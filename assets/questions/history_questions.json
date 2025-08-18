@@ -1,0 +1,134 @@
+[
+  {
+    "question": "What is the fundamental accounting equation?",
+    "options": [
+      "Assets = Liabilities + Equity",
+      "Assets = Liabilities - Equity",
+      "Assets + Liabilities = Equity",
+      "Assets - Equity = Liabilities"
+    ],
+    "correctAnswer": 0,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "Which of the following is NOT a current asset?",
+    "options": [
+      "Cash",
+      "Inventory",
+      "Buildings",
+      "Accounts Receivable"
+    ],
+    "correctAnswer": 2,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "What does GAAP stand for?",
+    "options": [
+      "Generally Accepted Accounting Principles",
+      "Global Accounting Audit Procedures",
+      "General Asset Allocation Protocol",
+      "Governmental Accounting Assessment Program"
+    ],
+    "correctAnswer": 0,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "When revenue is recorded when earned, regardless of when cash is received, this is called:",
+    "options": [
+      "Cash basis accounting",
+      "Accrual basis accounting",
+      "Modified cash basis",
+      "Hybrid accounting"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "A debit entry will:",
+    "options": [
+      "Increase liability accounts",
+      "Increase asset accounts",
+      "Increase revenue accounts",
+      "Decrease expense accounts"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "The trial balance is prepared to:",
+    "options": [
+      "Calculate net income",
+      "Verify that debits equal credits",
+      "Prepare financial statements",
+      "Close accounts at year-end"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "Which financial statement shows a company's financial position at a specific point in time?",
+    "options": [
+      "Income Statement",
+      "Balance Sheet",
+      "Cash Flow Statement",
+      "Statement of Retained Earnings"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "Depreciation is:",
+    "options": [
+      "The allocation of an asset's cost over its useful life",
+      "The decrease in market value of an asset",
+      "The maintenance cost of an asset",
+      "The insurance cost of an asset"
+    ],
+    "correctAnswer": 0,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "Which of the following is an example of an intangible asset?",
+    "options": [
+      "Building",
+      "Equipment",
+      "Patent",
+      "Inventory"
+    ],
+    "correctAnswer": 2,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "The matching principle states that:",
+    "options": [
+      "Revenues should match cash receipts",
+      "Expenses should be matched with related revenues",
+      "Assets should match liabilities",
+      "Debits should match credits"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "What is the normal balance of an expense account?",
+    "options": [
+      "Credit",
+      "Debit",
+      "Zero",
+      "It depends on the expense type"
+    ],
+    "correctAnswer": 1,
+    "reference": "Paper 1 2024 GCE"
+  },
+  {
+    "question": "Which of the following accounts would be closed at the end of an accounting period?",
+    "options": [
+      "Cash",
+      "Accounts Payable",
+      "Sales Revenue",
+      "Equipment"
+    ],
+    "correctAnswer": 2,
+    "reference": "Paper 1 2024 GCE"
+  }
+]
