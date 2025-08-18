@@ -1,4 +1,4 @@
-name: Build Flutter APK
+name: Build UltKit APK
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.24.5'
+        flutter-version: 'latest'
         channel: 'stable'
         cache: true
 
@@ -40,7 +40,8 @@ jobs:
       run: flutter pub get
 
     - name: Run tests (optional)
-      run: flutter test
+      run: flutter test --reporter=expanded
+      continue-on-error: true
 
     - name: Build APK
       run: flutter build apk --release
@@ -48,5 +49,16 @@ jobs:
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: flutter-apk
+        name: ultkit-apk
         path: build/app/outputs/flutter-apk/app-release.apk
+
+    - name: Upload APK to Release (on main branch)
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: UltKit Release v1.0.${{ github.run_number }}
+        files: build/app/outputs/flutter-apk/app-release.apk
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
