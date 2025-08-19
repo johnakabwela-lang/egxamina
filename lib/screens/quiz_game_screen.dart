@@ -410,7 +410,6 @@ class _QuizStreakWidgetState extends State<QuizStreakWidget>
   }
 }
 
-// Main Quiz Game Screen State (Updated)
 class QuizGameScreenState extends State<QuizGameScreen>
     with TickerProviderStateMixin {
   List<Question> questions = [];
@@ -532,9 +531,6 @@ class QuizGameScreenState extends State<QuizGameScreen>
       });
 
       _fadeController.forward();
-      _progressController.animateTo(
-        (currentQuestionIndex + 1) / questions.length,
-      );
       _startTimer();
     } catch (e) {
       setState(() {
@@ -660,9 +656,6 @@ class QuizGameScreenState extends State<QuizGameScreen>
         showConfetti = false;
       });
       _fadeController.forward();
-      _progressController.animateTo(
-        (currentQuestionIndex + 1) / questions.length,
-      );
       _startTimer();
     } else {
       _showResults();
@@ -895,38 +888,143 @@ class QuizGameScreenState extends State<QuizGameScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        title: Text(
-          '${widget.subject} Quiz',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF4B4B4B),
-          ),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Stack(
+          children: [
+            AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              foregroundColor: const Color(0xFF4B4B4B),
+              centerTitle: false,
+              automaticallyImplyLeading: false,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Streak
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: streakCount >= 3 
+                          ? const Color(0xFFFF9500).withOpacity(0.1)
+                          : const Color(0xFF777777).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: streakCount >= 3 
+                            ? const Color(0xFFFF9500).withOpacity(0.3)
+                            : const Color(0xFF777777).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.local_fire_department,
+                          size: 16,
+                          color: streakCount >= 3 
+                              ? const Color(0xFFFF9500)
+                              : const Color(0xFF777777),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$streakCount',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: streakCount >= 3 
+                                ? const Color(0xFFFF9500)
+                                : const Color(0xFF777777),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Timer
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: remainingTime <= 10 ? _pulseAnimation.value : 1.0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: _getTimerColor().withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _getTimerColor().withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                timeUp ? Icons.timer_off : Icons.timer,
+                                color: _getTimerColor(),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                timeUp ? 'Time Up!' : _formatTime(remainingTime),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: _getTimerColor(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  // Score
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF58CC02).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF58CC02).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      '$score/${currentQuestionIndex + (isAnswered ? 1 : 0)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF58CC02),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Timer progress bar as bottom border
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AnimatedBuilder(
+                animation: _timerController,
+                builder: (context, child) {
+                  return Container(
+                    height: 3,
+                    color: const Color(0xFFE5E5E5),
+                    child: FractionallySizedBox(
+                      widthFactor: timeUp ? 0.0 : (1.0 - _timerController.value),
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        color: _getTimerColor(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: const Color(0xFF4B4B4B),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF58CC02).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF58CC02).withOpacity(0.3),
-              ),
-            ),
-            child: Text(
-              '${currentQuestionIndex + 1}/${questions.length}',
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF58CC02),
-              ),
-            ),
-          ),
-        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -938,144 +1036,6 @@ class QuizGameScreenState extends State<QuizGameScreen>
         ),
         child: Column(
           children: [
-            // Enhanced header with Duolingo styling
-            Container(
-              margin: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Progress',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF777777),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            'Score: $score/${currentQuestionIndex + (isAnswered ? 1 : 0)}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF58CC02),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  AnimatedBuilder(
-                    animation: _progressController,
-                    builder: (context, child) {
-                      return Container(
-                        height: 12,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          color: const Color(0xFFE5E5E5),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: _progressController.value,
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF58CC02), Color(0xFF89E219)],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Enhanced timer with Duolingo styling
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: remainingTime <= 10
-                            ? _pulseAnimation.value
-                            : 1.0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getTimerColor().withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: _getTimerColor().withOpacity(0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                timeUp ? Icons.timer_off : Icons.timer,
-                                color: _getTimerColor(),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                timeUp
-                                    ? 'Time Up!'
-                                    : _formatTime(remainingTime),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: _getTimerColor(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Timer progress bar with Duolingo styling
-                  AnimatedBuilder(
-                    animation: _timerController,
-                    builder: (context, child) {
-                      return Container(
-                        height: 6,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(3),
-                          color: const Color(0xFFE5E5E5),
-                        ),
-                        child: FractionallySizedBox(
-                          widthFactor: timeUp
-                              ? 0.0
-                              : (1.0 - _timerController.value),
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(3),
-                              color: _getTimerColor(),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // Enhanced Streak widget
-                  QuizStreakWidget(streakCount: streakCount),
-                ],
-              ),
-            ),
-
             // Question content with Duolingo styling
             Expanded(
               child: FadeTransition(
@@ -1330,7 +1290,6 @@ class QuizGameScreenState extends State<QuizGameScreen>
     );
   }
 }
-
 class Question {
   final String question;
   final List<String> options;
