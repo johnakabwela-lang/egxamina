@@ -1,4 +1,4 @@
-// Simplified QuizScreen - Preserving all functionality while removing complex animations
+            // Simplified QuizScreen - Preserving all functionality while removing complex animations
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
@@ -575,58 +575,60 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  Widget _buildSubjectsGrid() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.count(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
-        children: [
-          SubjectCard(
-            title: 'Accounting',
-            icon: Icons.account_balance,
-            color: const Color(0xFF4285F4),
-            description: 'Master financial principles',
-            tokenCost: TokenManager.QUIZ_COST,
-            onTap: () =>
-                _startQuiz(context, 'Accounting', 'accounting_questions.json'),
+Widget _buildSubjectsGrid() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 0.95, // Adjusted for better proportions
+      children: [
+        SubjectCard(
+          title: 'Accounting',
+          icon: Icons.account_balance,
+          color: const Color(0xFF4285F4),
+          description: 'Master financial principles',
+          tokenCost: TokenManager.QUIZ_COST,
+          onTap: () =>
+              _startQuiz(context, 'Accounting', 'accounting_questions.json'),
+        ),
+        SubjectCard(
+          title: 'Mathematics',
+          icon: Icons.calculate,
+          color: const Color(0xFF34A853),
+          description: 'Solve complex equations',
+          tokenCost: TokenManager.QUIZ_COST,
+          onTap: () => _startQuiz(
+            context,
+            'Mathematics',
+            'mathematics_questions.json',
           ),
-          SubjectCard(
-            title: 'Mathematics',
-            icon: Icons.calculate,
-            color: const Color(0xFF34A853),
-            description: 'Solve complex equations',
-            tokenCost: TokenManager.QUIZ_COST,
-            onTap: () => _startQuiz(
-              context,
-              'Mathematics',
-              'mathematics_questions.json',
-            ),
-          ),
-          SubjectCard(
-            title: 'Science',
-            icon: Icons.science,
-            color: const Color(0xFF9C27B0),
-            description: 'Explore natural phenomena',
-            tokenCost: TokenManager.QUIZ_COST,
-            onTap: () =>
-                _startQuiz(context, 'Science', 'science_questions.json'),
-          ),
-          SubjectCard(
-            title: 'History',
-            icon: Icons.history_edu,
-            color: const Color(0xFFFF9800),
-            description: 'Journey through time',
-            tokenCost: TokenManager.QUIZ_COST,
-            onTap: () =>
-                _startQuiz(context, 'History', 'history_questions.json'),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+        SubjectCard(
+          title: 'Science',
+          icon: Icons.science,
+          color: const Color(0xFF9C27B0),
+          description: 'Explore natural phenomena',
+          tokenCost: TokenManager.QUIZ_COST,
+          onTap: () =>
+              _startQuiz(context, 'Science', 'science_questions.json'),
+        ),
+        SubjectCard(
+          title: 'History',
+          icon: Icons.history_edu,
+          color: const Color(0xFFFF9800),
+          description: 'Journey through time',
+          tokenCost: TokenManager.QUIZ_COST,
+          onTap: () =>
+              _startQuiz(context, 'History', 'history_questions.json'),
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   void _startQuiz(BuildContext context, String subject, String fileName) async {
     // Check if user has enough tokens first
@@ -787,95 +789,110 @@ class SubjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return DuolingoStyleCard(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [color, color.withOpacity(0.8)],
-          ),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.4),
-              blurRadius: 12,
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
               offset: const Offset(0, 6),
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon container
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white.withOpacity(0.15),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1.5,
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon container with consistent styling
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Icon(icon, color: color, size: 34),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Title with consistent typography
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  letterSpacing: 0.3,
                 ),
               ),
-              child: Icon(icon, color: Colors.white, size: 32),
-            ),
-            const SizedBox(height: 20),
-            // Title
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 0.5,
-                height: 1.2,
+              
+              const SizedBox(height: 6),
+              
+              // Description with consistent styling
+              Text(
+                description,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                  height: 1.3,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            // Description
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.9),
-                fontWeight: FontWeight.w500,
-                height: 1.4,
-                letterSpacing: 0.2,
-              ),
-            ),
-            const Spacer(),
-            // Token cost
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.white.withOpacity(0.2),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.star_rounded, color: Colors.white, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$tokenCost tokens',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+              
+              const Spacer(),
+              
+              // Token cost with refined styling
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: color.withOpacity(0.2),
+                    width: 1,
                   ),
-                ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.star_rounded,
+                      color: color,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$tokenCost tokens',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 // Simplified Token Display
 class TokenDisplay extends StatelessWidget {
@@ -921,6 +938,85 @@ class TokenDisplay extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+// Duolingo-style pressable card widget (same as before)
+class DuolingoStyleCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final Duration animationDuration;
+
+  const DuolingoStyleCard({
+    super.key,
+    required this.child,
+    required this.onTap,
+    this.animationDuration = const Duration(milliseconds: 150),
+  });
+
+  @override
+  State<DuolingoStyleCard> createState() => _DuolingoStyleCardState();
+}
+
+class _DuolingoStyleCardState extends State<DuolingoStyleCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: widget.animationDuration,
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    _animationController.forward();
+    HapticFeedback.lightImpact();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    _animationController.reverse();
+    widget.onTap();
+  }
+
+  void _onTapCancel() {
+    _animationController.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: AnimatedBuilder(
+        animation: _animationController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              transform: Matrix4.identity()
+                ..translate(0.0, 3.0 * _animationController.value),
+              child: Opacity(
+                opacity: 0.85 + (0.15 * (1 - _animationController.value)),
+                child: widget.child,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
