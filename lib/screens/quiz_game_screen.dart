@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'dart:math';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 
 class QuizGameScreen extends StatefulWidget {
@@ -431,6 +430,9 @@ class QuizGameScreenState extends State<QuizGameScreen>
   int streakCount = 0;
   int pressedButtonIndex = -1;
 
+  // Audio player for sound effects
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
   @override
   void initState() {
     super.initState();
@@ -487,10 +489,24 @@ class QuizGameScreenState extends State<QuizGameScreen>
     _buttonPressController.dispose();
     _questionTimer?.cancel();
     _autoNextTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
-  // Enhanced Sound effect methods with delay for wrong answer
+  // Sound effect methods
+  Future<void> _playCorrectSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
+    } catch (e) {
+    }
+  }
+
+  Future<void> _playWrongSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('sounds/wrong.mp3'));
+    } catch (e) {
+    }
+  }
 
   Future<void> _loadQuestions() async {
     try {
@@ -569,6 +585,7 @@ class QuizGameScreenState extends State<QuizGameScreen>
       });
 
       HapticFeedback.heavyImpact();
+      _playWrongSound(); // Play wrong sound for timeout
 
       // Show snackbar for time up
       _showTimeUpSnackbar();
@@ -655,11 +672,15 @@ class QuizGameScreenState extends State<QuizGameScreen>
       });
 
       if (isCorrect) {
+        _playCorrectSound(); // Play correct sound
         if (streakCount >= 3) {}
         HapticFeedback.mediumImpact();
         _pulseController.forward().then((_) => _pulseController.reset());
       } else {
-        // Wrong answer sound will play with 0.7s delay
+        // Wrong answer sound with 0.7s delay
+        Timer(const Duration(milliseconds: 700), () {
+          _playWrongSound();
+        });
 
         HapticFeedback.heavyImpact();
         _shakeController.repeat(reverse: true);
@@ -1150,15 +1171,11 @@ class QuizGameScreenState extends State<QuizGameScreen>
               children: [
                 // Question card with flexible height for images
                 Flexible(
-                  flex: isSmallScreen ? 5 : 6,
+                  flex: isSmallScreen ? 4 : 5, // Reduced flex to give more space to options
                   child: Container(
                     constraints: BoxConstraints(
-                      minHeight: isSmallScreen
-                          ? 200
-                          : 280, // Increased minimum height
-                      maxHeight: isSmallScreen
-                          ? 400
-                          : 500, // Maximum height to prevent overflow
+                      minHeight: isSmallScreen ? 180 : 240,
+                      maxHeight: isSmallScreen ? 350 : 450,
                     ),
                     padding: EdgeInsets.all(isTablet ? 24 : 20),
                     decoration: BoxDecoration(
@@ -1321,41 +1338,50 @@ class QuizGameScreenState extends State<QuizGameScreen>
 
                 SizedBox(height: isSmallScreen ? 16 : 20),
 
-                // Options section - Now fills remaining space to bottom
+                // Options section - Enhanced to be taller and reach bottom
                 Expanded(
-                  flex: isSmallScreen
-                      ? 7
-                      : 5, // Adjust flex to ensure it reaches bottom
-                  child: Container(
-                    child: ListView.separated(
-                      physics:
-                          const ClampingScrollPhysics(), // Prevents bouncing
-                      itemCount: questions[currentQuestionIndex].options.length,
-                      separatorBuilder: (context, index) =>
-                          SizedBox(height: isSmallScreen ? 8 : 12),
-                      itemBuilder: (context, index) {
-                        bool isCorrect =
-                            index ==
-                            questions[currentQuestionIndex].correctAnswer;
-                        bool isSelected = index == selectedAnswer;
-                        bool isPressed = index == pressedButtonIndex;
+                  flex: isSmallScreen ? 8 : 6, // Increased flex to make options taller
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate height for each option button to fill available space
+                      final availableHeight = constraints.maxHeight;
+                      final numOptions = questions[currentQuestionIndex].options.length;
+                      final spacing = (numOptions - 1) * (isSmallScreen ? 8 : 12);
+                      final buttonHeight = (availableHeight - spacing) / numOptions;
+                      final minButtonHeight = isSmallScreen ? 60.0 : 70.0;
+                      final maxButtonHeight = isSmallScreen ? 90.0 : 110.0;
+                      final finalButtonHeight = buttonHeight.clamp(minButtonHeight, maxButtonHeight);
 
-                        return PressEffectedWidget(
-                          option:
-                              questions[currentQuestionIndex].options[index],
-                          optionLabel: String.fromCharCode(65 + index),
-                          isSelected: isSelected,
-                          isCorrect: isCorrect,
-                          isAnswered: isAnswered,
-                          timeUp: timeUp,
-                          isPressed: isPressed,
-                          onTap: () => _selectAnswer(index),
-                          shakeAnimation: _shakeAnimation,
-                          buttonPressAnimation: _buttonPressAnimation,
-                          isSmallScreen: isSmallScreen,
-                        );
-                      },
-                    ),
+                      return ListView.separated(
+                        physics: const NeverScrollableScrollPhysics(), // Prevent scrolling since we want fixed heights
+                        itemCount: questions[currentQuestionIndex].options.length,
+                        separatorBuilder: (context, index) =>
+                            SizedBox(height: isSmallScreen ? 8 : 12),
+                        itemBuilder: (context, index) {
+                          bool isCorrect =
+                              index == questions[currentQuestionIndex].correctAnswer;
+                          bool isSelected = index == selectedAnswer;
+                          bool isPressed = index == pressedButtonIndex;
+
+                          return SizedBox(
+                            height: finalButtonHeight,
+                            child: PressEffectedWidget(
+                              option: questions[currentQuestionIndex].options[index],
+                              optionLabel: String.fromCharCode(65 + index),
+                              isSelected: isSelected,
+                              isCorrect: isCorrect,
+                              isAnswered: isAnswered,
+                              timeUp: timeUp,
+                              isPressed: isPressed,
+                              onTap: () => _selectAnswer(index),
+                              shakeAnimation: _shakeAnimation,
+                              buttonPressAnimation: _buttonPressAnimation,
+                              isSmallScreen: isSmallScreen,
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
