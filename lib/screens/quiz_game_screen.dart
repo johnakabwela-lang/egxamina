@@ -26,7 +26,7 @@ class QuizGameScreen extends StatefulWidget {
 }
 
 // Independent Options Card Widget
-class PressEffectedWidget extends StatefulWidget {
+class PressEffectedWidget extends StatelessWidget {
   final String option;
   final String optionLabel;
   final bool isSelected;
@@ -37,6 +37,7 @@ class PressEffectedWidget extends StatefulWidget {
   final VoidCallback onTap;
   final Animation<double> shakeAnimation;
   final Animation<double> buttonPressAnimation;
+  final bool isSmallScreen;
 
   const PressEffectedWidget({
     super.key,
@@ -50,195 +51,185 @@ class PressEffectedWidget extends StatefulWidget {
     required this.onTap,
     required this.shakeAnimation,
     required this.buttonPressAnimation,
+    this.isSmallScreen = false,
   });
 
-  @override
-  State<PressEffectedWidget> createState() => _PressEffectedWidgetState();
-}
+  Color _getBackgroundColor() {
+    if (!isAnswered && !timeUp) {
+      return isPressed ? const Color(0xFFE8F4FD) : Colors.white;
+    }
 
-class _PressEffectedWidgetState extends State<PressEffectedWidget> {
+    if (isCorrect) {
+      return const Color(0xFF58CC02).withOpacity(0.1);
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C).withOpacity(0.1);
+    }
+
+    return Colors.white.withOpacity(0.6);
+  }
+
+  Color _getBorderColor() {
+    if (!isAnswered && !timeUp) {
+      return isPressed ? const Color(0xFF1CB0F6) : const Color(0xFFE5E5E5);
+    }
+
+    if (isCorrect) {
+      return const Color(0xFF58CC02);
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C);
+    }
+
+    return const Color(0xFFE5E5E5);
+  }
+
+  Color _getTextColor() {
+    if (!isAnswered && !timeUp) {
+      return const Color(0xFF4B4B4B);
+    }
+
+    if (isCorrect) {
+      return const Color(0xFF58CC02);
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C);
+    }
+
+    return const Color(0xFF777777);
+  }
+
+  Widget _getStatusIcon() {
+    if (!isAnswered && !timeUp) return const SizedBox.shrink();
+
+    if (isCorrect) {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(
+          color: Color(0xFF58CC02),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.check,
+          color: Colors.white,
+          size: isSmallScreen ? 16 : 18,
+        ),
+      );
+    } else if (isSelected) {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(
+          color: Color(0xFFE74C3C),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.close,
+          color: Colors.white,
+          size: isSmallScreen ? 16 : 18,
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
-    Color cardColor = Colors.white;
-    Color borderColor = const Color(0xFFE5E5E5);
-    Color shadowColor = Colors.black12;
-    IconData? icon;
-    Color iconColor = Colors.transparent;
-    double elevation = 8;
-
-    if (widget.isAnswered || widget.timeUp) {
-      if (widget.isSelected && widget.isCorrect) {
-        cardColor = const Color(0xFF58CC02).withOpacity(0.1);
-        borderColor = const Color(0xFF58CC02);
-        icon = Icons.check_circle;
-        iconColor = const Color(0xFF58CC02);
-        shadowColor = const Color(0xFF58CC02).withOpacity(0.3);
-      } else if (widget.isSelected && !widget.isCorrect) {
-        cardColor = const Color(0xFFE74C3C).withOpacity(0.1);
-        borderColor = const Color(0xFFE74C3C);
-        icon = Icons.cancel;
-        iconColor = const Color(0xFFE74C3C);
-        shadowColor = const Color(0xFFE74C3C).withOpacity(0.3);
-      } else if (widget.isCorrect) {
-        cardColor = const Color(0xFF58CC02).withOpacity(0.1);
-        borderColor = const Color(0xFF58CC02);
-        icon = Icons.check_circle_outline;
-        iconColor = const Color(0xFF58CC02);
-        shadowColor = const Color(0xFF58CC02).withOpacity(0.3);
-      }
-
-      if (widget.timeUp && !widget.isSelected && widget.isCorrect) {
-        cardColor = const Color(0xFF58CC02).withOpacity(0.1);
-        borderColor = const Color(0xFF58CC02);
-        icon = Icons.check_circle;
-        iconColor = const Color(0xFF58CC02);
-        shadowColor = const Color(0xFF58CC02).withOpacity(0.3);
-      }
-    } else if (widget.isSelected) {
-      cardColor = const Color(0xFF1CB0F6).withOpacity(0.1);
-      borderColor = const Color(0xFF1CB0F6);
-      shadowColor = const Color(0xFF1CB0F6).withOpacity(0.3);
-    }
-
-    // Button press effect
-    if (widget.isPressed) {
-      elevation = 2;
-    }
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
 
     return AnimatedBuilder(
-      animation: widget.shakeAnimation,
+      animation: Listenable.merge([shakeAnimation, buttonPressAnimation]),
       builder: (context, child) {
+        double shakeOffset = 0;
+        double pressOffset = 0;
+
+        if (isSelected && !isCorrect && (isAnswered || timeUp)) {
+          shakeOffset = shakeAnimation.value;
+        }
+
+        if (isPressed) {
+          pressOffset = buttonPressAnimation.value;
+        }
+
         return Transform.translate(
-          offset: Offset(
-            (widget.isAnswered && widget.isSelected && !widget.isCorrect)
-                ? widget.shakeAnimation.value
-                : 0,
-            0,
-          ),
-          child: AnimatedBuilder(
-            animation: widget.buttonPressAnimation,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(
-                  0,
-                  widget.isPressed ? widget.buttonPressAnimation.value : 0,
+          offset: Offset(shakeOffset, -pressOffset),
+          child: GestureDetector(
+            onTap: (isAnswered || timeUp) ? null : onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(
+                bottom: isSmallScreen ? 4 : 8,
+                left: pressOffset > 0 ? pressOffset : 0,
+                right: pressOffset > 0 ? pressOffset : 0,
+              ),
+              padding: EdgeInsets.all(
+                isTablet ? 20 : (isSmallScreen ? 14 : 16),
+              ),
+              decoration: BoxDecoration(
+                color: _getBackgroundColor(),
+                borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+                border: Border.all(
+                  color: _getBorderColor(),
+                  width: (isAnswered || timeUp) ? 2 : 1.5,
                 ),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: borderColor, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: shadowColor,
-                          blurRadius: 0,
-                          offset: Offset(0, elevation),
-                        ),
-                        if (!widget.isPressed)
-                          BoxShadow(
-                            color: borderColor.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 4),
-                          ),
-                      ],
+                boxShadow: [
+                  if (!isAnswered && !timeUp)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: isPressed ? 2 : 8,
+                      offset: Offset(0, isPressed ? 1 : 4),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: widget.onTap,
-                        borderRadius: BorderRadius.circular(20),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      widget.isSelected ||
-                                          (widget.isAnswered &&
-                                              widget.isCorrect)
-                                      ? (widget.isCorrect
-                                            ? const Color(0xFF58CC02)
-                                            : const Color(0xFFE74C3C))
-                                      : const Color(0xFFF7F7F7),
-                                  border: Border.all(
-                                    color:
-                                        widget.isSelected ||
-                                            (widget.isAnswered &&
-                                                widget.isCorrect)
-                                        ? (widget.isCorrect
-                                              ? const Color(0xFF58CC02)
-                                              : const Color(0xFFE74C3C))
-                                        : const Color(0xFFE5E5E5),
-                                    width: 3,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          (widget.isSelected ||
-                                              (widget.isAnswered &&
-                                                  widget.isCorrect))
-                                          ? (widget.isCorrect
-                                                    ? const Color(0xFF58CC02)
-                                                    : const Color(0xFFE74C3C))
-                                                .withOpacity(0.3)
-                                          : Colors.black12,
-                                      blurRadius: 0,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    widget.optionLabel,
-                                    style: TextStyle(
-                                      color:
-                                          widget.isSelected ||
-                                              (widget.isAnswered &&
-                                                  widget.isCorrect)
-                                          ? Colors.white
-                                          : const Color(0xFF777777),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  widget.option,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    height: 1.4,
-                                    color: Color(0xFF4B4B4B),
-                                  ),
-                                ),
-                              ),
-                              if ((widget.isAnswered || widget.timeUp) &&
-                                  icon != null)
-                                AnimatedScale(
-                                  scale: 1.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: Icon(icon, color: iconColor, size: 32),
-                                ),
-                            ],
-                          ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Option label (A, B, C, D)
+                  Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: _getBorderColor().withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(
+                        isSmallScreen ? 6 : 8,
+                      ),
+                      border: Border.all(
+                        color: _getBorderColor().withOpacity(0.3),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        optionLabel,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 14 : 16,
+                          fontWeight: FontWeight.bold,
+                          color: _getTextColor(),
                         ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+
+                  SizedBox(width: isSmallScreen ? 12 : 16),
+
+                  // Option text
+                  Expanded(
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: isTablet ? 18 : (isSmallScreen ? 14 : 16),
+                        fontWeight: FontWeight.w600,
+                        color: _getTextColor(),
+                        height: 1.3,
+                      ),
+                      maxLines: isSmallScreen ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+
+                  // Status icon
+                  _getStatusIcon(),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -579,10 +570,52 @@ class QuizGameScreenState extends State<QuizGameScreen>
 
       HapticFeedback.heavyImpact();
 
+      // Show snackbar for time up
+      _showTimeUpSnackbar();
+
       _autoNextTimer = Timer(const Duration(seconds: 4), () {
         _nextQuestion();
       });
     }
+  }
+
+  void _showTimeUpSnackbar() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.timer_off, color: Colors.white, size: 20),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Time\'s Up! ⏰',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    'You ran out of time for this question',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFFE74C3C),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   void _selectAnswer(int answerIndex) async {
@@ -646,6 +679,9 @@ class QuizGameScreenState extends State<QuizGameScreen>
     _autoNextTimer?.cancel();
     _questionTimer?.cancel();
 
+    // Clear any existing snackbars when moving to next question
+    ScaffoldMessenger.of(context).clearSnackBars();
+
     if (currentQuestionIndex < questions.length - 1) {
       _fadeController.reset();
       setState(() {
@@ -691,6 +727,10 @@ class QuizGameScreenState extends State<QuizGameScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.height < 700;
+    final isTablet = screenSize.width > 600;
+
     if (isLoading) {
       return Scaffold(
         backgroundColor: const Color(0xFFF7F7F7),
@@ -700,6 +740,7 @@ class QuizGameScreenState extends State<QuizGameScreen>
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               color: Color(0xFF4B4B4B),
+              fontSize: 18,
             ),
           ),
           backgroundColor: Colors.white,
@@ -778,14 +819,14 @@ class QuizGameScreenState extends State<QuizGameScreen>
           ),
           child: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE74C3C).withOpacity(0.1),
+                      color: const Color(0xFFE74C3C).withAlpha(25),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -814,12 +855,14 @@ class QuizGameScreenState extends State<QuizGameScreen>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    alignment: WrapAlignment.center,
                     children: [
                       ElevatedButton.icon(
                         onPressed: _loadQuestions,
-                        icon: const Icon(Icons.refresh),
+                        icon: const Icon(Icons.refresh, size: 18),
                         label: const Text('Try Again'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF58CC02),
@@ -833,7 +876,6 @@ class QuizGameScreenState extends State<QuizGameScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16),
                       OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
@@ -889,7 +931,7 @@ class QuizGameScreenState extends State<QuizGameScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
+        preferredSize: Size.fromHeight(isSmallScreen ? 80 : 90),
         child: Stack(
           children: [
             AppBar(
@@ -898,107 +940,172 @@ class QuizGameScreenState extends State<QuizGameScreen>
               foregroundColor: const Color(0xFF4B4B4B),
               centerTitle: false,
               automaticallyImplyLeading: false,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Streak
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: streakCount >= 3 
-                          ? const Color(0xFFFF9500).withOpacity(0.1)
-                          : const Color(0xFF777777).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: streakCount >= 3 
-                            ? const Color(0xFFFF9500).withOpacity(0.3)
-                            : const Color(0xFF777777).withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.local_fire_department,
-                          size: 16,
-                          color: streakCount >= 3 
-                              ? const Color(0xFFFF9500)
-                              : const Color(0xFF777777),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$streakCount',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: streakCount >= 3 
-                                ? const Color(0xFFFF9500)
-                                : const Color(0xFF777777),
-                          ),
-                        ),
-                      ],
-                    ),
+              toolbarHeight: isSmallScreen ? 80 : 90,
+              flexibleSpace: SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 24 : 16,
+                    vertical: 8,
                   ),
-                  
-                  // Timer
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: remainingTime <= 10 ? _pulseAnimation.value : 1.0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getTimerColor().withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _getTimerColor().withOpacity(0.3),
+                  child: Column(
+                    children: [
+                      // Top row with indicators
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Streak indicator
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 6 : 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: streakCount >= 3
+                                  ? const Color(0xFFFF9500).withOpacity(0.1)
+                                  : const Color(0xFF777777).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: streakCount >= 3
+                                    ? const Color(0xFFFF9500).withOpacity(0.3)
+                                    : const Color(0xFF777777).withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.local_fire_department,
+                                  size: isSmallScreen ? 14 : 16,
+                                  color: streakCount >= 3
+                                      ? const Color(0xFFFF9500)
+                                      : const Color(0xFF777777),
+                                ),
+                                SizedBox(width: isSmallScreen ? 2 : 4),
+                                Text(
+                                  '$streakCount',
+                                  style: TextStyle(
+                                    fontSize: isSmallScreen ? 12 : 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: streakCount >= 3
+                                        ? const Color(0xFFFF9500)
+                                        : const Color(0xFF777777),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                timeUp ? Icons.timer_off : Icons.timer,
-                                color: _getTimerColor(),
-                                size: 16,
+
+                          // Timer
+                          AnimatedBuilder(
+                            animation: _pulseAnimation,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: remainingTime <= 10
+                                    ? _pulseAnimation.value
+                                    : 1.0,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isSmallScreen ? 6 : 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getTimerColor().withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: _getTimerColor().withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        timeUp ? Icons.timer_off : Icons.timer,
+                                        color: _getTimerColor(),
+                                        size: isSmallScreen ? 14 : 16,
+                                      ),
+                                      SizedBox(width: isSmallScreen ? 2 : 4),
+                                      Text(
+                                        timeUp
+                                            ? 'Time Up!'
+                                            : _formatTime(remainingTime),
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 12 : 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: _getTimerColor(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+
+                          // Score
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSmallScreen ? 6 : 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF58CC02).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF58CC02).withOpacity(0.3),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                timeUp ? 'Time Up!' : _formatTime(remainingTime),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: _getTimerColor(),
+                            ),
+                            child: Text(
+                              '$score/${currentQuestionIndex + (isAnswered ? 1 : 0)}',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 12 : 14,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF58CC02),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Progress indicator and question number
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 3,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE5E5E5),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: FractionallySizedBox(
+                                widthFactor:
+                                    (currentQuestionIndex + 1) /
+                                    questions.length,
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF58CC02),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  
-                  // Score
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF58CC02).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF58CC02).withOpacity(0.3),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${currentQuestionIndex + 1}/${questions.length}',
+                            style: TextStyle(
+                              fontSize: isSmallScreen ? 12 : 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF777777),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    child: Text(
-                      '$score/${currentQuestionIndex + (isAnswered ? 1 : 0)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF58CC02),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
             // Timer progress bar as bottom border
@@ -1013,11 +1120,11 @@ class QuizGameScreenState extends State<QuizGameScreen>
                     height: 3,
                     color: const Color(0xFFE5E5E5),
                     child: FractionallySizedBox(
-                      widthFactor: timeUp ? 0.0 : (1.0 - _timerController.value),
+                      widthFactor: timeUp
+                          ? 0.0
+                          : (1.0 - _timerController.value),
                       alignment: Alignment.centerLeft,
-                      child: Container(
-                        color: _getTimerColor(),
-                      ),
+                      child: Container(color: _getTimerColor()),
                     ),
                   );
                 },
@@ -1034,268 +1141,239 @@ class QuizGameScreenState extends State<QuizGameScreen>
             colors: [Color(0xFFF7F7F7), Colors.white],
           ),
         ),
-        child: Column(
-          children: [
-            // Question content with Duolingo styling
-            Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Enhanced question card with Duolingo styling
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black38,
-                              blurRadius: 20,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Question card with flexible height for images
+                Flexible(
+                  flex: isSmallScreen ? 5 : 6,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      minHeight: isSmallScreen
+                          ? 200
+                          : 280, // Increased minimum height
+                      maxHeight: isSmallScreen
+                          ? 400
+                          : 500, // Maximum height to prevent overflow
+                    ),
+                    padding: EdgeInsets.all(isTablet ? 24 : 20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 15,
+                          offset: Offset(0, 5),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Question reference with Duolingo styling
-                                if (questions[currentQuestionIndex].reference !=
-                                    null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF8E44AD,
-                                      ).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF8E44AD,
-                                        ).withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.bookmark_outline,
-                                          size: 14,
-                                          color: Color(0xFF8E44AD),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          questions[currentQuestionIndex]
-                                              .reference!,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF8E44AD),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                // Question number with Duolingo styling
+                      ],
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Question header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Question reference
+                              if (questions[currentQuestionIndex].reference !=
+                                  null)
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF8E44AD,
+                                    ).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: const Color(
+                                        0xFF8E44AD,
+                                      ).withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.bookmark_outline,
+                                        size: 12,
+                                        color: Color(0xFF8E44AD),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        questions[currentQuestionIndex]
+                                            .reference!,
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 10 : 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF8E44AD),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              // Auto-next indicator
+                              if (isAnswered || timeUp)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
                                     color: const Color(
                                       0xFF58CC02,
                                     ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: const Color(
                                         0xFF58CC02,
                                       ).withOpacity(0.3),
                                     ),
                                   ),
-                                  child: Text(
-                                    'Question ${currentQuestionIndex + 1} of ${questions.length}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF58CC02),
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 10,
+                                        height: 10,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                const Color(0xFF58CC02),
+                                              ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Next in 4s',
+                                        style: TextStyle(
+                                          fontSize: isSmallScreen ? 9 : 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF58CC02),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                            ],
+                          ),
 
-                                if (isAnswered || timeUp)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
+                          SizedBox(height: isSmallScreen ? 12 : 16),
+
+                          // Question text
+                          Text(
+                            questions[currentQuestionIndex].question,
+                            style: TextStyle(
+                              fontSize: isTablet
+                                  ? 20
+                                  : (isSmallScreen ? 16 : 18),
+                              fontWeight: FontWeight.bold,
+                              height: 1.4,
+                              color: const Color(0xFF4B4B4B),
+                            ),
+                          ),
+
+                          // Space for question image if it exists
+                          if (questions[currentQuestionIndex].imagePath !=
+                              null) ...[
+                            SizedBox(height: isSmallScreen ? 12 : 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.asset(
+                                questions[currentQuestionIndex].imagePath!,
+                                fit: BoxFit.contain,
+                                height: isSmallScreen ? 120 : 160,
+                                width: double.infinity,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    height: isSmallScreen ? 120 : 160,
                                     decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF58CC02,
-                                      ).withOpacity(0.1),
+                                      color: const Color(0xFFF0F0F0),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: const Color(
-                                          0xFF58CC02,
-                                        ).withOpacity(0.3),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.image_not_supported,
+                                        color: Color(0xFF777777),
+                                        size: 48,
                                       ),
                                     ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  Color(0xFF58CC02),
-                                                ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          'Next in 4s',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF58CC02),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              questions[currentQuestionIndex].question,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                height: 1.5,
-                                color: Color(0xFF4B4B4B),
+                                  );
+                                },
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-
-                      // Enhanced options with PressEffectedWidget widget
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount:
-                              questions[currentQuestionIndex].options.length,
-                          itemBuilder: (context, index) {
-                            bool isCorrect =
-                                index ==
-                                questions[currentQuestionIndex].correctAnswer;
-                            bool isSelected = index == selectedAnswer;
-                            bool isPressed = index == pressedButtonIndex;
-
-                            return PressEffectedWidget(
-                              option: questions[currentQuestionIndex]
-                                  .options[index],
-                              optionLabel: String.fromCharCode(65 + index),
-                              isSelected: isSelected,
-                              isCorrect: isCorrect,
-                              isAnswered: isAnswered,
-                              timeUp: timeUp,
-                              isPressed: isPressed,
-                              onTap: () => _selectAnswer(index),
-                              shakeAnimation: _shakeAnimation,
-                              buttonPressAnimation: _buttonPressAnimation,
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Enhanced time up message with Duolingo styling
-                      if (timeUp && selectedAnswer == -1)
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.only(top: 16),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE74C3C).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFE74C3C),
-                              width: 3,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFE74C3C).withOpacity(0.3),
-                                blurRadius: 0,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: const Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(
-                                Icons.timer_off,
-                                color: Color(0xFFE74C3C),
-                                size: 28,
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Time\'s Up! ⏰',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFFE74C3C),
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'You ran out of time for this question',
-                                      style: TextStyle(
-                                        color: Color(0xFF777777),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+
+                SizedBox(height: isSmallScreen ? 16 : 20),
+
+                // Options section - Now fills remaining space to bottom
+                Expanded(
+                  flex: isSmallScreen
+                      ? 7
+                      : 5, // Adjust flex to ensure it reaches bottom
+                  child: Container(
+                    child: ListView.separated(
+                      physics:
+                          const ClampingScrollPhysics(), // Prevents bouncing
+                      itemCount: questions[currentQuestionIndex].options.length,
+                      separatorBuilder: (context, index) =>
+                          SizedBox(height: isSmallScreen ? 8 : 12),
+                      itemBuilder: (context, index) {
+                        bool isCorrect =
+                            index ==
+                            questions[currentQuestionIndex].correctAnswer;
+                        bool isSelected = index == selectedAnswer;
+                        bool isPressed = index == pressedButtonIndex;
+
+                        return PressEffectedWidget(
+                          option:
+                              questions[currentQuestionIndex].options[index],
+                          optionLabel: String.fromCharCode(65 + index),
+                          isSelected: isSelected,
+                          isCorrect: isCorrect,
+                          isAnswered: isAnswered,
+                          timeUp: timeUp,
+                          isPressed: isPressed,
+                          onTap: () => _selectAnswer(index),
+                          shakeAnimation: _shakeAnimation,
+                          buttonPressAnimation: _buttonPressAnimation,
+                          isSmallScreen: isSmallScreen,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
+
 class Question {
   final String question;
   final List<String> options;
   int correctAnswer;
   final String? explanation;
   final String? reference;
+  final String? imagePath;
 
   // Store original options and correct answer for shuffling
   late List<String> _originalOptions;
@@ -1307,6 +1385,7 @@ class Question {
     required this.correctAnswer,
     this.explanation,
     this.reference,
+    this.imagePath,
   }) {
     _originalOptions = List.from(options);
     _originalCorrectAnswer = correctAnswer;
@@ -1319,9 +1398,9 @@ class Question {
       correctAnswer: json['correctAnswer'] as int,
       explanation: json['explanation'] as String?,
       reference: json['reference'] as String?,
+      imagePath: json['imagePath'] as String?,
     );
   }
-
   Map<String, dynamic> toJson() {
     return {
       'question': question,
@@ -1329,6 +1408,7 @@ class Question {
       'correctAnswer': correctAnswer,
       'explanation': explanation,
       'reference': reference,
+      'imagePath': imagePath,
     };
   }
 

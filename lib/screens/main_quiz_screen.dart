@@ -1,10 +1,9 @@
-            // Simplified QuizScreen - Preserving all functionality while removing complex animations
+// Simplified QuizScreen - Preserving all functionality while removing complex animations
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
 import 'dart:math';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'dart:async';
 
 class QuizScreen extends StatefulWidget {
@@ -578,60 +577,58 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-Widget _buildSubjectsGrid() {
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: GridView.count(
-      crossAxisCount: 2,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
-      childAspectRatio: 0.95, // Adjusted for better proportions
-      children: [
-        SubjectCard(
-          title: 'Accounting',
-          icon: Icons.account_balance,
-          color: const Color(0xFF4285F4),
-          description: 'Master financial principles',
-          tokenCost: TokenManager.QUIZ_COST,
-          onTap: () =>
-              _startQuiz(context, 'Accounting', 'accounting_questions.json'),
-        ),
-        SubjectCard(
-          title: 'Mathematics',
-          icon: Icons.calculate,
-          color: const Color(0xFF34A853),
-          description: 'Solve complex equations',
-          tokenCost: TokenManager.QUIZ_COST,
-          onTap: () => _startQuiz(
-            context,
-            'Mathematics',
-            'mathematics_questions.json',
+  Widget _buildSubjectsGrid() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.95, // Adjusted for better proportions
+        children: [
+          SubjectCard(
+            title: 'Accounting',
+            icon: Icons.account_balance,
+            color: const Color(0xFF4285F4),
+            description: 'Master financial principles',
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () =>
+                _startQuiz(context, 'Accounting', 'accounting_questions.json'),
           ),
-        ),
-        SubjectCard(
-          title: 'Science',
-          icon: Icons.science,
-          color: const Color(0xFF9C27B0),
-          description: 'Explore natural phenomena',
-          tokenCost: TokenManager.QUIZ_COST,
-          onTap: () =>
-              _startQuiz(context, 'Science', 'science_questions.json'),
-        ),
-        SubjectCard(
-          title: 'History',
-          icon: Icons.history_edu,
-          color: const Color(0xFFFF9800),
-          description: 'Journey through time',
-          tokenCost: TokenManager.QUIZ_COST,
-          onTap: () =>
-              _startQuiz(context, 'History', 'history_questions.json'),
-        ),
-      ],
-    ),
-  );
-}
-
-
+          SubjectCard(
+            title: 'Mathematics',
+            icon: Icons.calculate,
+            color: const Color(0xFF34A853),
+            description: 'Solve complex equations',
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'Mathematics',
+              'mathematics_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'Science',
+            icon: Icons.science,
+            color: const Color(0xFF9C27B0),
+            description: 'Explore natural phenomena',
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () =>
+                _startQuiz(context, 'Science', 'science_questions.json'),
+          ),
+          SubjectCard(
+            title: 'History',
+            icon: Icons.history_edu,
+            color: const Color(0xFFFF9800),
+            description: 'Journey through time',
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () =>
+                _startQuiz(context, 'History', 'history_questions.json'),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _startQuiz(BuildContext context, String subject, String fileName) async {
     // Check if user has enough tokens first
@@ -828,9 +825,9 @@ class SubjectCard extends StatelessWidget {
                 ),
                 child: Icon(icon, color: color, size: 34),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Title with consistent typography
               Text(
                 title,
@@ -841,9 +838,9 @@ class SubjectCard extends StatelessWidget {
                   letterSpacing: 0.3,
                 ),
               ),
-              
+
               const SizedBox(height: 6),
-              
+
               // Description with consistent styling
               Text(
                 description,
@@ -854,28 +851,24 @@ class SubjectCard extends StatelessWidget {
                   height: 1.3,
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Token cost with refined styling
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: color.withOpacity(0.2),
-                    width: 1,
-                  ),
+                  border: Border.all(color: color.withOpacity(0.2), width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.star_rounded,
-                      color: color,
-                      size: 16,
-                    ),
+                    Icon(Icons.star_rounded, color: color, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       '$tokenCost tokens',
@@ -895,7 +888,6 @@ class SubjectCard extends StatelessWidget {
     );
   }
 }
-
 
 // Simplified Token Display
 class TokenDisplay extends StatelessWidget {
@@ -945,6 +937,7 @@ class TokenDisplay extends StatelessWidget {
     );
   }
 }
+
 // Duolingo-style pressable card widget (same as before)
 class DuolingoStyleCard extends StatefulWidget {
   final Widget child;
