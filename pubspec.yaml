@@ -10,7 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  audioplayers: ^5.0.0
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.2
@@ -27,3 +27,4 @@ flutter:
 
   assets:
     - assets/questions/
+    - assets/sounds/
