@@ -497,15 +497,13 @@ class QuizGameScreenState extends State<QuizGameScreen>
   Future<void> _playCorrectSound() async {
     try {
       await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _playWrongSound() async {
     try {
       await _audioPlayer.play(AssetSource('sounds/wrong.mp3'));
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   Future<void> _loadQuestions() async {
@@ -1165,221 +1163,159 @@ class QuizGameScreenState extends State<QuizGameScreen>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Padding(
-            padding: EdgeInsets.all(isTablet ? 24 : 16),
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 24 : 16,
+              isTablet ? 24 : 16,
+              isTablet ? 24 : 16,
+              0, // Remove bottom padding
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Question card with flexible height for images
-                Flexible(
-                  flex: isSmallScreen ? 4 : 5, // Reduced flex to give more space to options
-                  child: Container(
-                    constraints: BoxConstraints(
-                      minHeight: isSmallScreen ? 180 : 240,
-                      maxHeight: isSmallScreen ? 350 : 450,
-                    ),
-                    padding: EdgeInsets.all(isTablet ? 24 : 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 15,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Question header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // Question reference
-                              if (questions[currentQuestionIndex].reference !=
-                                  null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF8E44AD,
-                                    ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFF8E44AD,
-                                      ).withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.bookmark_outline,
-                                        size: 12,
-                                        color: Color(0xFF8E44AD),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        questions[currentQuestionIndex]
-                                            .reference!,
-                                        style: TextStyle(
-                                          fontSize: isSmallScreen ? 10 : 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF8E44AD),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                // Question card with dynamic height based on content
+                Container(
+                  padding: EdgeInsets.all(isTablet ? 24 : 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 15,
+                        offset: Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Question header - only show reference if exists
+                      if (questions[currentQuestionIndex].reference != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8E44AD).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF8E44AD,
+                                  ).withOpacity(0.3),
                                 ),
-
-                              // Auto-next indicator
-                              if (isAnswered || timeUp)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.bookmark_outline,
+                                    size: 12,
+                                    color: Color(0xFF8E44AD),
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF58CC02,
-                                    ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFF58CC02,
-                                      ).withOpacity(0.3),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    questions[currentQuestionIndex].reference!,
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 10 : 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF8E44AD),
                                     ),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      SizedBox(
-                                        width: 10,
-                                        height: 10,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.5,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                const Color(0xFF58CC02),
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Next in 4s',
-                                        style: TextStyle(
-                                          fontSize: isSmallScreen ? 9 : 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color(0xFF58CC02),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-
-                          SizedBox(height: isSmallScreen ? 12 : 16),
-
-                          // Question text
-                          Text(
-                            questions[currentQuestionIndex].question,
-                            style: TextStyle(
-                              fontSize: isTablet
-                                  ? 20
-                                  : (isSmallScreen ? 16 : 18),
-                              fontWeight: FontWeight.bold,
-                              height: 1.4,
-                              color: const Color(0xFF4B4B4B),
-                            ),
-                          ),
-
-                          // Space for question image if it exists
-                          if (questions[currentQuestionIndex].imagePath !=
-                              null) ...[
-                            SizedBox(height: isSmallScreen ? 12 : 16),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                questions[currentQuestionIndex].imagePath!,
-                                fit: BoxFit.contain,
-                                height: isSmallScreen ? 120 : 160,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: isSmallScreen ? 120 : 160,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0F0F0),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: Color(0xFF777777),
-                                        size: 48,
-                                      ),
-                                    ),
-                                  );
-                                },
+                                ],
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
+                          ),
+                        ),
+
+                      // Question text - only show if it exists and is not empty
+                      if (questions[currentQuestionIndex].question.isNotEmpty)
+                        Text(
+                          questions[currentQuestionIndex].question,
+                          style: TextStyle(
+                            fontSize: isTablet ? 20 : (isSmallScreen ? 16 : 18),
+                            fontWeight: FontWeight.bold,
+                            height: 1.4,
+                            color: const Color(0xFF4B4B4B),
+                          ),
+                        ),
+
+                      // Question image - only build if image exists
+                      if (questions[currentQuestionIndex].imagePath !=
+                          null) ...[
+                        SizedBox(
+                          height:
+                              questions[currentQuestionIndex]
+                                  .question
+                                  .isNotEmpty
+                              ? 16
+                              : 0,
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            questions[currentQuestionIndex].imagePath!,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: isSmallScreen ? 120 : 160,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F0F0),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Color(0xFF777777),
+                                    size: 48,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
 
                 SizedBox(height: isSmallScreen ? 16 : 20),
 
-                // Options section - Enhanced to be taller and reach bottom
+                // Options section - Expanded to fill remaining space
                 Expanded(
-                  flex: isSmallScreen ? 8 : 6, // Increased flex to make options taller
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate height for each option button to fill available space
-                      final availableHeight = constraints.maxHeight;
-                      final numOptions = questions[currentQuestionIndex].options.length;
-                      final spacing = (numOptions - 1) * (isSmallScreen ? 8 : 12);
-                      final buttonHeight = (availableHeight - spacing) / numOptions;
-                      final minButtonHeight = isSmallScreen ? 60.0 : 70.0;
-                      final maxButtonHeight = isSmallScreen ? 90.0 : 110.0;
-                      final finalButtonHeight = buttonHeight.clamp(minButtonHeight, maxButtonHeight);
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom + 16,
+                    ),
+                    itemCount: questions[currentQuestionIndex].options.length,
+                    separatorBuilder: (context, index) =>
+                        SizedBox(height: isSmallScreen ? 12 : 16),
+                    itemBuilder: (context, index) {
+                      bool isCorrect =
+                          index ==
+                          questions[currentQuestionIndex].correctAnswer;
+                      bool isSelected = index == selectedAnswer;
+                      bool isPressed = index == pressedButtonIndex;
 
-                      return ListView.separated(
-                        physics: const NeverScrollableScrollPhysics(), // Prevent scrolling since we want fixed heights
-                        itemCount: questions[currentQuestionIndex].options.length,
-                        separatorBuilder: (context, index) =>
-                            SizedBox(height: isSmallScreen ? 8 : 12),
-                        itemBuilder: (context, index) {
-                          bool isCorrect =
-                              index == questions[currentQuestionIndex].correctAnswer;
-                          bool isSelected = index == selectedAnswer;
-                          bool isPressed = index == pressedButtonIndex;
-
-                          return SizedBox(
-                            height: finalButtonHeight,
-                            child: PressEffectedWidget(
-                              option: questions[currentQuestionIndex].options[index],
-                              optionLabel: String.fromCharCode(65 + index),
-                              isSelected: isSelected,
-                              isCorrect: isCorrect,
-                              isAnswered: isAnswered,
-                              timeUp: timeUp,
-                              isPressed: isPressed,
-                              onTap: () => _selectAnswer(index),
-                              shakeAnimation: _shakeAnimation,
-                              buttonPressAnimation: _buttonPressAnimation,
-                              isSmallScreen: isSmallScreen,
-                            ),
-                          );
-                        },
+                      return MultilineOptionButton(
+                        option: questions[currentQuestionIndex].options[index],
+                        optionLabel: String.fromCharCode(65 + index),
+                        isSelected: isSelected,
+                        isCorrect: isCorrect,
+                        isAnswered: isAnswered,
+                        timeUp: timeUp,
+                        isPressed: isPressed,
+                        onTap: () => _selectAnswer(index),
+                        shakeAnimation: _shakeAnimation,
+                        buttonPressAnimation: _buttonPressAnimation,
+                        isSmallScreen: isSmallScreen,
+                        isTablet: isTablet,
                       );
                     },
                   ),
@@ -1394,7 +1330,9 @@ class QuizGameScreenState extends State<QuizGameScreen>
 }
 
 class Question {
+  final int? id;
   final String question;
+  final String? questionType;
   final List<String> options;
   int correctAnswer;
   final String? explanation;
@@ -1406,7 +1344,9 @@ class Question {
   late int _originalCorrectAnswer;
 
   Question({
+    this.id,
     required this.question,
+    this.questionType,
     required this.options,
     required this.correctAnswer,
     this.explanation,
@@ -1419,7 +1359,11 @@ class Question {
 
   factory Question.fromJson(Map<String, dynamic> json) {
     return Question(
-      question: json['question'] as String,
+      id: json['id'] as int?,
+      question:
+          json['question'] as String? ??
+          '', // Handle empty question for image-only questions
+      questionType: json['questionType'] as String?,
       options: List<String>.from(json['options']),
       correctAnswer: json['correctAnswer'] as int,
       explanation: json['explanation'] as String?,
@@ -1427,16 +1371,26 @@ class Question {
       imagePath: json['imagePath'] as String?,
     );
   }
+
   Map<String, dynamic> toJson() {
     return {
+      if (id != null) 'id': id,
       'question': question,
+      if (questionType != null) 'questionType': questionType,
       'options': options,
       'correctAnswer': correctAnswer,
-      'explanation': explanation,
-      'reference': reference,
-      'imagePath': imagePath,
+      if (explanation != null) 'explanation': explanation,
+      if (reference != null) 'reference': reference,
+      if (imagePath != null) 'imagePath': imagePath,
     };
   }
+
+  // Helper methods to check question type
+  bool get isTextOnly => questionType == 'text';
+  bool get isTextWithImage => questionType == 'text_with_image';
+  bool get isImageOnly => questionType == 'image_only';
+  bool get hasImage => imagePath != null && imagePath!.isNotEmpty;
+  bool get hasText => question.isNotEmpty;
 
   void shuffleOptions() {
     List<MapEntry<int, String>> indexedOptions = [];
@@ -1458,6 +1412,158 @@ class Question {
     options.clear();
     options.addAll(_originalOptions);
     correctAnswer = _originalCorrectAnswer;
+  }
+}
+
+// New MultilineOptionButton widget to handle multiline text properly
+class MultilineOptionButton extends StatelessWidget {
+  final String option;
+  final String optionLabel;
+  final bool isSelected;
+  final bool isCorrect;
+  final bool isAnswered;
+  final bool timeUp;
+  final bool isPressed;
+  final VoidCallback onTap;
+  final Animation<double> shakeAnimation;
+  final Animation<double> buttonPressAnimation;
+  final bool isSmallScreen;
+  final bool isTablet;
+
+  const MultilineOptionButton({
+    Key? key,
+    required this.option,
+    required this.optionLabel,
+    required this.isSelected,
+    required this.isCorrect,
+    required this.isAnswered,
+    required this.timeUp,
+    required this.isPressed,
+    required this.onTap,
+    required this.shakeAnimation,
+    required this.buttonPressAnimation,
+    required this.isSmallScreen,
+    required this.isTablet,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    IconData? icon;
+
+    if (isAnswered || timeUp) {
+      if (isCorrect) {
+        backgroundColor = const Color(0xFF58CC02);
+        borderColor = const Color(0xFF58CC02);
+        textColor = Colors.white;
+        icon = Icons.check_circle;
+      } else if (isSelected) {
+        backgroundColor = const Color(0xFFFF4B4B);
+        borderColor = const Color(0xFFFF4B4B);
+        textColor = Colors.white;
+        icon = Icons.cancel;
+      } else {
+        backgroundColor = const Color(0xFFF7F7F7);
+        borderColor = const Color(0xFFE5E5E5);
+        textColor = const Color(0xFF4B4B4B);
+      }
+    } else if (isSelected) {
+      backgroundColor = const Color(0xFF1CB0F6).withOpacity(0.1);
+      borderColor = const Color(0xFF1CB0F6);
+      textColor = const Color(0xFF1CB0F6);
+    } else {
+      backgroundColor = Colors.white;
+      borderColor = const Color(0xFFE5E5E5);
+      textColor = const Color(0xFF4B4B4B);
+    }
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([shakeAnimation, buttonPressAnimation]),
+      builder: (context, child) {
+        double scale = isPressed ? 0.98 : 1.0;
+        double translateX = (isSelected && (isAnswered || timeUp) && !isCorrect)
+            ? shakeAnimation.value * 10
+            : 0;
+
+        return Transform.translate(
+          offset: Offset(translateX, 0),
+          child: Transform.scale(
+            scale: scale,
+            child: GestureDetector(
+              onTap: (isAnswered || timeUp) ? null : onTap,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isTablet ? 20 : 16,
+                  vertical: isTablet ? 18 : 16,
+                ),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    // Option label (A, B, C, D)
+                    Container(
+                      width: isTablet ? 32 : 28,
+                      height: isTablet ? 32 : 28,
+                      decoration: BoxDecoration(
+                        color: textColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          optionLabel,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isTablet ? 16 : 14,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(width: isTablet ? 16 : 12),
+
+                    // Option text - flexible to handle multiline
+                    Expanded(
+                      child: Text(
+                        option,
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: isTablet ? 16 : (isSmallScreen ? 14 : 15),
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                        ),
+                        maxLines: null, // Allow unlimited lines
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
+
+                    // Status icon
+                    if (icon != null) ...[
+                      SizedBox(width: isTablet ? 12 : 8),
+                      Icon(icon, color: Colors.white, size: isTablet ? 24 : 20),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -1510,7 +1616,7 @@ class QuestionService {
 
   // Helper method to validate JSON structure
   static bool validateQuestionStructure(Map<String, dynamic> questionJson) {
-    final requiredKeys = ['question', 'options', 'correctAnswer'];
+    final requiredKeys = ['options', 'correctAnswer'];
 
     // Check required keys
     for (String key in requiredKeys) {
@@ -1520,7 +1626,17 @@ class QuestionService {
     }
 
     // Validate data types
-    if (questionJson['question'] is! String) {
+    if (questionJson.containsKey('id') && questionJson['id'] is! int) {
+      return false;
+    }
+
+    if (questionJson.containsKey('question') &&
+        questionJson['question'] is! String) {
+      return false;
+    }
+
+    if (questionJson.containsKey('questionType') &&
+        questionJson['questionType'] is! String) {
       return false;
     }
 
@@ -1539,6 +1655,36 @@ class QuestionService {
       return false;
     }
 
+    // Validate question type specific requirements
+    String? questionType = questionJson['questionType'] as String?;
+    if (questionType != null) {
+      switch (questionType) {
+        case 'text':
+          // Text questions must have non-empty question text
+          String? question = questionJson['question'] as String?;
+          if (question == null || question.isEmpty) {
+            return false;
+          }
+          break;
+        case 'text_with_image':
+          // Text with image questions must have both question text and image path
+          String? question = questionJson['question'] as String?;
+          String? imagePath = questionJson['imagePath'] as String?;
+          if ((question == null || question.isEmpty) ||
+              (imagePath == null || imagePath.isEmpty)) {
+            return false;
+          }
+          break;
+        case 'image_only':
+          // Image only questions must have image path
+          String? imagePath = questionJson['imagePath'] as String?;
+          if (imagePath == null || imagePath.isEmpty) {
+            return false;
+          }
+          break;
+      }
+    }
+
     return true;
   }
 
@@ -1547,23 +1693,48 @@ class QuestionService {
     int questionsWithExplanation = questions
         .where((q) => q.explanation != null && q.explanation!.isNotEmpty)
         .length;
-
     int questionsWithReference = questions
         .where((q) => q.reference != null && q.reference!.isNotEmpty)
         .length;
+    int questionsWithImages = questions.where((q) => q.hasImage).length;
 
     Map<int, int> optionCounts = {};
+    Map<String, int> questionTypeCounts = {};
+
     for (Question q in questions) {
       int optionCount = q.options.length;
       optionCounts[optionCount] = (optionCounts[optionCount] ?? 0) + 1;
+
+      String type = q.questionType ?? 'unknown';
+      questionTypeCounts[type] = (questionTypeCounts[type] ?? 0) + 1;
     }
 
     return {
       'totalQuestions': questions.length,
       'questionsWithExplanation': questionsWithExplanation,
       'questionsWithReference': questionsWithReference,
+      'questionsWithImages': questionsWithImages,
       'optionDistribution': optionCounts,
+      'questionTypeDistribution': questionTypeCounts,
     };
+  }
+
+  // Filter questions by type
+  static List<Question> getQuestionsByType(
+    List<Question> questions,
+    String questionType,
+  ) {
+    return questions.where((q) => q.questionType == questionType).toList();
+  }
+
+  // Get questions with images
+  static List<Question> getQuestionsWithImages(List<Question> questions) {
+    return questions.where((q) => q.hasImage).toList();
+  }
+
+  // Get questions without images
+  static List<Question> getQuestionsWithoutImages(List<Question> questions) {
+    return questions.where((q) => !q.hasImage).toList();
   }
 
   // Utility method to shuffle all questions' options
@@ -1592,5 +1763,37 @@ class QuestionService {
     List<Question> shuffled = List.from(questions);
     shuffled.shuffle(Random());
     return shuffled.take(count).toList();
+  }
+
+  // Get random questions by type
+  static List<Question> getRandomQuestionsByType(
+    List<Question> questions,
+    String questionType,
+    int count,
+  ) {
+    List<Question> filteredQuestions = getQuestionsByType(
+      questions,
+      questionType,
+    );
+    return getRandomQuestions(filteredQuestions, count);
+  }
+
+  // Validate image paths exist in assets
+  static Future<List<String>> validateImagePaths(
+    List<Question> questions,
+  ) async {
+    List<String> missingImages = [];
+
+    for (Question question in questions) {
+      if (question.hasImage) {
+        try {
+          await rootBundle.load(question.imagePath!);
+        } catch (e) {
+          missingImages.add(question.imagePath!);
+        }
+      }
+    }
+
+    return missingImages;
   }
 }
