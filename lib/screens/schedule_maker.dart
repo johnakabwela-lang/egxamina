@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class ScheduleMakerScreen extends StatefulWidget {
   const ScheduleMakerScreen({super.key});
@@ -10,6 +13,8 @@ class ScheduleMakerScreen extends StatefulWidget {
 class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // Study Timetable Data
   Map<String, List<TimetableSlot>> weeklySchedule = {
@@ -29,6 +34,154 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    // Initialize timezone
+    tz.initializeTimeZones();
+    
+    // Android initialization settings
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Handle notification tap
+        _handleNotificationTap(response);
+      },
+    );
+
+    // Request notification permissions for Android 13+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+
+  void _handleNotificationTap(NotificationResponse response) {
+    // Handle what happens when user taps on notification
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Notification tapped: ${response.payload}')),
+    );
+  }
+
+  Future<void> _scheduleStudySessionNotification(TimetableSlot slot, String day) async {
+    // Generate unique ID based on day and subject
+    int notificationId = '${day}_${slot.subject}'.hashCode;
+    
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'study_sessions',
+      'Study Session Reminders',
+      channelDescription: 'Notifications for upcoming study sessions',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+    
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    // Calculate next occurrence of this day and time
+    DateTime now = DateTime.now();
+    int weekdayNumber = _getWeekdayNumber(day);
+    int daysUntilTarget = (weekdayNumber - now.weekday) % 7;
+    if (daysUntilTarget == 0 && _isTimeAfterNow(slot.startTime)) {
+      daysUntilTarget = 7; // Schedule for next week if time has passed today
+    }
+    
+    DateTime targetDate = now.add(Duration(days: daysUntilTarget));
+    DateTime scheduledTime = _parseTimeForDate(slot.startTime, targetDate);
+    
+    // Schedule 15 minutes before the session
+    DateTime notificationTime = scheduledTime.subtract(const Duration(minutes: 15));
+    
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      notificationId,
+      'Study Session Reminder',
+      '${slot.subject} starts in 15 minutes (${slot.startTime})',
+      tz.TZDateTime.from(notificationTime, tz.local),
+      platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: 'study_${slot.subject}_$day',
+    );
+  }
+
+  Future<void> _scheduleTaskDeadlineNotification(TodoTask task) async {
+    int notificationId = task.title.hashCode;
+    
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'task_deadlines',
+      'Task Deadline Reminders',
+      channelDescription: 'Notifications for upcoming task deadlines',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+    
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    try {
+      DateTime dueDate = DateTime.parse(task.dueDate);
+      DateTime notificationTime = dueDate.subtract(const Duration(days: 1));
+      
+      // Only schedule if the notification time is in the future
+      if (notificationTime.isAfter(DateTime.now())) {
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          notificationId,
+          'Task Deadline Reminder',
+          'Task "${task.title}" is due tomorrow!',
+          tz.TZDateTime.from(notificationTime, tz.local),
+          platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: 'task_${task.title}',
+        );
+      }
+    } catch (e) {
+      // Handle invalid date format
+      print('Error scheduling notification for task: ${task.title}');
+    }
+  }
+
+  Future<void> _cancelNotification(int notificationId) async {
+    await flutterLocalNotificationsPlugin.cancel(notificationId);
+  }
+
+  int _getWeekdayNumber(String day) {
+    switch (day) {
+      case 'Monday': return 1;
+      case 'Tuesday': return 2;
+      case 'Wednesday': return 3;
+      case 'Thursday': return 4;
+      case 'Friday': return 5;
+      case 'Saturday': return 6;
+      case 'Sunday': return 7;
+      default: return 1;
+    }
+  }
+
+  bool _isTimeAfterNow(String timeString) {
+    DateTime now = DateTime.now();
+    DateTime time = _parseTimeForDate(timeString, now);
+    return time.isBefore(now);
+  }
+
+  DateTime _parseTimeForDate(String timeString, DateTime date) {
+    List<String> timeParts = timeString.split(':');
+    int hour = int.parse(timeParts[0]);
+    int minute = int.parse(timeParts[1]);
+    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 
   @override
@@ -46,6 +199,12 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
         foregroundColor: Colors.white,
         title: const Text('Schedule Maker'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () => _showNotificationSettings(),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
@@ -68,6 +227,32 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
         children: [
           _buildTimetableTab(),
           _buildTodoTab(),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Notification Settings'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('📚 Study sessions: 15 min before start time'),
+            SizedBox(height: 8),
+            Text('📝 Task deadlines: 1 day before due date'),
+            SizedBox(height: 8),
+            Text('🔔 Notifications are automatically scheduled when you add items'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -156,11 +341,25 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
         ),
       ),
       title: Text(slot.subject),
-      subtitle: Text('${slot.startTime} - ${slot.endTime}'),
+      subtitle: Row(
+        children: [
+          Text('${slot.startTime} - ${slot.endTime}'),
+          const SizedBox(width: 8),
+          if (slot.hasNotification)
+            const Icon(
+              Icons.notifications_active,
+              size: 16,
+              color: Colors.green,
+            ),
+        ],
+      ),
       trailing: IconButton(
         icon: const Icon(Icons.delete, color: Colors.red),
         onPressed: () {
           setState(() {
+            // Cancel notification before removing
+            int notificationId = '${day}_${slot.subject}'.hashCode;
+            _cancelNotification(notificationId);
             weeklySchedule[day]!.remove(slot);
           });
         },
@@ -228,6 +427,13 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
           onChanged: (value) {
             setState(() {
               task.isCompleted = value ?? false;
+              if (task.isCompleted) {
+                // Cancel notification when task is completed
+                _cancelNotification(task.title.hashCode);
+              } else {
+                // Reschedule notification when task is uncompleted
+                _scheduleTaskDeadlineNotification(task);
+              }
             });
           },
           activeColor: const Color(0xFF2196F3),
@@ -276,6 +482,14 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                     ),
                   ),
                 ),
+                if (task.hasNotification) ...[
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.notifications_active,
+                    size: 16,
+                    color: Colors.green,
+                  ),
+                ],
               ],
             ),
           ],
@@ -284,6 +498,8 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
           icon: const Icon(Icons.delete, color: Colors.red),
           onPressed: () {
             setState(() {
+              // Cancel notification before removing
+              _cancelNotification(task.title.hashCode);
               todoTasks.removeAt(index);
             });
           },
@@ -299,6 +515,7 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     String endTime = '10:00';
     IconData selectedIcon = Icons.book;
     Color selectedColor = Colors.blue;
+    bool enableNotifications = true;
 
     showDialog(
       context: context,
@@ -423,6 +640,22 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                         }),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: enableNotifications,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              enableNotifications = value ?? false;
+                            });
+                          },
+                        ),
+                        const Expanded(
+                          child: Text('Enable reminder notifications (15 min before)'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -434,17 +667,29 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                 ElevatedButton(
                   onPressed: () {
                     if (subject.isNotEmpty) {
+                      final newSlot = TimetableSlot(
+                        subject: subject,
+                        startTime: startTime,
+                        endTime: endTime,
+                        icon: selectedIcon,
+                        color: selectedColor,
+                        hasNotification: enableNotifications,
+                      );
+                      
                       setState(() {
-                        weeklySchedule[selectedDay]!.add(
-                          TimetableSlot(
-                            subject: subject,
-                            startTime: startTime,
-                            endTime: endTime,
-                            icon: selectedIcon,
-                            color: selectedColor,
+                        weeklySchedule[selectedDay]!.add(newSlot);
+                      });
+                      
+                      // Schedule notification if enabled
+                      if (enableNotifications) {
+                        _scheduleStudySessionNotification(newSlot, selectedDay);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Study session added with notification reminder!'),
                           ),
                         );
-                      });
+                      }
+                      
                       Navigator.pop(context);
                     }
                   },
@@ -467,6 +712,7 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     String description = '';
     String dueDate = DateTime.now().toString().split(' ')[0];
     Priority selectedPriority = Priority.medium;
+    bool enableNotifications = true;
 
     showDialog(
       context: context,
@@ -527,6 +773,22 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                         });
                       },
                     ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: enableNotifications,
+                          onChanged: (value) {
+                            setDialogState(() {
+                              enableNotifications = value ?? false;
+                            });
+                          },
+                        ),
+                        const Expanded(
+                          child: Text('Enable deadline notifications (1 day before)'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -538,16 +800,28 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                 ElevatedButton(
                   onPressed: () {
                     if (title.isNotEmpty) {
+                      final newTask = TodoTask(
+                        title: title,
+                        description: description,
+                        dueDate: dueDate,
+                        priority: selectedPriority,
+                        hasNotification: enableNotifications,
+                      );
+                      
                       setState(() {
-                        todoTasks.add(
-                          TodoTask(
-                            title: title,
-                            description: description,
-                            dueDate: dueDate,
-                            priority: selectedPriority,
+                        todoTasks.add(newTask);
+                      });
+                      
+                      // Schedule notification if enabled
+                      if (enableNotifications) {
+                        _scheduleTaskDeadlineNotification(newTask);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Task added with deadline reminder!'),
                           ),
                         );
-                      });
+                      }
+                      
                       Navigator.pop(context);
                     }
                   },
@@ -572,6 +846,7 @@ class TimetableSlot {
   final String endTime;
   final IconData icon;
   final Color color;
+  final bool hasNotification;
 
   TimetableSlot({
     required this.subject,
@@ -579,6 +854,7 @@ class TimetableSlot {
     required this.endTime,
     required this.icon,
     required this.color,
+    this.hasNotification = false,
   });
 }
 
@@ -587,6 +863,7 @@ class TodoTask {
   final String description;
   final String dueDate;
   final Priority priority;
+  final bool hasNotification;
   bool isCompleted;
 
   TodoTask({
@@ -594,6 +871,7 @@ class TodoTask {
     required this.description,
     required this.dueDate,
     required this.priority,
+    this.hasNotification = false,
     this.isCompleted = false,
   });
 }
