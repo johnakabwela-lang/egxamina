@@ -22,8 +22,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ultsukulu"
-        // ✅ Updated minSdk for better notification support
-        minSdk = 21  // Android 5.0 (API level 21) for better notification features
+        // ✅ Keep using flutter's minSdk or set a specific value
+        minSdk = flutter.minSdkVersion ?: 21  // Use flutter's minSdk or fallback to 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -33,10 +33,10 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("debug")
             // ✅ Optimize for release builds
-            minifyEnabled = false
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -45,9 +45,10 @@ android {
     }
 
     // ✅ Add packaging options to avoid conflicts
-    packagingOptions {
-        pickFirst("**/libc++_shared.so")
-        pickFirst("**/libjsc.so")
+    packaging {
+        resources {
+            pickFirsts += setOf("**/libc++_shared.so", "**/libjsc.so")
+        }
     }
 }
 
