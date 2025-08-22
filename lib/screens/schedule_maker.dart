@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart' as notifications;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -13,8 +13,8 @@ class ScheduleMakerScreen extends StatefulWidget {
 class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  final notifications.FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      notifications.FlutterLocalNotificationsPlugin();
 
   // Study Timetable Data
   Map<String, List<TimetableSlot>> weeklySchedule = {
@@ -42,15 +42,15 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     tz.initializeTimeZones();
     
     // Android initialization settings
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const notifications.AndroidInitializationSettings initializationSettingsAndroid =
+        notifications.AndroidInitializationSettings('@mipmap/ic_launcher');
     
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
+    const notifications.InitializationSettings initializationSettings =
+        notifications.InitializationSettings(android: initializationSettingsAndroid);
     
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (notifications.NotificationResponse response) {
         // Handle notification tap
         _handleNotificationTap(response);
       },
@@ -59,11 +59,11 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     // Request notification permissions for Android 13+
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+            notifications.AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
   }
 
-  void _handleNotificationTap(NotificationResponse response) {
+  void _handleNotificationTap(notifications.NotificationResponse response) {
     // Handle what happens when user taps on notification
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Notification tapped: ${response.payload}')),
@@ -74,18 +74,18 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     // Generate unique ID based on day and subject
     int notificationId = '${day}_${slot.subject}'.hashCode;
     
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
+    const notifications.AndroidNotificationDetails androidPlatformChannelSpecifics =
+        notifications.AndroidNotificationDetails(
       'study_sessions',
       'Study Session Reminders',
       channelDescription: 'Notifications for upcoming study sessions',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: notifications.Importance.high,
+      priority: notifications.Priority.high,
       icon: '@mipmap/ic_launcher',
     );
     
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const notifications.NotificationDetails platformChannelSpecifics =
+        notifications.NotificationDetails(android: androidPlatformChannelSpecifics);
 
     // Calculate next occurrence of this day and time
     DateTime now = DateTime.now();
@@ -107,9 +107,9 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
       '${slot.subject} starts in 15 minutes (${slot.startTime})',
       tz.TZDateTime.from(notificationTime, tz.local),
       platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: notifications.AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+          notifications.UILocalNotificationDateInterpretation.absoluteTime,
       payload: 'study_${slot.subject}_$day',
     );
   }
@@ -117,18 +117,18 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
   Future<void> _scheduleTaskDeadlineNotification(TodoTask task) async {
     int notificationId = task.title.hashCode;
     
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
+    const notifications.AndroidNotificationDetails androidPlatformChannelSpecifics =
+        notifications.AndroidNotificationDetails(
       'task_deadlines',
       'Task Deadline Reminders',
       channelDescription: 'Notifications for upcoming task deadlines',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: notifications.Importance.high,
+      priority: notifications.Priority.high,
       icon: '@mipmap/ic_launcher',
     );
     
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const notifications.NotificationDetails platformChannelSpecifics =
+        notifications.NotificationDetails(android: androidPlatformChannelSpecifics);
 
     try {
       DateTime dueDate = DateTime.parse(task.dueDate);
@@ -142,9 +142,9 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
           'Task "${task.title}" is due tomorrow!',
           tz.TZDateTime.from(notificationTime, tz.local),
           platformChannelSpecifics,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: notifications.AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+              notifications.UILocalNotificationDateInterpretation.absoluteTime,
           payload: 'task_${task.title}',
         );
       }
@@ -711,7 +711,7 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
     String title = '';
     String description = '';
     String dueDate = DateTime.now().toString().split(' ')[0];
-    Priority selectedPriority = Priority.medium;
+    TaskPriority selectedPriority = TaskPriority.medium;
     bool enableNotifications = true;
 
     showDialog(
@@ -745,10 +745,10 @@ class _ScheduleMakerScreenState extends State<ScheduleMakerScreen>
                       onChanged: (value) => dueDate = value,
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<Priority>(
+                    DropdownButtonFormField<TaskPriority>(
                       value: selectedPriority,
                       decoration: const InputDecoration(labelText: 'Priority'),
-                      items: Priority.values.map((priority) {
+                      items: TaskPriority.values.map((priority) {
                         return DropdownMenuItem(
                           value: priority,
                           child: Row(
@@ -862,7 +862,7 @@ class TodoTask {
   final String title;
   final String description;
   final String dueDate;
-  final Priority priority;
+  final TaskPriority priority;
   final bool hasNotification;
   bool isCompleted;
 
@@ -876,12 +876,12 @@ class TodoTask {
   });
 }
 
-enum Priority {
+enum TaskPriority {
   low('Low', Colors.teal),
   medium('Medium', Colors.orange),
   high('High', Colors.redAccent);
 
-  const Priority(this.name, this.color);
+  const TaskPriority(this.name, this.color);
   final String name;
   final Color color;
 }
