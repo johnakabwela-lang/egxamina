@@ -1,4 +1,4 @@
-// Simplified QuizScreen - Preserving all functionality while removing complex animations
+// Mobile-optimized QuizScreen with education color scheme
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
@@ -134,75 +134,75 @@ class _QuizScreenState extends State<QuizScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.amber.shade300, Colors.orange.shade400],
+                  colors: [Colors.blue.shade400, Colors.blue.shade600],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.amber.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.celebration,
                 color: Colors.white,
-                size: 48,
+                size: 40,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               '🎉 DAILY BONUS! 🎉',
               style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
                 color: Colors.grey[800],
-                letterSpacing: 1.2,
+                letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               result.message,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green.shade500,
+                  backgroundColor: Colors.blue.shade500,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  elevation: 8,
-                  shadowColor: Colors.green.withOpacity(0.4),
+                  elevation: 6,
+                  shadowColor: Colors.blue.withOpacity(0.3),
                 ),
                 child: const Text(
                   'AWESOME! 🚀',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ),
@@ -217,9 +217,9 @@ class _QuizScreenState extends State<QuizScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message, style: const TextStyle(fontSize: 16)),
+        content: Text(message, style: const TextStyle(fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -227,7 +227,7 @@ class _QuizScreenState extends State<QuizScreen> {
               backgroundColor: Colors.blue.shade100,
               foregroundColor: Colors.blue.shade700,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(15),
               ),
             ),
             child: const Text('OK'),
@@ -251,13 +251,13 @@ class _QuizScreenState extends State<QuizScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.orange.shade400, Colors.red.shade400],
@@ -267,39 +267,39 @@ class _QuizScreenState extends State<QuizScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                    color: Colors.orange.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.local_fire_department,
                 color: Colors.white,
-                size: 48,
+                size: 40,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               '🔥 STREAK MASTER! 🔥',
               style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
                 color: Colors.grey[800],
-                letterSpacing: 1.2,
+                letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               'You\'re unstoppable!\n$_currentStreak days and counting!',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -307,19 +307,19 @@ class _QuizScreenState extends State<QuizScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade500,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  elevation: 8,
-                  shadowColor: Colors.orange.withOpacity(0.4),
+                  elevation: 6,
+                  shadowColor: Colors.orange.withOpacity(0.3),
                 ),
                 child: const Text(
                   'KEEP GOING! 💪',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ),
@@ -333,7 +333,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF58CC02), // Duolingo green background
+      backgroundColor: Colors.blue.shade600, // Education blue background
       body: SafeArea(
         child: Column(
           children: [
@@ -346,13 +346,13 @@ class _QuizScreenState extends State<QuizScreen> {
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25),
-                    topRight: Radius.circular(25),
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
                   ),
                 ),
                 child: Column(
                   children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Daily bonus banner (if available)
                     if (_dailyBonusAvailable) _buildDailyBonusBanner(),
@@ -374,51 +374,51 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           // App logo
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
-            child: const Icon(Icons.school, color: Color(0xFF58CC02), size: 28),
+            child: Icon(Icons.school, color: Colors.blue.shade600, size: 24),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           const Expanded(
             child: Text(
               'ISUKULU',
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 24,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
-                letterSpacing: 2.0,
+                letterSpacing: 1.5,
               ),
             ),
           ),
           // Token display
           TokenDisplay(tokens: _currentTokens, onTap: _showTokenShop),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           // Streak display
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(25),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -428,9 +428,9 @@ class _QuizScreenState extends State<QuizScreen> {
                 Icon(
                   Icons.local_fire_department,
                   color: _isStreakActive ? Colors.orange.shade600 : Colors.grey,
-                  size: 18,
+                  size: 16,
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   '$_currentStreak',
                   style: TextStyle(
@@ -438,7 +438,7 @@ class _QuizScreenState extends State<QuizScreen> {
                         ? Colors.orange.shade600
                         : Colors.grey,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -451,43 +451,43 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Widget _buildDailyBonusBanner() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
         onTap: _claimDailyBonus,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.amber.shade400, Colors.orange.shade500],
+              colors: [Colors.blue.shade400, Colors.blue.shade600],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.amber.withOpacity(0.4),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: Colors.blue.withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.card_giftcard,
                   color: Colors.white,
-                  size: 32,
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,18 +495,18 @@ class _QuizScreenState extends State<QuizScreen> {
                     const Text(
                       '🎁 DAILY GIFT!',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
                       ),
                     ),
                     Text(
                       'Claim ${TokenManager.DAILY_BONUS} tokens now!',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -515,7 +515,7 @@ class _QuizScreenState extends State<QuizScreen> {
               const Icon(
                 Icons.arrow_forward_ios,
                 color: Colors.white,
-                size: 20,
+                size: 16,
               ),
             ],
           ),
@@ -526,48 +526,48 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Widget _buildMotivationalBanner() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade400, Colors.purple.shade400],
+            colors: [Colors.blue.shade300, Colors.blue.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              color: Colors.blue.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.psychology,
                 color: Colors.white,
-                size: 28,
+                size: 20,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 _currentMotivationalMessage,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
                 ),
               ),
             ),
@@ -579,18 +579,17 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Widget _buildSubjectsGrid() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.count(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.95, // Adjusted for better proportions
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.1, // Optimized for mobile
         children: [
           SubjectCard(
             title: 'Accounting',
             icon: Icons.account_balance,
-            color: const Color(0xFF4285F4),
-            description: 'Master financial principles',
+            color: Colors.blue.shade600,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () =>
                 _startQuiz(context, 'Accounting', 'accounting_questions.json'),
@@ -598,8 +597,7 @@ class _QuizScreenState extends State<QuizScreen> {
           SubjectCard(
             title: 'Mathematics',
             icon: Icons.calculate,
-            color: const Color(0xFF34A853),
-            description: 'Solve complex equations',
+            color: Colors.blue.shade500,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () => _startQuiz(
               context,
@@ -610,8 +608,7 @@ class _QuizScreenState extends State<QuizScreen> {
           SubjectCard(
             title: 'Science',
             icon: Icons.science,
-            color: const Color(0xFF9C27B0),
-            description: 'Explore natural phenomena',
+            color: Colors.blue.shade700,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () =>
                 _startQuiz(context, 'Science', 'science_questions.json'),
@@ -619,8 +616,7 @@ class _QuizScreenState extends State<QuizScreen> {
           SubjectCard(
             title: 'History',
             icon: Icons.history_edu,
-            color: const Color(0xFFFF9800),
-            description: 'Journey through time',
+            color: Colors.blue.shade400,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () =>
                 _startQuiz(context, 'History', 'history_questions.json'),
@@ -662,55 +658,55 @@ class _QuizScreenState extends State<QuizScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: Colors.white,
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.red.shade400, Colors.pink.shade400],
+                  colors: [Colors.red.shade400, Colors.red.shade600],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
+                    color: Colors.red.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: const Icon(
                 Icons.warning_rounded,
                 color: Colors.white,
-                size: 48,
+                size: 40,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               'NOT ENOUGH TOKENS! 😱',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
                 color: Colors.grey[800],
-                letterSpacing: 1.2,
+                letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               result.message,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -719,21 +715,21 @@ class _QuizScreenState extends State<QuizScreen> {
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.grey.shade200,
                       foregroundColor: Colors.grey.shade700,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text(
                       'MAYBE LATER',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -741,20 +737,20 @@ class _QuizScreenState extends State<QuizScreen> {
                       _showTokenShop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber.shade500,
+                      backgroundColor: Colors.blue.shade500,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      elevation: 8,
-                      shadowColor: Colors.amber.withOpacity(0.4),
+                      elevation: 6,
+                      shadowColor: Colors.blue.withOpacity(0.3),
                     ),
                     child: const Text(
                       'GET TOKENS! 💰',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -768,12 +764,11 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 }
 
-// Simplified Subject Card
+// Simplified Subject Card - Mobile optimized
 class SubjectCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
-  final String description;
   final int tokenCost;
   final VoidCallback onTap;
 
@@ -782,7 +777,6 @@ class SubjectCard extends StatelessWidget {
     required this.title,
     required this.icon,
     required this.color,
-    required this.description,
     required this.tokenCost,
     required this.onTap,
   });
@@ -794,86 +788,74 @@ class SubjectCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Icon container with consistent styling
+              // Centered icon
               Container(
-                width: 68,
-                height: 68,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.12),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                      color: color.withOpacity(0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Icon(icon, color: color, size: 34),
+                child: Icon(icon, color: color, size: 28),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // Title with consistent typography
+              // Title
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0.2,
                 ),
+                textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
 
-              // Description with consistent styling
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                  height: 1.3,
-                ),
-              ),
-
-              const Spacer(),
-
-              // Token cost with refined styling
+              // Token cost
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  horizontal: 10,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: color.withOpacity(0.2), width: 1),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star_rounded, color: color, size: 16),
-                    const SizedBox(width: 4),
+                    Icon(Icons.star_rounded, color: color, size: 14),
+                    const SizedBox(width: 3),
                     Text(
-                      '$tokenCost tokens',
+                      '$tokenCost',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: color,
                       ),
@@ -901,34 +883,34 @@ class TokenDisplay extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.amber.shade400, Colors.orange.shade500],
+            colors: [Colors.blue.shade400, Colors.blue.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.amber.withOpacity(0.4),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Colors.blue.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.monetization_on, color: Colors.white, size: 18),
-            const SizedBox(width: 6),
+            const Icon(Icons.monetization_on, color: Colors.white, size: 16),
+            const SizedBox(width: 4),
             Text(
               '$tokens',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
-                letterSpacing: 0.5,
+                fontSize: 14,
+                letterSpacing: 0.4,
               ),
             ),
           ],
@@ -938,7 +920,7 @@ class TokenDisplay extends StatelessWidget {
   }
 }
 
-// Duolingo-style pressable card widget (same as before)
+// Duolingo-style pressable card widget
 class DuolingoStyleCard extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
@@ -967,7 +949,7 @@ class _DuolingoStyleCardState extends State<DuolingoStyleCard>
       duration: widget.animationDuration,
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
@@ -1005,9 +987,9 @@ class _DuolingoStyleCardState extends State<DuolingoStyleCard>
             scale: _scaleAnimation.value,
             child: Container(
               transform: Matrix4.identity()
-                ..translate(0.0, 3.0 * _animationController.value),
+                ..translate(0.0, 2.0 * _animationController.value),
               child: Opacity(
-                opacity: 0.85 + (0.15 * (1 - _animationController.value)),
+                opacity: 0.9 + (0.1 * (1 - _animationController.value)),
                 child: widget.child,
               ),
             ),

@@ -1431,7 +1431,7 @@ class MultilineOptionButton extends StatelessWidget {
   final bool isTablet;
 
   const MultilineOptionButton({
-    Key? key,
+    super.key,
     required this.option,
     required this.optionLabel,
     required this.isSelected,
@@ -1444,7 +1444,7 @@ class MultilineOptionButton extends StatelessWidget {
     required this.buttonPressAnimation,
     required this.isSmallScreen,
     required this.isTablet,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
