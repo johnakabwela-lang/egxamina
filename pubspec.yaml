@@ -20,6 +20,7 @@ dependencies:
   path_provider: ^2.0.11
   flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -35,6 +36,7 @@ flutter:
     - assets/icons/
     - assets/pdfs/
     - assets/periodic.json
+    - assets/organic_chemistry.pdf  # Add this line specifically
 
 flutter_icons:
   android: "launcher_icon"

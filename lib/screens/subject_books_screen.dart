@@ -1,10 +1,11 @@
-// Enhanced Books Screen with Folder-Based PDF Support
+// Enhanced Books Screen with Folder-Based PDF Support - FIXED
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
-import 'dart:typed_data';
+import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class SubjectBooksScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -30,48 +31,91 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
       final subjectName = widget.subject['name'] as String;
       final subjectFolder = subjectName.toLowerCase().replaceAll(' ', '_');
 
+      print('Looking for PDFs in subject: $subjectName');
+      print('Subject folder: $subjectFolder');
+
       // Get list of PDFs for this subject from asset manifest
       final manifestContent = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifestMap = Map<String, dynamic>.from(
-        const StandardMessageCodec().decodeMessage(
-          Uint8List.fromList(manifestContent.codeUnits) as ByteData?,
-        ),
-      );
+      final Map<String, dynamic> manifestMap = json.decode(manifestContent);
+
+      print('Total assets in manifest: ${manifestMap.keys.length}');
 
       // Filter PDFs for current subject
-      final pdfAssets = manifestMap.keys
-          .where(
-            (key) =>
-                key.startsWith('assets/pdfs/$subjectFolder/') &&
-                key.endsWith('.pdf'),
-          )
-          .toList();
+      final pdfAssets = manifestMap.keys.where((key) {
+        final isInSubjectFolder =
+            key.startsWith('assets/pdfs/$subjectFolder/') ||
+            key.startsWith('assets/$subjectFolder/') ||
+            key.startsWith('assets/pdfs/');
+        final isPdf = key.endsWith('.pdf');
+        print(
+          'Checking asset: $key - isInSubjectFolder: $isInSubjectFolder, isPdf: $isPdf',
+        );
+        return isInSubjectFolder && isPdf;
+      }).toList();
+
+      print('Found PDF assets: $pdfAssets');
 
       List<Map<String, String>> books = [];
-      for (String assetPath in pdfAssets) {
-        final fileName = assetPath.split('/').last;
-        final pdfName = fileName
-            .replaceAll('.pdf', '')
-            .replaceAll('_', ' ')
-            .split(' ')
-            .map((word) => word[0].toUpperCase() + word.substring(1))
-            .join(' ');
 
-        books.add({'name': pdfName, 'path': assetPath});
+      if (pdfAssets.isEmpty) {
+        // If no assets found in subject-specific folder, check for any PDFs
+        final allPdfs = manifestMap.keys
+            .where((key) => key.endsWith('.pdf'))
+            .toList();
+
+        print('No subject-specific PDFs found. All PDFs in assets: $allPdfs');
+
+        // Add any PDF that might match the subject
+        for (String assetPath in allPdfs) {
+          final fileName = assetPath.split('/').last;
+          final pdfName = fileName
+              .replaceAll('.pdf', '')
+              .replaceAll('_', ' ')
+              .split(' ')
+              .map(
+                (word) => word.isNotEmpty
+                    ? word[0].toUpperCase() + word.substring(1)
+                    : '',
+              )
+              .join(' ');
+
+          books.add({'name': pdfName, 'path': assetPath});
+        }
+      } else {
+        for (String assetPath in pdfAssets) {
+          final fileName = assetPath.split('/').last;
+          final pdfName = fileName
+              .replaceAll('.pdf', '')
+              .replaceAll('_', ' ')
+              .split(' ')
+              .map(
+                (word) => word.isNotEmpty
+                    ? word[0].toUpperCase() + word.substring(1)
+                    : '',
+              )
+              .join(' ');
+
+          books.add({'name': pdfName, 'path': assetPath});
+        }
       }
+
+      print('Final books list: $books');
 
       setState(() {
         pdfBooks = books;
         isLoading = false;
       });
     } catch (e) {
+      print('Error loading PDFs: $e');
       // Fallback to predefined list if manifest reading fails
       _loadPredefinedPDFBooks();
     }
   }
 
   void _loadPredefinedPDFBooks() {
-    // Fallback predefined PDF books for each subject
+    print('Loading predefined PDF books as fallback');
+
+    // Updated predefined PDF books to include your organic_chemistry.pdf
     final allPDFBooks = {
       'Mathematics': [
         {
@@ -81,14 +125,6 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
         {
           'name': 'Linear Algebra',
           'path': 'assets/pdfs/mathematics/linear_algebra.pdf',
-        },
-        {
-          'name': 'Statistics Guide',
-          'path': 'assets/pdfs/mathematics/statistics_guide.pdf',
-        },
-        {
-          'name': 'Differential Equations',
-          'path': 'assets/pdfs/mathematics/differential_equations.pdf',
         },
       ],
       'Physics': [
@@ -100,31 +136,16 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
           'name': 'Classical Physics',
           'path': 'assets/pdfs/physics/classical_physics.pdf',
         },
-        {
-          'name': 'Thermodynamics',
-          'path': 'assets/pdfs/physics/thermodynamics.pdf',
-        },
-        {
-          'name': 'Electromagnetism',
-          'path': 'assets/pdfs/physics/electromagnetism.pdf',
-        },
       ],
       'Chemistry': [
         {
           'name': 'Organic Chemistry',
-          'path': 'assets/pdfs/chemistry/organic_chemistry.pdf',
+          'path':
+              'assets/pdfs/organic_chemistry.pdf', // This matches your actual file
         },
         {
           'name': 'Chemical Reactions',
           'path': 'assets/pdfs/chemistry/chemical_reactions.pdf',
-        },
-        {
-          'name': 'Periodic Table Guide',
-          'path': 'assets/pdfs/chemistry/periodic_table.pdf',
-        },
-        {
-          'name': 'Analytical Chemistry',
-          'path': 'assets/pdfs/chemistry/analytical_chemistry.pdf',
         },
       ],
       'Biology': [
@@ -133,11 +154,6 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
           'path': 'assets/pdfs/biology/cell_biology.pdf',
         },
         {'name': 'Genetics', 'path': 'assets/pdfs/biology/genetics.pdf'},
-        {'name': 'Ecology', 'path': 'assets/pdfs/biology/ecology.pdf'},
-        {
-          'name': 'Human Anatomy',
-          'path': 'assets/pdfs/biology/human_anatomy.pdf',
-        },
       ],
       'Computer Science': [
         {
@@ -148,18 +164,20 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
           'name': 'Algorithms',
           'path': 'assets/pdfs/computer_science/algorithms.pdf',
         },
-        {
-          'name': 'Database Systems',
-          'path': 'assets/pdfs/computer_science/database_systems.pdf',
-        },
       ],
     };
 
     final subjectName = widget.subject['name'] as String;
+
+    print('Subject name: $subjectName');
+    print('Available subjects: ${allPDFBooks.keys}');
+
     setState(() {
       pdfBooks = allPDFBooks[subjectName] ?? [];
       isLoading = false;
     });
+
+    print('Loaded ${pdfBooks.length} predefined books for $subjectName');
   }
 
   @override
@@ -246,8 +264,27 @@ class _PDFBookCardState extends State<PDFBookCard> {
 
   Future<void> _copyAssetToLocal() async {
     try {
+      print('Attempting to load PDF asset: ${widget.pdfAssetPath}');
+
+      if (kIsWeb) {
+        // For web, we can't use local files, so we'll show an alternative message
+        if (mounted) {
+          setState(() {
+            hasError = true;
+            isLoading = false;
+          });
+        }
+        return;
+      }
+
       final byteData = await rootBundle.load(widget.pdfAssetPath);
+      print(
+        'Successfully loaded PDF asset, size: ${byteData.lengthInBytes} bytes',
+      );
+
       final file = await _writeToFile(byteData);
+      print('Successfully wrote PDF to local file: ${file.path}');
+
       if (mounted) {
         setState(() {
           localFilePath = file.path;
@@ -255,6 +292,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
         });
       }
     } catch (e) {
+      print('Error loading PDF asset: $e');
       if (mounted) {
         setState(() {
           hasError = true;
@@ -290,7 +328,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: localFilePath != null && !hasError
+        onTap: !kIsWeb && localFilePath != null && !hasError
             ? () {
                 Navigator.push(
                   context,
@@ -300,6 +338,17 @@ class _PDFBookCardState extends State<PDFBookCard> {
                       title: widget.pdfName,
                       subjectColor: widget.subject['color'] as Color,
                     ),
+                  ),
+                );
+              }
+            : kIsWeb
+            ? () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'PDF viewing is not supported on web. Please use a mobile device or desktop app.',
+                    ),
+                    backgroundColor: Colors.orange,
                   ),
                 );
               }
@@ -372,6 +421,24 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 
   Widget _buildStatusChip() {
+    if (kIsWeb) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          'Web Not Supported',
+          style: TextStyle(
+            color: Colors.orange,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
     if (isLoading) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -426,6 +493,12 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 
   Widget _buildPreview() {
+    if (kIsWeb) {
+      return Center(
+        child: Icon(Icons.web, color: Colors.orange[400], size: 32),
+      );
+    }
+
     if (isLoading) {
       return const Center(
         child: SizedBox(
