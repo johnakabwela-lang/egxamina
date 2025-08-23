@@ -13,8 +13,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
 
 
-
-
 // Main Tools Screen with enhanced press effects and animations
 class ToolsScreen extends StatelessWidget {
   const ToolsScreen({super.key});
