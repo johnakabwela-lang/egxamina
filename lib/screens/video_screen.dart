@@ -803,12 +803,12 @@ class _VideosScreenState extends State<VideosScreen> {
         decoration: BoxDecoration(
           color: isPrimary
               ? widget.subject.color.withOpacity(isDisabled ? 0.1 : 0.15)
-              : const Color.fromRGBO(255, 255, 255, isDisabled ? 0.03 : 0.08),
+              : Color.fromRGBO(255, 255, 255, isDisabled ? 0.03 : 0.08),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isPrimary
                 ? widget.subject.color.withOpacity(isDisabled ? 0.1 : 0.2)
-                : const Color.fromRGBO(255, 255, 255, isDisabled ? 0.05 : 0.12),
+                : Color.fromRGBO(255, 255, 255, isDisabled ? 0.05 : 0.12),
             width: 0.5,
           ),
         ),
