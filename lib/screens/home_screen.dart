@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
+import 'package:ultsukulu/screens/shop_screen.dart';
 import 'package:ultsukulu/screens/subject_books_screen.dart';
 import 'package:ultsukulu/screens/subject_past_papers_screen.dart';
 
@@ -174,39 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showTokenShop() {
-    // Navigate to token shop or show token shop dialog
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Token Shop'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Your Tokens: $_currentTokens 🪙'),
-            const SizedBox(height: 16),
-            if (_dailyBonusAvailable)
-              ElevatedButton.icon(
-                onPressed: _claimDailyBonus,
-                icon: const Icon(Icons.card_giftcard),
-                label: const Text('Claim Daily Bonus!'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            const SizedBox(height: 16),
-            Text(
-              'Shop items coming soon!',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TokenShopScreen(onTokensUpdated: _loadTokenData),
       ),
     );
   }
@@ -286,38 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: _showTokenShop,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🪙', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$_currentTokens',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
             ],
           ),
           const SizedBox(height: 20),

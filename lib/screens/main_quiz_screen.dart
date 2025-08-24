@@ -6,6 +6,8 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 import 'dart:async';
 
+import 'package:ultsukulu/screens/shop_screen.dart';
+
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
 
@@ -238,12 +240,11 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _showTokenShop() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          TokenShopBottomSheet(onTokensUpdated: _loadTokenData),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TokenShopScreen(onTokensUpdated: _loadTokenData),
+      ),
     );
   }
 
@@ -406,8 +407,7 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           // Token display
-          TokenDisplay(tokens: _currentTokens, onTap: _showTokenShop),
-          const SizedBox(width: 8),
+          TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
           // Streak display
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -865,55 +865,6 @@ class SubjectCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Simplified Token Display
-class TokenDisplay extends StatelessWidget {
-  final int tokens;
-  final VoidCallback onTap;
-
-  const TokenDisplay({super.key, required this.tokens, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade400, Colors.blue.shade600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.blue.withOpacity(0.3),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.monetization_on, color: Colors.white, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              '$tokens',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -246,12 +246,12 @@ class TokenStats {
 }
 
 // Token display widget
-class TokenDisplay extends StatelessWidget {
+class TokenDisplayer extends StatelessWidget {
   final int tokens;
   final bool showAnimation;
   final VoidCallback? onTap;
 
-  const TokenDisplay({
+  const TokenDisplayer({
     super.key,
     required this.tokens,
     this.showAnimation = false,

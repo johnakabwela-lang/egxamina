@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
+
+void main() {
+  runApp(
+    MaterialApp(
+      home: const VideoScreen(),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+    ),
+  );
+}
 
 class VideoScreen extends StatefulWidget {
   const VideoScreen({super.key});
@@ -20,6 +34,142 @@ class _VideoScreenState extends State<VideoScreen>
   bool isPlaying = false;
   bool isMuted = false;
   bool isCameraOn = true;
+
+  // Subjects data
+  final List<Subject> subjects = [
+    Subject(
+      name: 'Mathematics',
+      icon: Icons.calculate,
+      color: const Color(0xFF2196F3),
+      videos: [
+        YouTubeVideo(
+          'Algebra Basics',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Geometry Fundamentals',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Calculus Introduction',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Statistics Made Easy',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+    Subject(
+      name: 'Science',
+      icon: Icons.science,
+      color: const Color(0xFF4CAF50),
+      videos: [
+        YouTubeVideo('Physics Laws', 'https://youtube.com/watch?v=dQw4w9WgXcQ'),
+        YouTubeVideo(
+          'Chemistry Basics',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Biology Fundamentals',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Earth Sciences',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+    Subject(
+      name: 'History',
+      icon: Icons.history_edu,
+      color: const Color(0xFF9C27B0),
+      videos: [
+        YouTubeVideo(
+          'World History Overview',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Ancient Civilizations',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Modern History',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'African History',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+    Subject(
+      name: 'English',
+      icon: Icons.menu_book,
+      color: const Color(0xFFFF9800),
+      videos: [
+        YouTubeVideo(
+          'Grammar Basics',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Literature Analysis',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Creative Writing',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Reading Comprehension',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+    Subject(
+      name: 'Programming',
+      icon: Icons.code,
+      color: const Color(0xFF607D8B),
+      videos: [
+        YouTubeVideo(
+          'Python for Beginners',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Web Development',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Mobile App Development',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Data Structures',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+    Subject(
+      name: 'Art & Design',
+      icon: Icons.palette,
+      color: const Color(0xFFE91E63),
+      videos: [
+        YouTubeVideo(
+          'Drawing Fundamentals',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo(
+          'Digital Art Basics',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+        YouTubeVideo('Color Theory', 'https://youtube.com/watch?v=dQw4w9WgXcQ'),
+        YouTubeVideo(
+          'Design Principles',
+          'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        ),
+      ],
+    ),
+  ];
 
   @override
   void initState() {
@@ -45,26 +195,16 @@ class _VideoScreenState extends State<VideoScreen>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
     _scaleAnimation = Tween<double>(
       begin: 0.8,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _glowAnimation = Tween<double>(
-      begin: 0.3,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _glowController,
-      curve: Curves.easeInOut,
-    ));
+    _glowAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
 
     // Start entrance animation
     _fadeController.forward();
@@ -86,77 +226,53 @@ class _VideoScreenState extends State<VideoScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-            ],
+            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
           ),
         ),
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _fadeController,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _fadeAnimation.value,
-                child: Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: _buildVideoScreen(),
-                ),
-              );
-            },
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header with welcome message
+              _buildHeader(),
+
+              // Subjects list
+              Expanded(child: _buildSubjectsList()),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildVideoScreen() {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: 500,
-      constraints: const BoxConstraints(maxWidth: 800),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 25,
-            offset: const Offset(0, 25),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Floating particles
-            _buildParticles(),
-
-            // Wave animation
-            _buildWaveAnimation(),
-
-            // Main content
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildHelloText(),
-                const SizedBox(height: 20),
-                _buildSubtitle(),
-                const SizedBox(height: 40),
-                _buildVideoControls(),
-              ],
+  Widget _buildHeader() {
+    return AnimatedBuilder(
+      animation: _fadeController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fadeAnimation.value,
+          child: Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  _buildHelloText(),
+                  const SizedBox(height: 10),
+                  _buildSubtitle(),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Select a subject to explore videos',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
             ),
-
-            // Status indicator
-            _buildStatusIndicator(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -167,7 +283,7 @@ class _VideoScreenState extends State<VideoScreen>
         return Text(
           'Hey!',
           style: TextStyle(
-            fontSize: 60,
+            fontSize: 48,
             fontWeight: FontWeight.bold,
             color: Colors.white,
             shadows: [
@@ -201,7 +317,7 @@ class _VideoScreenState extends State<VideoScreen>
             child: Text(
               'Kabwela pano mwaice',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 20,
                 color: Colors.white.withAlpha((0.8 * 255).toInt()),
               ),
             ),
@@ -211,35 +327,25 @@ class _VideoScreenState extends State<VideoScreen>
     );
   }
 
-  Widget _buildVideoControls() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 2000),
-      tween: Tween<double>(begin: 30.0, end: 0.0),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, value),
-          child: Opacity(
-            opacity: 1 - (value / 30),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildControlButton(
-                  icon: isPlaying ? Icons.pause : Icons.play_arrow,
-                  onTap: _toggleVideo,
-                  isPlay: true,
-                ),
-                const SizedBox(width: 20),
-                _buildControlButton(
-                  icon: isMuted ? Icons.volume_off : Icons.volume_up,
-                  onTap: _toggleMute,
-                ),
-                const SizedBox(width: 20),
-                _buildControlButton(
-                  icon: isCameraOn ? Icons.videocam : Icons.videocam_off,
-                  onTap: _toggleCamera,
-                ),
-              ],
+  Widget _buildSubjectsList() {
+    return AnimatedBuilder(
+      animation: _fadeController,
+      builder: (context, child) {
+        return Opacity(
+          opacity: _fadeAnimation.value,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 15,
+                mainAxisSpacing: 15,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: subjects.length,
+              itemBuilder: (context, index) {
+                return _buildSubjectCard(subjects[index], index);
+              },
             ),
           ),
         );
@@ -247,132 +353,74 @@ class _VideoScreenState extends State<VideoScreen>
     );
   }
 
-  Widget _buildControlButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    bool isPlay = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: isPlay
-              ? const Color(0xFF4CAF50).withOpacity(0.7)
-              : Colors.white.withOpacity(0.2),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusIndicator() {
-    return Positioned(
-      top: 20,
-      right: 20,
-      child: AnimatedBuilder(
-        animation: _glowController,
-        builder: (context, child) {
-          return Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color:
-                      const Color(0xFF4CAF50).withOpacity(_glowAnimation.value),
-                  blurRadius: 10,
+  Widget _buildSubjectCard(Subject subject, int index) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 800 + (index * 200)),
+      tween: Tween<double>(begin: 50.0, end: 0.0),
+      curve: Curves.easeOutBack,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, value),
+          child: GestureDetector(
+            onTap: () => _navigateToVideos(subject),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2),
+                  width: 1,
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildParticles() {
-    return AnimatedBuilder(
-      animation: _particleController,
-      builder: (context, child) {
-        return Stack(
-          children: List.generate(9, (index) {
-            final progress = (_particleController.value + (index * 0.1)) % 1.0;
-            final opacity = progress < 0.1 || progress > 0.9
-                ? 0.0
-                : (progress > 0.5 ? 0.8 : 1.0);
-
-            return Positioned(
-              left: (10 + index * 10) /
-                  100 *
-                  MediaQuery.of(context).size.width *
-                  0.9,
-              bottom: 500 * progress,
-              child: Opacity(
-                opacity: opacity,
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.6),
-                    shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
-                ),
+                ],
               ),
-            );
-          }),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: subject.color.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(subject.icon, size: 30, color: Colors.white),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    subject.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${subject.videos.length} videos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildWaveAnimation() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 100,
-      child: AnimatedBuilder(
-        animation: _particleController,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(
-              (MediaQuery.of(context).size.width * 0.9) *
-                  (math.sin(_particleController.value * 2 * math.pi) * 0.5),
-              0,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [
-                    Colors.transparent,
-                    Colors.white.withOpacity(0.1),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+  void _navigateToVideos(Subject subject) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => VideosScreen(subject: subject)),
     );
   }
 
@@ -401,10 +449,180 @@ class _VideoScreenState extends State<VideoScreen>
   }
 }
 
-// Usage example:
-void main() {
-  runApp(MaterialApp(
-    home: const VideoScreen(),
-    debugShowCheckedModeBanner: false,
-  ));
+class VideosScreen extends StatelessWidget {
+  final Subject subject;
+
+  const VideosScreen({super.key, required this.subject});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              subject.color.withOpacity(0.8),
+              subject.color.withOpacity(0.6),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(context),
+
+              // Videos list
+              Expanded(child: _buildVideosList()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  subject.name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  '${subject.videos.length} educational videos',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(subject.icon, color: Colors.white, size: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideosList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: subject.videos.length,
+      itemBuilder: (context, index) {
+        return TweenAnimationBuilder<double>(
+          duration: Duration(milliseconds: 300 + (index * 100)),
+          tween: Tween<double>(begin: 50.0, end: 0.0),
+          curve: Curves.easeOut,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, value),
+              child: _buildVideoCard(subject.videos[index], index),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVideoCard(YouTubeVideo video, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(15),
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: subject.color.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.play_circle_fill,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+        title: Text(
+          video.title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        subtitle: Text(
+          'Tap to watch on YouTube',
+          style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.7)),
+        ),
+        trailing: const Icon(Icons.open_in_new, color: Colors.white, size: 20),
+        onTap: () => _openYouTubeVideo(video.url),
+      ),
+    );
+  }
+
+  Future<void> _openYouTubeVideo(String url) async {
+    final Uri videoUri = Uri.parse(url);
+
+    try {
+      if (await canLaunchUrl(videoUri)) {
+        await launchUrl(videoUri, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      print('Error launching URL: $e');
+      // You could show a snackbar or dialog here to inform the user
+    }
+  }
+}
+
+// Data models
+class Subject {
+  final String name;
+  final IconData icon;
+  final Color color;
+  final List<YouTubeVideo> videos;
+
+  Subject({
+    required this.name,
+    required this.icon,
+    required this.color,
+    required this.videos,
+  });
+}
+
+class YouTubeVideo {
+  final String title;
+  final String url;
+
+  YouTubeVideo(this.title, this.url);
 }
