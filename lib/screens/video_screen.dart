@@ -508,10 +508,18 @@ class _VideoScreenState extends State<VideoScreen>
   }
 }
 
-class VideosScreen extends StatelessWidget {
+class VideosScreen extends StatefulWidget {
   final Subject subject;
 
   const VideosScreen({super.key, required this.subject});
+
+  @override
+  State<VideosScreen> createState() => _VideosScreenState();
+}
+
+class _VideosScreenState extends State<VideosScreen> {
+  Map<String, double> downloadProgress = {};
+  Map<String, bool> downloadingStatus = {};
 
   @override
   Widget build(BuildContext context) {
@@ -523,7 +531,7 @@ class VideosScreen extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: [
               const Color(0xFF0F0F23),
-              subject.color.withOpacity(0.2),
+              widget.subject.color.withOpacity(0.2),
               const Color(0xFF1E1E3F),
             ],
           ),
@@ -554,10 +562,10 @@ class VideosScreen extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [subject.color.withOpacity(0.3), subject.color.withOpacity(0.1)],
+                  colors: [widget.subject.color.withOpacity(0.3), widget.subject.color.withOpacity(0.1)],
                 ),
                 shape: BoxShape.circle,
-                border: Border.all(color: subject.color.withOpacity(0.3)),
+                border: Border.all(color: widget.subject.color.withOpacity(0.3)),
               ),
               child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
@@ -568,7 +576,7 @@ class VideosScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  subject.name,
+                  widget.subject.name,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -578,14 +586,14 @@ class VideosScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: subject.color.withOpacity(0.2),
+                    color: widget.subject.color.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${subject.videos.length} educational videos',
+                    '${widget.subject.videos.length} educational videos',
                     style: TextStyle(
                       fontSize: 12,
-                      color: subject.color,
+                      color: widget.subject.color,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -597,11 +605,11 @@ class VideosScreen extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [subject.color, subject.color.withOpacity(0.8)],
+                colors: [widget.subject.color, widget.subject.color.withOpacity(0.8)],
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(subject.icon, color: Colors.white, size: 24),
+            child: Icon(widget.subject.icon, color: Colors.white, size: 24),
           ),
         ],
       ),
@@ -611,7 +619,7 @@ class VideosScreen extends StatelessWidget {
   Widget _buildVideosList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: subject.videos.length,
+      itemCount: widget.subject.videos.length,
       itemBuilder: (context, index) {
         return TweenAnimationBuilder<double>(
           duration: Duration(milliseconds: 300 + (index * 100)),
@@ -620,7 +628,7 @@ class VideosScreen extends StatelessWidget {
           builder: (context, value, child) {
             return Transform.translate(
               offset: Offset(0, value),
-              child: _buildVideoCard(subject.videos[index], index, context),
+              child: _buildVideoCard(widget.subject.videos[index], index, context),
             );
           },
         );
@@ -629,6 +637,9 @@ class VideosScreen extends StatelessWidget {
   }
 
   Widget _buildVideoCard(YouTubeVideo video, int index, BuildContext context) {
+    bool isDownloading = downloadingStatus[video.title] ?? false;
+    double progress = downloadProgress[video.title] ?? 0.0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -641,10 +652,10 @@ class VideosScreen extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: subject.color.withOpacity(0.3), width: 1),
+        border: Border.all(color: widget.subject.color.withOpacity(0.3), width: 1),
         boxShadow: [
           BoxShadow(
-            color: subject.color.withOpacity(0.1),
+            color: widget.subject.color.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -662,12 +673,12 @@ class VideosScreen extends StatelessWidget {
                   height: 70,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [subject.color, subject.color.withOpacity(0.8)],
+                      colors: [widget.subject.color, widget.subject.color.withOpacity(0.8)],
                     ),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: subject.color.withOpacity(0.4),
+                        color: widget.subject.color.withOpacity(0.4),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -706,6 +717,28 @@ class VideosScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
+            
+            // Download progress bar
+            if (isDownloading)
+              Column(
+                children: [
+                  LinearProgressIndicator(
+                    value: progress / 100,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(widget.subject.color),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Downloading... ${progress.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      color: widget.subject.color,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              ),
+            
             Row(
               children: [
                 Expanded(
@@ -714,7 +747,7 @@ class VideosScreen extends StatelessWidget {
                     icon: const Icon(Icons.play_arrow, color: Colors.white),
                     label: const Text('Watch', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: subject.color,
+                      backgroundColor: widget.subject.color,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -725,11 +758,19 @@ class VideosScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _downloadVideo(video),
-                    icon: const Icon(Icons.download, color: Colors.white),
-                    label: const Text('Download', style: TextStyle(color: Colors.white)),
+                    onPressed: isDownloading ? null : () => _downloadVideo(video),
+                    icon: Icon(
+                      isDownloading ? Icons.hourglass_empty : Icons.download, 
+                      color: Colors.white
+                    ),
+                    label: Text(
+                      isDownloading ? 'Downloading...' : 'Download', 
+                      style: const TextStyle(color: Colors.white)
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: subject.color.withOpacity(0.3),
+                      backgroundColor: isDownloading 
+                        ? Colors.grey 
+                        : widget.subject.color.withOpacity(0.3),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -740,7 +781,7 @@ class VideosScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Container(
                   decoration: BoxDecoration(
-                    color: subject.color.withOpacity(0.2),
+                    color: widget.subject.color.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: IconButton(
@@ -762,48 +803,102 @@ class VideosScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => VideoPlayerScreen(
           video: video,
-          subject: subject,
+          subject: widget.subject,
         ),
       ),
     );
   }
 
   Future<void> _downloadVideo(YouTubeVideo video) async {
-    // Request storage permission
-    var status = await Permission.storage.request();
-    if (status != PermissionStatus.granted) {
-      return;
-    }
-
     try {
+      // Request storage permissions
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.storage,
+        Permission.manageExternalStorage, // For Android 11+
+      ].request();
+
+      bool permissionGranted = statuses[Permission.storage]?.isGranted == true ||
+          statuses[Permission.manageExternalStorage]?.isGranted == true;
+
+      if (!permissionGranted) {
+        _showMessage('Storage permission denied');
+        return;
+      }
+
+      setState(() {
+        downloadingStatus[video.title] = true;
+        downloadProgress[video.title] = 0.0;
+      });
+
       // Get the downloads directory
-      Directory? downloadsDirectory = await getExternalStorageDirectory();
-      if (downloadsDirectory == null) return;
+      Directory? directory;
+      
+      if (Platform.isAndroid) {
+        // For Android, try to get the Downloads folder
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
 
-      String filePath = '${downloadsDirectory.path}/${video.title}.mp4';
+      if (directory == null) {
+        _showMessage('Could not access storage directory');
+        setState(() {
+          downloadingStatus[video.title] = false;
+        });
+        return;
+      }
 
-      // Create Dio instance for downloading
+      // Create a clean filename
+      String cleanFileName = video.title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+      String filePath = '${directory.path}/${cleanFileName}.mp4';
+
+      // Create Dio instance for downloading with timeout configuration
       Dio dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 30);
+      dio.options.receiveTimeout = const Duration(seconds: 30);
 
-      // Show download progress (you might want to show a dialog or snackbar)
-      print('Starting download: ${video.title}');
+      _showMessage('Starting download: ${video.title}');
 
       await dio.download(
         video.url,
         filePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
-            print('Download progress: ${(received / total * 100).toStringAsFixed(0)}%');
+            double progress = (received / total * 100);
+            setState(() {
+              downloadProgress[video.title] = progress;
+            });
           }
         },
       );
 
-      print('Download completed: $filePath');
-      // Show success message
+      setState(() {
+        downloadingStatus[video.title] = false;
+        downloadProgress[video.title] = 100.0;
+      });
+
+      _showMessage('Download completed: $filePath');
+
     } catch (e) {
-      print('Download error: $e');
-      // Show error message
+      setState(() {
+        downloadingStatus[video.title] = false;
+        downloadProgress[video.title] = 0.0;
+      });
+      _showMessage('Download error: $e');
     }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: widget.subject.color,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _openYouTubeVideo(String url) async {
@@ -813,10 +908,10 @@ class VideosScreen extends StatelessWidget {
       if (await canLaunchUrl(videoUri)) {
         await launchUrl(videoUri, mode: LaunchMode.externalApplication);
       } else {
-        throw 'Could not launch $url';
+        _showMessage('Could not launch $url');
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      _showMessage('Error launching URL: $e');
     }
   }
 }
@@ -836,21 +931,68 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
   bool _isControlsVisible = true;
+  bool _isInitializing = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.video.url))
-      ..initialize().then((_) {
-        setState(() {});
-        _controller.play();
+    _initializeVideoPlayer();
+  }
+
+  Future<void> _initializeVideoPlayer() async {
+    try {
+      setState(() {
+        _isInitializing = true;
+        _errorMessage = null;
       });
 
-    // Hide controls after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.video.url),
+        videoPlayerOptions: VideoPlayerOptions(
+          allowBackgroundPlayback: false,
+          mixWithOthers: false,
+        ),
+      );
+
+      // Add listener for initialization
+      _controller!.addListener(() {
+        if (_controller!.value.hasError) {
+          setState(() {
+            _errorMessage = _controller!.value.errorDescription ?? 'Unknown video error';
+            _isInitializing = false;
+          });
+        }
+      });
+
+      await _controller!.initialize();
+      
       if (mounted) {
+        setState(() {
+          _isInitializing = false;
+        });
+        
+        // Auto-play the video
+        await _controller!.play();
+        
+        // Hide controls after 3 seconds
+        _hideControlsAfterDelay();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load video: $e';
+          _isInitializing = false;
+        });
+      }
+    }
+  }
+
+  void _hideControlsAfterDelay() {
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted && _controller != null && _controller!.value.isPlaying) {
         setState(() {
           _isControlsVisible = false;
         });
@@ -860,7 +1002,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
@@ -870,14 +1012,26 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     });
 
     if (_isControlsVisible) {
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          setState(() {
-            _isControlsVisible = false;
-          });
-        }
-      });
+      _hideControlsAfterDelay();
     }
+  }
+
+  void _togglePlayPause() {
+    if (_controller == null) return;
+    
+    setState(() {
+      if (_controller!.value.isPlaying) {
+        _controller!.pause();
+      } else {
+        _controller!.play();
+        _hideControlsAfterDelay();
+      }
+    });
+  }
+
+  void _seekTo(Duration position) {
+    if (_controller == null) return;
+    _controller!.seekTo(position);
   }
 
   @override
@@ -889,43 +1043,150 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           onTap: _toggleControls,
           child: Stack(
             children: [
-              // Video player
+              // Video player or loading/error state
               Center(
-                child: _controller.value.isInitialized
-                    ? AspectRatio(
-                        aspectRatio: _controller.value.aspectRatio,
-                        child: VideoPlayer(_controller),
-                      )
-                    : Container(
-                        color: Colors.black,
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      ),
+                child: _buildVideoContent(),
               ),
 
               // Controls overlay
-              AnimatedOpacity(
-                opacity: _isControlsVisible ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Container(
-                  color: Colors.black.withOpacity(0.5),
-                  child: Column(
-                    children: [
-                      // Top bar
-                      _buildTopBar(),
+              if (_isControlsVisible)
+                AnimatedOpacity(
+                  opacity: _isControlsVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: Column(
+                      children: [
+                        // Top bar
+                        _buildTopBar(),
 
-                      // Spacer
-                      const Spacer(),
+                        // Spacer
+                        const Spacer(),
 
-                      // Bottom controls
-                      _buildBottomControls(),
-                    ],
+                        // Center play button (when paused)
+                        if (_controller != null && !_controller!.value.isPlaying && !_isInitializing)
+                          _buildCenterPlayButton(),
+
+                        // Spacer
+                        const Spacer(),
+
+                        // Bottom controls
+                        if (_controller != null && _controller!.value.isInitialized)
+                          _buildBottomControls(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoContent() {
+    if (_isInitializing) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(widget.subject.color),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Loading video...',
+            style: TextStyle(color: Colors.white),
+          ),
+        ],
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: Colors.red.withOpacity(0.7),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error loading video',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _errorMessage!,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _initializeVideoPlayer,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.subject.color,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text(
+              'Retry',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (_controller != null && _controller!.value.isInitialized) {
+      return AspectRatio(
+        aspectRatio: _controller!.value.aspectRatio,
+        child: VideoPlayer(_controller!),
+      );
+    }
+
+    return Container(
+      color: Colors.black,
+      child: const Center(
+        child: Text(
+          'Video not available',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterPlayButton() {
+    return GestureDetector(
+      onTap: _togglePlayPause,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [widget.subject.color, widget.subject.color.withOpacity(0.8)],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: widget.subject.color.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.play_arrow,
+          color: Colors.white,
+          size: 50,
         ),
       ),
     );
@@ -990,7 +1251,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         children: [
           // Progress bar
           VideoProgressIndicator(
-            _controller,
+            _controller!,
             allowScrubbing: true,
             colors: VideoProgressColors(
               playedColor: widget.subject.color,
@@ -1004,12 +1265,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Previous button
+              // Previous button (10 seconds back)
               IconButton(
                 onPressed: () {
-                  Duration currentPosition = _controller.value.position;
+                  Duration currentPosition = _controller!.value.position;
                   Duration targetPosition = currentPosition - const Duration(seconds: 10);
-                  _controller.seekTo(targetPosition);
+                  if (targetPosition < Duration.zero) targetPosition = Duration.zero;
+                  _seekTo(targetPosition);
                 },
                 icon: const Icon(Icons.replay_10, color: Colors.white, size: 30),
               ),
@@ -1031,29 +1293,23 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   ],
                 ),
                 child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (_controller.value.isPlaying) {
-                        _controller.pause();
-                      } else {
-                        _controller.play();
-                      }
-                    });
-                  },
+                  onTap: _togglePlayPause,
                   child: Icon(
-                    _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                    _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
                     color: Colors.white,
                     size: 30,
                   ),
                 ),
               ),
 
-              // Next button
+              // Next button (10 seconds forward)
               IconButton(
                 onPressed: () {
-                  Duration currentPosition = _controller.value.position;
+                  Duration currentPosition = _controller!.value.position;
                   Duration targetPosition = currentPosition + const Duration(seconds: 10);
-                  _controller.seekTo(targetPosition);
+                  Duration maxPosition = _controller!.value.duration;
+                  if (targetPosition > maxPosition) targetPosition = maxPosition;
+                  _seekTo(targetPosition);
                 },
                 icon: const Icon(Icons.forward_10, color: Colors.white, size: 30),
               ),
@@ -1067,7 +1323,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _formatDuration(_controller.value.position),
+                _formatDuration(_controller!.value.position),
                 style: const TextStyle(color: Colors.white),
               ),
               Row(
@@ -1075,24 +1331,30 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
                   IconButton(
                     onPressed: () {
                       setState(() {
-                        _controller.setVolume(_controller.value.volume == 0 ? 1 : 0);
+                        _controller!.setVolume(_controller!.value.volume == 0 ? 1 : 0);
                       });
                     },
                     icon: Icon(
-                      _controller.value.volume == 0 ? Icons.volume_off : Icons.volume_up,
+                      _controller!.value.volume == 0 ? Icons.volume_off : Icons.volume_up,
                       color: Colors.white,
                     ),
                   ),
                   IconButton(
                     onPressed: () {
-                      // Toggle fullscreen (you might want to implement proper fullscreen)
+                      // Placeholder for fullscreen functionality
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Fullscreen mode not implemented yet'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.fullscreen, color: Colors.white),
                   ),
                 ],
               ),
               Text(
-                _formatDuration(_controller.value.duration),
+                _formatDuration(_controller!.value.duration),
                 style: const TextStyle(color: Colors.white),
               ),
             ],
@@ -1106,7 +1368,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
     String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-    return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
+    if (duration.inHours > 0) {
+      return '${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
+    }
+    return '$twoDigitMinutes:$twoDigitSeconds';
   }
 }
 
