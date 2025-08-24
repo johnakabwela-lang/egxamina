@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
-import 'dart:math' as math;
 
 void main() {
   runApp(
@@ -13,10 +11,15 @@ void main() {
       home: const VideoScreen(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: CupertinoColors.systemBlue,
-        scaffoldBackgroundColor: const Color.fromRGBO(28, 28, 30, 1),
-        fontFamily: '.SF UI Text',
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        fontFamily: 'Roboto',
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          foregroundColor: Colors.black87,
+        ),
       ),
     ),
   );
@@ -29,20 +32,13 @@ class VideoScreen extends StatefulWidget {
   State<VideoScreen> createState() => _VideoScreenState();
 }
 
-class _VideoScreenState extends State<VideoScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _floatingController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _floatingAnimation;
-
+class _VideoScreenState extends State<VideoScreen> {
   // Subjects data with test URL
   final List<Subject> subjects = [
     Subject(
       name: 'Mathematics',
-      icon: CupertinoIcons.number,
-      color: const Color.fromRGBO(52, 120, 246, 1), // iOS Blue
+      icon: Icons.calculate_outlined,
+      color: Colors.blue,
       videos: [
         YouTubeVideo(
           'Algebra Basics',
@@ -66,8 +62,8 @@ class _VideoScreenState extends State<VideoScreen>
     ),
     Subject(
       name: 'Science',
-      icon: CupertinoIcons.lab_flask,
-      color: const Color.fromRGBO(52, 199, 89, 1), // iOS Green
+      icon: Icons.science_outlined,
+      color: Colors.green,
       videos: [
         YouTubeVideo(
           'Physics Laws',
@@ -85,8 +81,8 @@ class _VideoScreenState extends State<VideoScreen>
     ),
     Subject(
       name: 'History',
-      icon: CupertinoIcons.book,
-      color: const Color.fromRGBO(175, 82, 222, 1), // iOS Purple
+      icon: Icons.history_edu_outlined,
+      color: Colors.purple,
       videos: [
         YouTubeVideo(
           'World History Overview',
@@ -104,8 +100,8 @@ class _VideoScreenState extends State<VideoScreen>
     ),
     Subject(
       name: 'English',
-      icon: CupertinoIcons.textformat,
-      color: const Color.fromRGBO(255, 159, 10, 1), // iOS Orange
+      icon: Icons.menu_book_outlined,
+      color: Colors.orange,
       videos: [
         YouTubeVideo(
           'Grammar Basics',
@@ -123,8 +119,8 @@ class _VideoScreenState extends State<VideoScreen>
     ),
     Subject(
       name: 'Programming',
-      icon: CupertinoIcons.chevron_left_slash_chevron_right,
-      color: const Color.fromRGBO(90, 200, 250, 1), // iOS Light Blue
+      icon: Icons.code_outlined,
+      color: Colors.indigo,
       videos: [
         YouTubeVideo(
           'Python for Beginners',
@@ -142,8 +138,8 @@ class _VideoScreenState extends State<VideoScreen>
     ),
     Subject(
       name: 'Art & Design',
-      icon: CupertinoIcons.paintbrush,
-      color: const Color.fromRGBO(255, 45, 85, 1), // iOS Pink
+      icon: Icons.palette_outlined,
+      color: Colors.pink,
       videos: [
         YouTubeVideo(
           'Drawing Fundamentals',
@@ -162,317 +158,138 @@ class _VideoScreenState extends State<VideoScreen>
   ];
 
   @override
-  void initState() {
-    super.initState();
-
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-
-    _floatingController = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
-
-    _floatingAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
-      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
-    );
-
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    _floatingController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      backgroundColor: const Color.fromRGBO(0, 0, 0, 0.95),
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topRight,
-            radius: 1.5,
-            colors: [
-              Color.fromRGBO(25, 25, 40, 0.8),
-              Color.fromRGBO(0, 0, 0, 0.95),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(child: _buildSubjectsList()),
-            ],
-          ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(child: _buildSubjectsList()),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return AnimatedBuilder(
-      animation: _fadeController,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _fadeAnimation.value,
-          child: Transform.scale(
-            scale: _scaleAnimation.value,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
-              child: Column(
-                children: [
-                  _buildHelloText(),
-                  const SizedBox(height: 12),
-                  _buildSubtitle(),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Select a subject to explore videos',
-                    style: TextStyle(
-                      fontSize: 17,
-                      color: const Color.fromRGBO(235, 235, 245, 0.6),
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: -0.24,
-                    ),
-                  ),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Learning Hub',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHelloText() {
-    return AnimatedBuilder(
-      animation: _floatingController,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _floatingAnimation.value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color.fromRGBO(255, 255, 255, 0.05),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: const Color.fromRGBO(255, 255, 255, 0.1),
-                width: 0.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color.fromRGBO(52, 120, 246, 0.1),
-                  blurRadius: 20,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Text(
-              'Hey! 👋',
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w700,
-                foreground: Paint()
-                  ..shader = const LinearGradient(
-                    colors: [
-                      Color.fromRGBO(52, 120, 246, 1),
-                      Color.fromRGBO(90, 200, 250, 1),
-                      Color.fromRGBO(175, 82, 222, 1)
-                    ],
-                  ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0)),
-                letterSpacing: -1.0,
-              ),
+          const SizedBox(height: 8),
+          Text(
+            'Select a subject to explore videos',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: Colors.black54,
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSubtitle() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 1200),
-      tween: Tween<double>(begin: 20.0, end: 0.0),
-      curve: Curves.easeOut,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, value),
-          child: Opacity(
-            opacity: 1 - (value / 20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(255, 255, 255, 0.08),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(
-                  color: const Color.fromRGBO(255, 255, 255, 0.12),
-                  width: 0.5,
-                ),
-              ),
-              child: const Text(
-                'Kabwela pano mwaice',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Color.fromRGBO(235, 235, 245, 0.8),
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: -0.24,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 
   Widget _buildSubjectsList() {
-    return AnimatedBuilder(
-      animation: _fadeController,
-      builder: (context, child) {
-        return Opacity(
-          opacity: _fadeAnimation.value,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: GridView.builder(
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.05,
-              ),
-              itemCount: subjects.length,
-              itemBuilder: (context, index) {
-                return _buildSubjectCard(subjects[index], index);
-              },
-            ),
-          ),
-        );
-      },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        physics: const BouncingScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.0,
+        ),
+        itemCount: subjects.length,
+        itemBuilder: (context, index) {
+          return _buildSubjectCard(subjects[index]);
+        },
+      ),
     );
   }
 
-  Widget _buildSubjectCard(Subject subject, int index) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + (index * 150)),
-      tween: Tween<double>(begin: 30.0, end: 0.0),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, value),
-          child: GestureDetector(
-            onTap: () => _navigateToVideos(subject),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(255, 255, 255, 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: subject.color.withOpacity(0.2),
-                  width: 0.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: subject.color.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        subject.color.withOpacity(0.08),
-                        subject.color.withOpacity(0.03),
-                      ],
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: subject.color.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: subject.color.withOpacity(0.2),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          subject.icon,
-                          size: 28,
-                          color: subject.color,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        subject.name,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: Color.fromRGBO(235, 235, 245, 0.9),
-                          letterSpacing: -0.24,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: subject.color.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '${subject.videos.length} videos',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: subject.color,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.08,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+  Widget _buildSubjectCard(Subject subject) {
+    return Card(
+      elevation: 2,
+      color: Colors.white.withOpacity(0.7),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: InkWell(
+        onTap: () => _navigateToVideos(subject),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                subject.color.withOpacity(0.1),
+                Colors.white.withOpacity(0.5),
+              ],
             ),
           ),
-        );
-      },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: subject.color.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    subject.icon,
+                    size: 32,
+                    color: subject.color,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  subject.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Chip(
+                  label: Text(
+                    '${subject.videos.length} videos',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subject.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  backgroundColor: subject.color.withOpacity(0.1),
+                  side: BorderSide.none,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   void _navigateToVideos(Subject subject) {
     Navigator.push(
       context,
-      CupertinoPageRoute(builder: (context) => VideosScreen(subject: subject)),
+      MaterialPageRoute(builder: (context) => VideosScreen(subject: subject)),
     );
   }
 }
@@ -492,101 +309,47 @@ class _VideosScreenState extends State<VideosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      backgroundColor: const Color.fromRGBO(0, 0, 0, 0.95),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.2,
-            colors: [
-              widget.subject.color.withOpacity(0.1),
-              const Color.fromRGBO(0, 0, 0, 0.95),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Expanded(child: _buildVideosList()),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: const Color.fromRGBO(255, 255, 255, 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color.fromRGBO(255, 255, 255, 0.12),
-                  width: 0.5,
-                ),
-              ),
-              child: const Icon(
-                CupertinoIcons.back,
-                color: Color.fromRGBO(235, 235, 245, 0.9),
-                size: 20,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.subject.name,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Color.fromRGBO(235, 235, 245, 0.9),
-                    letterSpacing: -0.6,
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: widget.subject.color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${widget.subject.videos.length} educational videos',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: widget.subject.color,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.08,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: Text(widget.subject.name),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black87,
+        actions: [
           Container(
-            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: widget.subject.color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               widget.subject.icon,
               color: widget.subject.color,
-              size: 22,
+              size: 20,
             ),
           ),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Chip(
+              label: Text(
+                '${widget.subject.videos.length} educational videos',
+                style: TextStyle(
+                  color: widget.subject.color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              backgroundColor: widget.subject.color.withOpacity(0.1),
+              side: BorderSide.none,
+            ),
+          ),
+          Expanded(child: _buildVideosList()),
         ],
       ),
     );
@@ -595,174 +358,144 @@ class _VideosScreenState extends State<VideosScreen> {
   Widget _buildVideosList() {
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: widget.subject.videos.length,
       itemBuilder: (context, index) {
-        return TweenAnimationBuilder<double>(
-          duration: Duration(milliseconds: 200 + (index * 80)),
-          tween: Tween<double>(begin: 30.0, end: 0.0),
-          curve: Curves.easeOut,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, value),
-              child: _buildVideoCard(widget.subject.videos[index], index, context),
-            );
-          },
-        );
+        return _buildVideoCard(widget.subject.videos[index], index);
       },
     );
   }
 
-  Widget _buildVideoCard(YouTubeVideo video, int index, BuildContext context) {
+  Widget _buildVideoCard(YouTubeVideo video, int index) {
     bool isDownloading = downloadingStatus[video.title] ?? false;
     double progress = downloadProgress[video.title] ?? 0.0;
 
-    return Container(
+    return Card(
+      elevation: 2,
+      color: Colors.white.withOpacity(0.7),
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(255, 255, 255, 0.06),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color.fromRGBO(255, 255, 255, 0.1),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: widget.subject.color.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                widget.subject.color.withOpacity(0.05),
-                const Color.fromRGBO(255, 255, 255, 0.02),
-              ],
-            ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              widget.subject.color.withOpacity(0.05),
+              Colors.white.withOpacity(0.5),
+            ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: widget.subject.color.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: widget.subject.color.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        CupertinoIcons.play_circle_fill,
-                        color: widget.subject.color,
-                        size: 30,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            video.title,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: Color.fromRGBO(235, 235, 245, 0.9),
-                              letterSpacing: -0.24,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            video.description,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: Color.fromRGBO(235, 235, 245, 0.6),
-                              letterSpacing: -0.16,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          _buildQualityBadge(video.quality),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                if (isDownloading) ...[
-                  const SizedBox(height: 16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
                   Container(
-                    height: 3,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: const Color.fromRGBO(255, 255, 255, 0.1),
-                      borderRadius: BorderRadius.circular(1.5),
+                      color: widget.subject.color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: progress / 100,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: widget.subject.color,
-                          borderRadius: BorderRadius.circular(1.5),
-                        ),
-                      ),
+                    child: Icon(
+                      Icons.play_circle_filled,
+                      color: widget.subject.color,
+                      size: 30,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Downloading... ${progress.toStringAsFixed(1)}%',
-                    style: TextStyle(
-                      color: widget.subject.color,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.08,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          video.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          video.description,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildQualityBadge(video.quality),
+                      ],
                     ),
                   ),
                 ],
-                
+              ),
+              
+              if (isDownloading) ...[
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: CupertinoIcons.play_fill,
-                        label: 'Watch on YouTube',
-                        isPrimary: true,
-                        onTap: () => _openYouTubeVideo(video.url),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildActionButton(
-                        icon: isDownloading 
-                            ? CupertinoIcons.hourglass 
-                            : CupertinoIcons.cloud_download,
-                        label: isDownloading ? 'Downloading...' : 'Download',
-                        isPrimary: false,
-                        isDisabled: isDownloading,
-                        onTap: isDownloading ? null : () => _downloadVideo(video),
-                      ),
-                    ),
-                  ],
+                LinearProgressIndicator(
+                  value: progress / 100,
+                  backgroundColor: Colors.grey[300],
+                  color: widget.subject.color,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Downloading... ${progress.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    color: widget.subject.color,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
-            ),
+              
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _openYouTubeVideo(video.url),
+                      icon: const Icon(Icons.play_arrow, size: 18),
+                      label: const Text('Watch on YouTube'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: widget.subject.color,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isDownloading ? null : () => _downloadVideo(video),
+                      icon: Icon(
+                        isDownloading ? Icons.hourglass_empty : Icons.download,
+                        size: 18,
+                      ),
+                      label: Text(isDownloading ? 'Downloading...' : 'Download'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: widget.subject.color,
+                        side: BorderSide(color: widget.subject.color),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -771,72 +504,17 @@ class _VideosScreenState extends State<VideosScreen> {
 
   Widget _buildQualityBadge(VideoQuality quality) {
     String qualityText = quality == VideoQuality.hd1080 ? 'HD 1080p' : 'HD 720p';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: widget.subject.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
+    return Chip(
+      label: Text(
         qualityText,
         style: TextStyle(
           fontSize: 11,
           color: widget.subject.color,
           fontWeight: FontWeight.w600,
-          letterSpacing: -0.06,
         ),
       ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required bool isPrimary,
-    bool isDisabled = false,
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: isDisabled ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        decoration: BoxDecoration(
-          color: isPrimary
-              ? widget.subject.color.withOpacity(isDisabled ? 0.1 : 0.15)
-              : Color.fromRGBO(255, 255, 255, isDisabled ? 0.03 : 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isPrimary
-                ? widget.subject.color.withOpacity(isDisabled ? 0.1 : 0.2)
-                : Color.fromRGBO(255, 255, 255, isDisabled ? 0.05 : 0.12),
-            width: 0.5,
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: isPrimary
-                  ? widget.subject.color.withOpacity(isDisabled ? 0.5 : 1.0)
-                  : Color.fromRGBO(235, 235, 245, isDisabled ? 0.3 : 0.8),
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isPrimary
-                    ? widget.subject.color.withOpacity(isDisabled ? 0.5 : 1.0)
-                    : Color.fromRGBO(235, 235, 245, isDisabled ? 0.3 : 0.8),
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.16,
-              ),
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: widget.subject.color.withOpacity(0.1),
+      side: BorderSide.none,
     );
   }
 
@@ -922,19 +600,13 @@ class _VideosScreenState extends State<VideosScreen> {
   }
 
   void _showMessage(String message) {
-    showCupertinoDialog(
+    showDialog(
       context: context,
       builder: (BuildContext context) {
-        return CupertinoAlertDialog(
-          content: Text(
-            message,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color.fromRGBO(235, 235, 245, 0.9),
-            ),
-          ),
+        return AlertDialog(
+          content: Text(message),
           actions: [
-            CupertinoDialogAction(
+            TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'OK',
