@@ -529,7 +529,7 @@ class _VideosScreenState extends State<VideosScreen> {
           statuses[Permission.manageExternalStorage]?.isGranted == true;
 
       if (!permissionGranted) {
-        _showMessage('Storage permission denied');
+        _showMessage('Storage permission denied by user');
         return;
       }
 
