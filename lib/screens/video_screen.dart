@@ -620,7 +620,7 @@ class VideosScreen extends StatelessWidget {
           builder: (context, value, child) {
             return Transform.translate(
               offset: Offset(0, value),
-              child: _buildVideoCard(subject.videos[index], index),
+              child: _buildVideoCard(subject.videos[index], index, context),
             );
           },
         );
@@ -628,7 +628,7 @@ class VideosScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildVideoCard(YouTubeVideo video, int index) {
+  Widget _buildVideoCard(YouTubeVideo video, int index, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -710,7 +710,7 @@ class VideosScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _openVideoPlayer(video),
+                    onPressed: () => _openVideoPlayer(context, video),
                     icon: const Icon(Icons.play_arrow, color: Colors.white),
                     label: const Text('Watch', style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(
@@ -756,7 +756,7 @@ class VideosScreen extends StatelessWidget {
     );
   }
 
-  void _openVideoPlayer(YouTubeVideo video) {
+  void _openVideoPlayer(BuildContext context, YouTubeVideo video) {
     Navigator.push(
       context,
       MaterialPageRoute(
