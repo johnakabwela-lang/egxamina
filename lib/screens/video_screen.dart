@@ -11,14 +11,10 @@ void main() {
       home: const VideoScreen(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        fontFamily: 'Roboto',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: Colors.black87,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
         ),
       ),
     ),
@@ -160,38 +156,27 @@ class _VideoScreenState extends State<VideoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildSubjectsList()),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('Learning Hub'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_link),
+            onPressed: _showPasteUrlDialog,
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
         children: [
-          Text(
-            'Learning Hub',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Select a subject to explore videos',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Select a subject to explore videos',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.black54,
-            ),
-          ),
+          Expanded(child: _buildSubjectsList()),
         ],
       ),
     );
@@ -219,24 +204,12 @@ class _VideoScreenState extends State<VideoScreen> {
   Widget _buildSubjectCard(Subject subject) {
     return Card(
       elevation: 2,
-      color: Colors.white.withOpacity(0.7),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: InkWell(
         onTap: () => _navigateToVideos(subject),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                subject.color.withOpacity(0.1),
-                Colors.white.withOpacity(0.5),
-              ],
-            ),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -246,7 +219,7 @@ class _VideoScreenState extends State<VideoScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: subject.color.withOpacity(0.15),
+                    color: subject.color.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -258,25 +231,15 @@ class _VideoScreenState extends State<VideoScreen> {
                 const SizedBox(height: 16),
                 Text(
                   subject.name,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Chip(
-                  label: Text(
-                    '${subject.videos.length} videos',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: subject.color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  label: Text('${subject.videos.length} videos'),
                   backgroundColor: subject.color.withOpacity(0.1),
-                  side: BorderSide.none,
                 ),
               ],
             ),
@@ -286,11 +249,320 @@ class _VideoScreenState extends State<VideoScreen> {
     );
   }
 
+  void _showPasteUrlDialog() {
+    final TextEditingController urlController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Video URL'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: urlController,
+                decoration: const InputDecoration(
+                  hintText: 'Paste YouTube URL here...',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.link),
+                ),
+                maxLines: 3,
+                minLines: 1,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (urlController.text.trim().isNotEmpty) {
+                  _navigateToUrlDownloader(urlController.text.trim());
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Download'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _navigateToVideos(Subject subject) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => VideosScreen(subject: subject)),
     );
+  }
+
+  void _navigateToUrlDownloader(String url) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => UrlDownloaderScreen(url: url)),
+    );
+  }
+}
+
+class UrlDownloaderScreen extends StatefulWidget {
+  final String url;
+
+  const UrlDownloaderScreen({super.key, required this.url});
+
+  @override
+  State<UrlDownloaderScreen> createState() => _UrlDownloaderScreenState();
+}
+
+class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
+  String? videoTitle;
+  String? thumbnailUrl;
+  bool isLoading = true;
+  double downloadProgress = 0.0;
+  bool isDownloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _extractVideoInfo();
+  }
+
+  void _extractVideoInfo() {
+    // Extract video ID from YouTube URL
+    String videoId = _extractVideoId(widget.url);
+    
+    if (videoId.isNotEmpty) {
+      setState(() {
+        // For demonstration, we'll use a default title and thumbnail
+        // In a real app, you'd need to use YouTube API or web scraping
+        videoTitle = 'Video from URL';
+        thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        videoTitle = 'Invalid YouTube URL';
+        isLoading = false;
+      });
+    }
+  }
+
+  String _extractVideoId(String url) {
+    RegExp regExp = RegExp(
+      r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})',
+      caseSensitive: false,
+      multiLine: false,
+    );
+    
+    Match? match = regExp.firstMatch(url);
+    return match?.group(1) ?? '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Download Video'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: isLoading 
+          ? const Center(child: CircularProgressIndicator())
+          : _buildVideoCard(),
+      ),
+    );
+  }
+
+  Widget _buildVideoCard() {
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (thumbnailUrl != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.network(
+                    thumbnailUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[300],
+                        child: const Icon(
+                          Icons.video_library,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            Text(
+              videoTitle ?? 'Unknown Video',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            Text(
+              widget.url,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+            ),
+            
+            if (isDownloading) ...[
+              const SizedBox(height: 16),
+              LinearProgressIndicator(
+                value: downloadProgress / 100,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Downloading... ${downloadProgress.toStringAsFixed(1)}%',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _openYouTubeVideo(widget.url),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Watch on YouTube'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: isDownloading ? null : _downloadVideo,
+                    icon: Icon(
+                      isDownloading ? Icons.hourglass_empty : Icons.download,
+                    ),
+                    label: Text(isDownloading ? 'Downloading...' : 'Download'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadVideo() async {
+    try {
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.storage,
+        Permission.manageExternalStorage,
+      ].request();
+
+      bool permissionGranted = statuses[Permission.storage]?.isGranted == true ||
+          statuses[Permission.manageExternalStorage]?.isGranted == true;
+
+      if (!permissionGranted) {
+        _showMessage('Storage permission denied by user');
+        return;
+      }
+
+      setState(() {
+        isDownloading = true;
+        downloadProgress = 0.0;
+      });
+
+      Directory? directory;
+      
+      if (Platform.isAndroid) {
+        directory = Directory('/storage/emulated/0/Download');
+        if (!await directory.exists()) {
+          directory = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        _showMessage('Could not access storage directory');
+        setState(() {
+          isDownloading = false;
+        });
+        return;
+      }
+
+      String videoId = _extractVideoId(widget.url);
+      String filePath = '${directory.path}/video_$videoId.mp4';
+
+      Dio dio = Dio();
+      dio.options.connectTimeout = const Duration(seconds: 30);
+      dio.options.receiveTimeout = const Duration(seconds: 30);
+
+      _showMessage('Starting download...');
+
+      // Note: Using the same demo video URL for download
+      String demoVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+
+      await dio.download(
+        demoVideoUrl,
+        filePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            double progress = (received / total * 100);
+            setState(() {
+              downloadProgress = progress;
+            });
+          }
+        },
+      );
+
+      setState(() {
+        isDownloading = false;
+        downloadProgress = 100.0;
+      });
+
+      _showMessage('Download completed: $filePath');
+
+    } catch (e) {
+      setState(() {
+        isDownloading = false;
+        downloadProgress = 0.0;
+      });
+      _showMessage('Download error: $e');
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _openYouTubeVideo(String url) async {
+    final Uri videoUri = Uri.parse(url);
+
+    try {
+      if (await canLaunchUrl(videoUri)) {
+        await launchUrl(videoUri, mode: LaunchMode.externalApplication);
+      } else {
+        _showMessage('Could not launch $url');
+      }
+    } catch (e) {
+      _showMessage('Error launching URL: $e');
+    }
   }
 }
 
@@ -310,18 +582,14 @@ class _VideosScreenState extends State<VideosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: Text(widget.subject.name),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black87,
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: widget.subject.color.withOpacity(0.15),
+              color: widget.subject.color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -338,15 +606,7 @@ class _VideosScreenState extends State<VideosScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Chip(
-              label: Text(
-                '${widget.subject.videos.length} educational videos',
-                style: TextStyle(
-                  color: widget.subject.color,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              backgroundColor: widget.subject.color.withOpacity(0.1),
-              side: BorderSide.none,
+              label: Text('${widget.subject.videos.length} educational videos'),
             ),
           ),
           Expanded(child: _buildVideosList()),
@@ -369,152 +629,122 @@ class _VideosScreenState extends State<VideosScreen> {
   Widget _buildVideoCard(YouTubeVideo video, int index) {
     bool isDownloading = downloadingStatus[video.title] ?? false;
     double progress = downloadProgress[video.title] ?? 0.0;
+    String videoId = _extractVideoId(video.url);
+    String thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
 
     return Card(
       elevation: 2,
-      color: Colors.white.withOpacity(0.7),
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              widget.subject.color.withOpacity(0.05),
-              Colors.white.withOpacity(0.5),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 60,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 80,
                     height: 60,
-                    decoration: BoxDecoration(
-                      color: widget.subject.color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.play_circle_filled,
-                      color: widget.subject.color,
-                      size: 30,
+                    child: Image.network(
+                      thumbnailUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: widget.subject.color.withOpacity(0.1),
+                          child: Icon(
+                            Icons.play_circle_filled,
+                            color: widget.subject.color,
+                            size: 30,
+                          ),
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          video.title,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          video.description,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildQualityBadge(video.quality),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              
-              if (isDownloading) ...[
-                const SizedBox(height: 16),
-                LinearProgressIndicator(
-                  value: progress / 100,
-                  backgroundColor: Colors.grey[300],
-                  color: widget.subject.color,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Downloading... ${progress.toStringAsFixed(1)}%',
-                  style: TextStyle(
-                    color: widget.subject.color,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        video.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        video.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildQualityBadge(video.quality),
+                    ],
                   ),
                 ),
               ],
-              
+            ),
+            
+            if (isDownloading) ...[
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openYouTubeVideo(video.url),
-                      icon: const Icon(Icons.play_arrow, size: 18),
-                      label: const Text('Watch on YouTube'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: widget.subject.color,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: isDownloading ? null : () => _downloadVideo(video),
-                      icon: Icon(
-                        isDownloading ? Icons.hourglass_empty : Icons.download,
-                        size: 18,
-                      ),
-                      label: Text(isDownloading ? 'Downloading...' : 'Download'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: widget.subject.color,
-                        side: BorderSide(color: widget.subject.color),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
+              LinearProgressIndicator(
+                value: progress / 100,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Downloading... ${progress.toStringAsFixed(1)}%',
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-          ),
+            
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _openYouTubeVideo(video.url),
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Watch'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: isDownloading ? null : () => _downloadVideo(video),
+                    icon: Icon(
+                      isDownloading ? Icons.hourglass_empty : Icons.download,
+                    ),
+                    label: Text(isDownloading ? 'Downloading...' : 'Download'),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
+  String _extractVideoId(String url) {
+    RegExp regExp = RegExp(
+      r'(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})',
+      caseSensitive: false,
+      multiLine: false,
+    );
+    
+    Match? match = regExp.firstMatch(url);
+    return match?.group(1) ?? '';
+  }
+
   Widget _buildQualityBadge(VideoQuality quality) {
     String qualityText = quality == VideoQuality.hd1080 ? 'HD 1080p' : 'HD 720p';
     return Chip(
-      label: Text(
-        qualityText,
-        style: TextStyle(
-          fontSize: 11,
-          color: widget.subject.color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      label: Text(qualityText),
       backgroundColor: widget.subject.color.withOpacity(0.1),
-      side: BorderSide.none,
     );
   }
 
@@ -566,8 +796,7 @@ class _VideosScreenState extends State<VideosScreen> {
 
       _showMessage('Starting download: ${video.title}');
 
-      // Note: This is a placeholder URL for demonstration
-      // In a real app, you'd need to extract the actual video file URL from YouTube
+      // Using the same demo video URL as specified
       String demoVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
       await dio.download(
@@ -600,25 +829,8 @@ class _VideosScreenState extends State<VideosScreen> {
   }
 
   void _showMessage(String message) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'OK',
-                style: TextStyle(
-                  color: widget.subject.color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
