@@ -29,7 +29,7 @@ class VideoScreen extends StatefulWidget {
 }
 
 class _VideoScreenState extends State<VideoScreen> {
-  // Subjects data with test URL
+  // Subjects data with different demo videos for each URL
   final List<Subject> subjects = [
     Subject(
       name: 'Mathematics',
@@ -38,21 +38,24 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'Algebra Basics',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/WUvTyaaNkzM', // Khan Academy Algebra
           'Learn the fundamentals of algebra',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
         ),
         YouTubeVideo(
           'Geometry Fundamentals',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/mhd9FXYdf4s', // Geometry video
           'Master geometric concepts',
           VideoQuality.hd1080,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
         ),
         YouTubeVideo(
           'Calculus Introduction',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/EKvHQc3QEow', // Calculus intro
           'Introduction to calculus concepts',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
         ),
       ],
     ),
@@ -63,15 +66,17 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'Physics Laws',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/ZM8ECpBuQYE', // Physics laws
           'Fundamental laws of physics',
           VideoQuality.hd1080,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
         ),
         YouTubeVideo(
           'Chemistry Basics',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/FSyAehMdpyI', // Chemistry basics
           'Introduction to chemistry',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
         ),
       ],
     ),
@@ -82,15 +87,17 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'World History Overview',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/xuCn8ux2gbs', // World history
           'A comprehensive world history',
           VideoQuality.hd1080,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
         ),
         YouTubeVideo(
           'Ancient Civilizations',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/Z_AYXcDOWVg', // Ancient civilizations
           'Explore ancient civilizations',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
         ),
       ],
     ),
@@ -101,15 +108,17 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'Grammar Basics',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/VQmPQflsWV0', // Grammar basics
           'Essential grammar rules',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
         ),
         YouTubeVideo(
           'Literature Analysis',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/msVS9qmOEL0', // Literature analysis
           'Analyzing literary works',
           VideoQuality.hd1080,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4',
         ),
       ],
     ),
@@ -120,15 +129,17 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'Python for Beginners',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/rfscVS0vtbw', // Python tutorial
           'Learn Python programming',
           VideoQuality.hd1080,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
         ),
         YouTubeVideo(
           'Web Development',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/UB1O30fR-EE', // Web development
           'Build websites and web apps',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
         ),
       ],
     ),
@@ -139,19 +150,27 @@ class _VideoScreenState extends State<VideoScreen> {
       videos: [
         YouTubeVideo(
           'Drawing Fundamentals',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/pMC0Cx3Uk84', // Drawing tutorial
           'Learn to draw effectively',
           VideoQuality.hd720,
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
         ),
         YouTubeVideo(
           'Digital Art Basics',
-          'https://youtu.be/SeCmnHhCP74?si=TBCTNjouhrnQ_ji5',
+          'https://youtu.be/Nj_O2kqx_fI', // Digital art
           'Create digital artwork',
           VideoQuality.hd1080,
+          'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
         ),
       ],
     ),
   ];
+
+  // Map to store custom video URLs for pasted URLs
+  final Map<String, String> _customVideoUrls = {
+    // Default demo videos for common YouTube URLs
+    'default': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +289,13 @@ class _VideoScreenState extends State<VideoScreen> {
                 maxLines: 3,
                 minLines: 1,
               ),
+              const SizedBox(height: 8),
+              Text(
+                'Note: This will download a demo video for demonstration purposes',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
           actions: [
@@ -280,7 +306,7 @@ class _VideoScreenState extends State<VideoScreen> {
             FilledButton(
               onPressed: () {
                 String url = urlController.text.trim();
-                Navigator.of(context).pop(); // Close dialog first
+                Navigator.of(context).pop();
                 if (url.isNotEmpty) {
                   _navigateToUrlDownloader(url);
                 }
@@ -331,23 +357,30 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
   }
 
   void _extractVideoInfo() {
-    // Extract video ID from YouTube URL
     String videoId = _extractVideoId(widget.url);
     
     if (videoId.isNotEmpty) {
       setState(() {
-        // For demonstration, we'll use a default title and thumbnail
-        // In a real app, you'd need to use YouTube API or web scraping
-        videoTitle = 'Video from URL';
+        videoTitle = _getTitleFromUrl(widget.url);
         thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
         isLoading = false;
       });
     } else {
       setState(() {
-        videoTitle = 'Invalid YouTube URL';
+        videoTitle = 'Custom Video from URL';
+        thumbnailUrl = null;
         isLoading = false;
       });
     }
+  }
+
+  String _getTitleFromUrl(String url) {
+    // Extract a title based on the URL or video ID
+    String videoId = _extractVideoId(url);
+    if (videoId.isNotEmpty) {
+      return 'YouTube Video ($videoId)';
+    }
+    return 'Video from URL';
   }
 
   String _extractVideoId(String url) {
@@ -359,6 +392,21 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
     
     Match? match = regExp.firstMatch(url);
     return match?.group(1) ?? '';
+  }
+
+  String _getDownloadUrlForPastedUrl(String originalUrl) {
+    // For demonstration, we'll use different demo videos based on the URL
+    String videoId = _extractVideoId(originalUrl);
+    
+    // Map different video IDs to different demo videos
+    Map<String, String> demoVideoMap = {
+      'dQw4w9WgXcQ': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', // Rick Roll
+      'kJQP7kiw5Fk': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Despacito
+      'fJ9rUzIMcZQ': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', // Bohemian Rhapsody
+      'default': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    };
+    
+    return demoVideoMap[videoId] ?? demoVideoMap['default']!;
   }
 
   @override
@@ -506,7 +554,10 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
       }
 
       String videoId = _extractVideoId(widget.url);
-      String filePath = '${directory.path}/video_$videoId.mp4';
+      String fileName = videoId.isNotEmpty 
+          ? 'video_$videoId.mp4' 
+          : 'custom_video_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      String filePath = '${directory.path}/$fileName';
 
       Dio dio = Dio();
       dio.options.connectTimeout = const Duration(seconds: 30);
@@ -514,15 +565,11 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
 
       _showMessage('Starting download...');
 
-      // Use the same URL for download as for play (the actual YouTube URL)
-      // In a real scenario, you'd extract the actual video file URL from YouTube
-      String downloadUrl = widget.url; // This would be the actual video file URL
-
-      // For demonstration, we'll use a demo video URL since we can't download directly from YouTube
-      String demoVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+      // Get the appropriate demo video URL for this pasted URL
+      String downloadUrl = _getDownloadUrlForPastedUrl(widget.url);
 
       await dio.download(
-        demoVideoUrl,
+        downloadUrl,
         filePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
@@ -801,19 +848,11 @@ class _VideosScreenState extends State<VideosScreen> {
 
       _showMessage('Starting download: ${video.title}');
 
-      // Use the actual YouTube URL from the video object (same as play button)
-      // In a real app, you'd need to extract the actual video file URL from this YouTube URL
-      String youtubeUrl = video.url;
-      
-      // For demonstration purposes, since we can't directly download from YouTube,
-      // we'll use a demo video but the URL structure would be the same
-      String actualDownloadUrl = youtubeUrl; // This would contain the actual video file URL after processing
-      
-      // Demo video URL (in real app this would be extracted from youtubeUrl)
-      String demoVideoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
+      // Use the specific demo video URL assigned to this video
+      String downloadUrl = video.downloadUrl;
 
       await dio.download(
-        demoVideoUrl,
+        downloadUrl,
         filePath,
         onReceiveProgress: (received, total) {
           if (total != -1) {
@@ -884,6 +923,13 @@ class YouTubeVideo {
   final String url;
   final String description;
   final VideoQuality quality;
+  final String downloadUrl; // New field for the actual download URL
 
-  YouTubeVideo(this.title, this.url, this.description, this.quality);
+  YouTubeVideo(
+    this.title, 
+    this.url, 
+    this.description, 
+    this.quality, 
+    this.downloadUrl, // Added download URL parameter
+  );
 }
