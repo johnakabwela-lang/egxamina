@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ultsukulu/screens/calculator.dart';
 import 'package:ultsukulu/screens/notepad.dart';
+import 'package:ultsukulu/screens/periodic_table.dart';
 import 'package:ultsukulu/screens/schedule_maker.dart';
 import 'package:ultsukulu/screens/study_timer.dart';
 import 'package:ultsukulu/screens/unit_converter.dart';
@@ -11,7 +12,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:http/http.dart' as http;
-
 
 // Main Tools Screen with enhanced press effects and animations
 class ToolsScreen extends StatelessWidget {
@@ -578,7 +578,8 @@ class WordDefinition {
     List<String> audioUrls = [];
     if (json['phonetics'] != null) {
       for (var phonetic in json['phonetics']) {
-        if (phonetic['audio'] != null && phonetic['audio'].toString().isNotEmpty) {
+        if (phonetic['audio'] != null &&
+            phonetic['audio'].toString().isNotEmpty) {
           audioUrls.add(phonetic['audio']);
         }
       }
@@ -635,10 +636,7 @@ class Definition {
   final String definition;
   final String? example;
 
-  Definition({
-    required this.definition,
-    this.example,
-  });
+  Definition({required this.definition, this.example});
 
   factory Definition.fromJson(Map<String, dynamic> json) {
     return Definition(
@@ -672,11 +670,11 @@ class DictionaryScreen extends StatefulWidget {
 class _DictionaryScreenState extends State<DictionaryScreen> {
   final TextEditingController _searchController = TextEditingController();
   final AudioPlayer _audioPlayer = AudioPlayer();
-  
+
   WordDefinition? _currentWord;
   bool _isLoading = false;
   String? _error;
-  
+
   // Quiz state
   QuizQuestion? _currentQuestion;
   bool _quizMode = false;
@@ -704,7 +702,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/${word.trim()}'),
+        Uri.parse(
+          'https://api.dictionaryapi.dev/api/v2/entries/en/${word.trim()}',
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -723,7 +723,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       }
     } catch (e) {
       setState(() {
-        _error = 'Failed to fetch word definition. Please check your connection.';
+        _error =
+            'Failed to fetch word definition. Please check your connection.';
         _isLoading = false;
       });
     }
@@ -733,9 +734,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     try {
       await _audioPlayer.play(UrlSource(audioUrl));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to play audio')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to play audio')));
     }
   }
 
@@ -756,7 +757,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
         // Get definition for random word
         final defResponse = await http.get(
-          Uri.parse('https://api.dictionaryapi.dev/api/v2/entries/en/$randomWord'),
+          Uri.parse(
+            'https://api.dictionaryapi.dev/api/v2/entries/en/$randomWord',
+          ),
         );
 
         if (defResponse.statusCode == 200) {
@@ -765,7 +768,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
           // Generate question
           final question = await _createQuestion(wordDef);
-          
+
           setState(() {
             _currentQuestion = question;
             _selectedAnswer = null;
@@ -790,18 +793,18 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   Future<QuizQuestion> _createQuestion(WordDefinition word) async {
     final random = Random();
     final questionTypes = ['definition', 'synonym', 'antonym'];
-    
+
     // Filter available question types based on available data
     List<String> availableTypes = ['definition'];
-    
+
     bool hasSynonyms = word.meanings.any((m) => m.synonyms.isNotEmpty);
     bool hasAntonyms = word.meanings.any((m) => m.antonyms.isNotEmpty);
-    
+
     if (hasSynonyms) availableTypes.add('synonym');
     if (hasAntonyms) availableTypes.add('antonym');
-    
+
     final questionType = availableTypes[random.nextInt(availableTypes.length)];
-    
+
     switch (questionType) {
       case 'definition':
         return _createDefinitionQuestion(word);
@@ -817,19 +820,19 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
   QuizQuestion _createDefinitionQuestion(WordDefinition word) {
     final random = Random();
     final definition = word.meanings[0].definitions[0].definition;
-    
+
     // Generate wrong answers
     List<String> wrongAnswers = [
       'A type of ancient building structure',
       'A mathematical calculation method',
       'A cooking technique from France',
     ];
-    
+
     List<String> options = [word.word, ...wrongAnswers];
     options.shuffle();
-    
+
     final correctIndex = options.indexOf(word.word);
-    
+
     return QuizQuestion(
       question: 'What does this definition describe?\n\n"$definition"',
       options: options,
@@ -844,20 +847,16 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         .expand((m) => m.synonyms)
         .where((s) => s.isNotEmpty)
         .toList();
-    
+
     final correctSynonym = synonyms[random.nextInt(synonyms.length)];
-    
-    List<String> wrongAnswers = [
-      'completely',
-      'hardly',
-      'never',
-    ];
-    
+
+    List<String> wrongAnswers = ['completely', 'hardly', 'never'];
+
     List<String> options = [correctSynonym, ...wrongAnswers];
     options.shuffle();
-    
+
     final correctIndex = options.indexOf(correctSynonym);
-    
+
     return QuizQuestion(
       question: 'Which word is a synonym of "${word.word}"?',
       options: options,
@@ -872,20 +871,16 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         .expand((m) => m.antonyms)
         .where((s) => s.isNotEmpty)
         .toList();
-    
+
     final correctAntonym = antonyms[random.nextInt(antonyms.length)];
-    
-    List<String> wrongAnswers = [
-      'similar',
-      'equivalent',
-      'identical',
-    ];
-    
+
+    List<String> wrongAnswers = ['similar', 'equivalent', 'identical'];
+
     List<String> options = [correctAntonym, ...wrongAnswers];
     options.shuffle();
-    
+
     final correctIndex = options.indexOf(correctAntonym);
-    
+
     return QuizQuestion(
       question: 'Which word is an antonym of "${word.word}"?',
       options: options,
@@ -896,12 +891,12 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
 
   void _selectAnswer(int index) {
     if (_showAnswer) return;
-    
+
     setState(() {
       _selectedAnswer = index;
       _showAnswer = true;
       _totalQuestions++;
-      
+
       if (index == _currentQuestion!.correctIndex) {
         _score++;
       }
@@ -967,22 +962,27 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFFF4B4B), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFFFF4B4B),
+                  width: 2,
+                ),
               ),
             ),
             onSubmitted: _searchWord,
           ),
         ),
-        
+
         // Content
         Expanded(
           child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF4B4B)))
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFFF4B4B)),
+                )
               : _error != null
-                  ? _buildErrorState()
-                  : _currentWord != null
-                      ? _buildWordDetails()
-                      : _buildEmptyState(),
+              ? _buildErrorState()
+              : _currentWord != null
+              ? _buildWordDetails()
+              : _buildEmptyState(),
         ),
       ],
     );
@@ -1002,10 +1002,15 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 children: [
                   Text(
                     'Score: $_score / $_totalQuestions',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
-                    _totalQuestions > 0 ? '${((_score / _totalQuestions) * 100).round()}%' : '0%',
+                    _totalQuestions > 0
+                        ? '${((_score / _totalQuestions) * 100).round()}%'
+                        : '0%',
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -1016,16 +1021,18 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Quiz Content
           Expanded(
             child: _isGeneratingQuestion
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF4B4B)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFF4B4B)),
+                  )
                 : _currentQuestion != null
-                    ? _buildQuizQuestion()
-                    : _buildQuizEmptyState(),
+                ? _buildQuizQuestion()
+                : _buildQuizEmptyState(),
           ),
         ],
       ),
@@ -1047,15 +1054,15 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // Options
         ...List.generate(_currentQuestion!.options.length, (index) {
           final isSelected = _selectedAnswer == index;
           final isCorrect = index == _currentQuestion!.correctIndex;
           final showResult = _showAnswer;
-          
+
           Color? cardColor;
           if (showResult) {
             if (isCorrect) {
@@ -1064,7 +1071,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               cardColor = Colors.red.shade100;
             }
           }
-          
+
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Card(
@@ -1074,16 +1081,16 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                 leading: showResult && isCorrect
                     ? const Icon(Icons.check_circle, color: Colors.green)
                     : showResult && isSelected && !isCorrect
-                        ? const Icon(Icons.cancel, color: Colors.red)
-                        : null,
+                    ? const Icon(Icons.cancel, color: Colors.red)
+                    : null,
                 onTap: () => _selectAnswer(index),
               ),
             ),
           );
         }),
-        
+
         const SizedBox(height: 20),
-        
+
         // Next Button
         if (_showAnswer)
           ElevatedButton(
@@ -1158,8 +1165,12 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       ),
                       if (_currentWord!.audioUrls.isNotEmpty)
                         IconButton(
-                          icon: const Icon(Icons.volume_up, color: Color(0xFFFF4B4B)),
-                          onPressed: () => _playAudio(_currentWord!.audioUrls.first),
+                          icon: const Icon(
+                            Icons.volume_up,
+                            color: Color(0xFFFF4B4B),
+                          ),
+                          onPressed: () =>
+                              _playAudio(_currentWord!.audioUrls.first),
                         ),
                     ],
                   ),
@@ -1174,9 +1185,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Meanings
           ...List.generate(_currentWord!.meanings.length, (index) {
             final meaning = _currentWord!.meanings[index];
@@ -1189,7 +1200,10 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                   children: [
                     // Part of Speech
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFF4B4B).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
@@ -1202,9 +1216,9 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Definitions
                     ...List.generate(meaning.definitions.length, (defIndex) {
                       final definition = meaning.definitions[defIndex];
@@ -1232,7 +1246,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                         ),
                       );
                     }),
-                    
+
                     // Synonyms
                     if (meaning.synonyms.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -1244,13 +1258,17 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
-                        children: meaning.synonyms.map((synonym) => Chip(
-                          label: Text(synonym),
-                          backgroundColor: Colors.green.shade100,
-                        )).toList(),
+                        children: meaning.synonyms
+                            .map(
+                              (synonym) => Chip(
+                                label: Text(synonym),
+                                backgroundColor: Colors.green.shade100,
+                              ),
+                            )
+                            .toList(),
                       ),
                     ],
-                    
+
                     // Antonyms
                     if (meaning.antonyms.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -1262,10 +1280,14 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
-                        children: meaning.antonyms.map((antonym) => Chip(
-                          label: Text(antonym),
-                          backgroundColor: Colors.red.shade100,
-                        )).toList(),
+                        children: meaning.antonyms
+                            .map(
+                              (antonym) => Chip(
+                                label: Text(antonym),
+                                backgroundColor: Colors.red.shade100,
+                              ),
+                            )
+                            .toList(),
                       ),
                     ],
                   ],
@@ -1273,7 +1295,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               ),
             );
           }),
-          
+
           // Origin
           if (_currentWord!.origin != null) ...[
             Card(
@@ -1310,11 +1332,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.menu_book,
-            size: 80,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.menu_book, size: 80, color: Colors.grey.shade400),
           const SizedBox(height: 20),
           Text(
             'English Dictionary',
@@ -1328,10 +1346,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           Text(
             'Search for any word to see its definition,\npronunciation, and more!',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
           ),
         ],
       ),
@@ -1343,11 +1358,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.red.shade400,
-          ),
+          Icon(Icons.error_outline, size: 80, color: Colors.red.shade400),
           const SizedBox(height: 20),
           Text(
             'Oops!',
@@ -1363,10 +1374,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
             child: Text(
               _error!,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade500,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
             ),
           ),
           const SizedBox(height: 30),
@@ -1386,773 +1394,4 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
       ),
     );
   }
-}
-
-
-class Element {
-  final String name;
-  final String symbol;
-  final int number;
-  final String category;
-  final double atomicMass;
-  final double? boil;
-  final double? melt;
-  final String phase;
-  final String summary;
-  final String? imageUrl;
-  final String block;
-  final int? group;
-  final int period;
-  final int xpos;
-  final int ypos;
-
-  Element({
-    required this.name,
-    required this.symbol,
-    required this.number,
-    required this.category,
-    required this.atomicMass,
-    this.boil,
-    this.melt,
-    required this.phase,
-    required this.summary,
-    this.imageUrl,
-    required this.block,
-    this.group,
-    required this.period,
-    required this.xpos,
-    required this.ypos,
-  });
-
-  factory Element.fromJson(Map<String, dynamic> json) {
-    return Element(
-      name: json['name'],
-      symbol: json['symbol'],
-      number: json['number'],
-      category: json['category'],
-      atomicMass: json['atomic_mass'].toDouble(),
-      boil: json['boil']?.toDouble(),
-      melt: json['melt']?.toDouble(),
-      phase: json['phase'],
-      summary: json['summary'],
-      imageUrl: json['image']?['url'],
-      block: json['block'],
-      group: json['group'],
-      period: json['period'],
-      xpos: json['xpos'],
-      ypos: json['ypos'],
-    );
-  }
-
-  // Color coding by category
-  Color get categoryColor {
-    switch (category.toLowerCase()) {
-      case 'diatomic nonmetal':
-        return const Color(0xFF4CAF50);
-      case 'noble gas':
-        return const Color(0xFF9C27B0);
-      case 'alkali metal':
-        return const Color(0xFFF44336);
-      case 'alkaline earth metal':
-        return const Color(0xFFFF9800);
-      case 'metalloid':
-        return const Color(0xFF607D8B);
-      case 'polyatomic nonmetal':
-        return const Color(0xFF2196F3);
-      case 'post-transition metal':
-        return const Color(0xFF795548);
-      case 'transition metal':
-        return const Color(0xFF00BCD4);
-      case 'lanthanide':
-        return const Color(0xFFE91E63);
-      case 'actinide':
-        return const Color(0xFF673AB7);
-      default:
-        return const Color(0xFF9E9E9E);
-    }
-  }
-}
-
-// ================== SERVICE ==================
-class PeriodicTableService {
-  static Future<List<Element>> loadElements() async {
-    try {
-      final String data = await rootBundle.loadString('assets/periodic.json');
-      final Map<String, dynamic> jsonData = json.decode(data);
-      final List<dynamic> elementsJson = jsonData['elements'];
-      
-      return elementsJson.map((json) => Element.fromJson(json)).toList();
-    } catch (e) {
-      throw Exception('Failed to load periodic table data: $e');
-    }
-  }
-}
-
-// ================== ELEMENT CARD WIDGET ==================
-class ElementCard extends StatelessWidget {
-  final Element element;
-  final VoidCallback onTap;
-
-  const ElementCard({
-    Key? key,
-    required this.element,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: element.categoryColor,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            // Atomic number (top-left)
-            Positioned(
-              top: 4,
-              left: 4,
-              child: Text(
-                element.number.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            // Element symbol (center)
-            Center(
-              child: Text(
-                element.symbol,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ================== PROPERTY ITEM HELPER CLASS ==================
-class _PropertyItem {
-  final String label;
-  final String value;
-  
-  _PropertyItem(this.label, this.value);
-}
-
-// ================== ELEMENT DETAIL SCREEN ==================
-class ElementDetailScreen extends StatelessWidget {
-  final Element element;
-
-  const ElementDetailScreen({Key? key, required this.element}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        backgroundColor: element.categoryColor,
-        foregroundColor: Colors.white,
-        title: Text(element.name),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Main element display
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: element.categoryColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        element.number.toString(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (element.imageUrl != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            element.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.white24,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.science,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    element.symbol,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    element.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    element.category.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Properties section
-            _buildPropertyCard('Properties', [
-              _PropertyItem('Phase', element.phase),
-              _PropertyItem('Atomic Mass', '${element.atomicMass} u'),
-              if (element.melt != null)
-                _PropertyItem('Melting Point', '${element.melt!.toStringAsFixed(2)} K'),
-              if (element.boil != null)
-                _PropertyItem('Boiling Point', '${element.boil!.toStringAsFixed(2)} K'),
-              _PropertyItem('Block', element.block.toUpperCase()),
-              if (element.group != null)
-                _PropertyItem('Group', element.group.toString()),
-              _PropertyItem('Period', element.period.toString()),
-            ]),
-            
-            const SizedBox(height: 16),
-            
-            // Summary section
-            _buildSummaryCard(),
-            
-            const SizedBox(height: 24),
-            
-            // More info button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _launchWikipedia,
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('More Info on Wikipedia'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: element.categoryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPropertyCard(String title, List<_PropertyItem> properties) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...properties.map((prop) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    prop.label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF666666),
-                    ),
-                  ),
-                  Text(
-                    prop.value,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'About',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              element.summary,
-              style: const TextStyle(
-                fontSize: 16,
-                height: 1.5,
-                color: Color(0xFF555555),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _launchWikipedia() async {
-    final url = 'https://en.wikipedia.org/wiki/${element.name}';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    }
-  }
-}
-
-// ================== PERIODIC TABLE SCREEN ==================
-class PeriodicTableScreen extends StatefulWidget {
-  const PeriodicTableScreen({super.key});
-
-  @override
-  State<PeriodicTableScreen> createState() => _PeriodicTableScreenState();
-}
-
-class _PeriodicTableScreenState extends State<PeriodicTableScreen> 
-    with SingleTickerProviderStateMixin {
-  List<Element> elements = [];
-  bool isLoading = true;
-  String? errorMessage;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    _loadElements();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadElements() async {
-    try {
-      final loadedElements = await PeriodicTableService.loadElements();
-      setState(() {
-        elements = loadedElements;
-        isLoading = false;
-      });
-      _animationController.forward();
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFF9600),
-        foregroundColor: Colors.white,
-        title: const Text('Periodic Table'),
-        elevation: 0,
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF9600)),
-        ),
-      );
-    }
-
-    if (errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Failed to load periodic table',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              errorMessage!,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  isLoading = true;
-                  errorMessage = null;
-                });
-                _loadElements();
-              },
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return FadeTransition(
-      opacity: _fadeAnimation,
-      child: _buildPeriodicTable(),
-    );
-  }
-
-  Widget _buildPeriodicTable() {
-    // Calculate grid dimensions
-    final maxX = elements.map((e) => e.xpos).reduce((a, b) => a > b ? a : b);
-    final maxY = elements.map((e) => e.ypos).reduce((a, b) => a > b ? a : b);
-
-    // Create a 2D grid
-    final grid = List.generate(
-      maxY,
-      (_) => List.generate(maxX, (_) => null as Element?),
-    );
-
-    // Fill the grid with elements
-    for (final element in elements) {
-      if (element.ypos > 0 && element.xpos > 0) {
-        grid[element.ypos - 1][element.xpos - 1] = element;
-      }
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: grid.asMap().entries.map((rowEntry) {
-              return Row(
-                children: rowEntry.value.asMap().entries.map((colEntry) {
-                  final element = colEntry.value;
-                  return Container(
-                    width: 50,
-                    height: 50,
-                    margin: const EdgeInsets.all(1),
-                    child: element != null
-                        ? ElementCard(
-                            element: element,
-                            onTap: () => _navigateToDetail(element),
-                          )
-                        : const SizedBox(),
-                  );
-                }).toList(),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _navigateToDetail(Element element) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            ElementDetailScreen(element: element),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOut;
-
-          var tween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: FadeTransition(
-              opacity: animation,
-              child: child,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-// Shared dummy content builder
-Widget _buildDummyContent(
-  String title,
-  IconData icon,
-  Color color,
-  String description,
-  List<String> features,
-) {
-  return SingleChildScrollView(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.12),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.2),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, size: 45, color: color),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                description,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Features',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ...features.map(
-                (feature) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.check, color: color, size: 16),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Text(
-                          feature,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.construction, size: 40, color: color),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Coming Soon!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'This tool is currently under development. Check back soon for the full functionality!',
-                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
 }

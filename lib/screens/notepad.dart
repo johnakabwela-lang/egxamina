@@ -65,39 +65,64 @@ class NoteManager {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    await _requestPermissions();
-    await _createNotesDirectory();
-    await _loadNotes();
-    _initialized = true;
+    try {
+      await _requestPermissions();
+      await _createNotesDirectory();
+      await _loadNotes();
+      _initialized = true;
+    } catch (e) {
+      print('Error initializing NoteManager: $e');
+      // Continue with empty notes list instead of throwing
+      _notes = [];
+      _initialized = true;
+    }
   }
 
   Future<void> _requestPermissions() async {
     if (Platform.isAndroid) {
+      // For Android 11+ (API 30+), we need different permissions
       final status = await Permission.storage.request();
       if (status.isDenied) {
-        throw Exception('Storage permission is required to save notes');
+        print('Storage permission denied, but continuing...');
+        // Don't throw exception, just log the issue
       }
     }
   }
 
   Future<void> _createNotesDirectory() async {
-    Directory? externalDir;
+    try {
+      Directory? externalDir;
 
-    if (Platform.isAndroid) {
-      externalDir = await getExternalStorageDirectory();
-      if (externalDir != null) {
-        // Create in emulated storage under ParaNotes folder
-        final paraNotesPath = '/storage/emulated/0/ParaNotes';
-        _notesDirectory = Directory(paraNotesPath);
+      if (Platform.isAndroid) {
+        // Try external storage first, fallback to app directory
+        try {
+          externalDir = await getExternalStorageDirectory();
+          if (externalDir != null) {
+            final paraNotesPath = '/storage/emulated/0/ParaNotes';
+            _notesDirectory = Directory(paraNotesPath);
+          }
+        } catch (e) {
+          print('External storage not available, using app directory');
+          externalDir = await getApplicationDocumentsDirectory();
+          _notesDirectory = Directory('${externalDir.path}/ParaNotes');
+        }
+      } else {
+        // For iOS, use documents directory
+        externalDir = await getApplicationDocumentsDirectory();
+        _notesDirectory = Directory('${externalDir.path}/ParaNotes');
       }
-    } else {
-      // For iOS, use documents directory
-      externalDir = await getApplicationDocumentsDirectory();
-      _notesDirectory = Directory('${externalDir.path}/ParaNotes');
-    }
 
-    if (!await _notesDirectory.exists()) {
-      await _notesDirectory.create(recursive: true);
+      if (!await _notesDirectory.exists()) {
+        await _notesDirectory.create(recursive: true);
+      }
+    } catch (e) {
+      print('Error creating notes directory: $e');
+      // Fallback to app documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      _notesDirectory = Directory('${appDir.path}/ParaNotes');
+      if (!await _notesDirectory.exists()) {
+        await _notesDirectory.create(recursive: true);
+      }
     }
   }
 
@@ -117,11 +142,15 @@ class NoteManager {
   }
 
   Future<void> _saveNotes() async {
-    final notesFile = File('${_notesDirectory.path}/notes.json');
-    final jsonString = json.encode(
-      _notes.map((note) => note.toJson()).toList(),
-    );
-    await notesFile.writeAsString(jsonString);
+    try {
+      final notesFile = File('${_notesDirectory.path}/notes.json');
+      final jsonString = json.encode(
+        _notes.map((note) => note.toJson()).toList(),
+      );
+      await notesFile.writeAsString(jsonString);
+    } catch (e) {
+      print('Error saving notes: $e');
+    }
   }
 
   Future<void> addNote(Note note) async {
@@ -253,6 +282,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
   String searchQuery = '';
   String selectedSubject = 'All';
   bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -263,16 +293,14 @@ class _NotepadScreenState extends State<NotepadScreen> {
   Future<void> _initializeNoteManager() async {
     try {
       await _noteManager.initialize();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error initializing storage: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
       setState(() {
         _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Error initializing storage: $e';
       });
     }
   }
@@ -282,7 +310,56 @@ class _NotepadScreenState extends State<NotepadScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Loading notes...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Error',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  _errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _errorMessage = null;
+                  });
+                  _initializeNoteManager();
+                },
+                child: Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -845,6 +922,19 @@ class NotesViewer extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text('Error: ${snapshot.error}'),
+                ],
+              ),
+            );
           }
 
           final notes = _noteManager.notes;
