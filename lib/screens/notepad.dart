@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 // Note model
 class Note {
@@ -17,6 +19,30 @@ class Note {
     required this.updatedAt,
     this.subject = 'General',
   });
+
+  // Convert Note to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'subject': subject,
+    };
+  }
+
+  // Create Note from JSON
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['id'],
+      title: json['title'],
+      content: json['content'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      subject: json['subject'] ?? 'General',
+    );
+  }
 }
 
 // Main Notepad Screen
@@ -32,19 +58,57 @@ class _NotepadScreenState extends State<NotepadScreen> {
   String searchQuery = '';
   String selectedSubject = 'All';
   final List<String> subjects = ['All', 'General', 'Work', 'Personal', 'Ideas', 'School'];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadSampleNotes();
+    _loadNotes();
   }
 
-  void _loadSampleNotes() {
+  // Load notes from storage
+  Future<void> _loadNotes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notesJson = prefs.getStringList('notes') ?? [];
+      
+      setState(() {
+        notes = notesJson.map((noteStr) {
+          final noteData = json.decode(noteStr);
+          return Note.fromJson(noteData);
+        }).toList();
+        isLoading = false;
+      });
+
+      // If no notes exist, create sample notes
+      if (notes.isEmpty) {
+        _createSampleNotes();
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      _showErrorSnackBar('Failed to load notes');
+    }
+  }
+
+  // Save notes to storage
+  Future<void> _saveNotes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notesJson = notes.map((note) => json.encode(note.toJson())).toList();
+      await prefs.setStringList('notes', notesJson);
+    } catch (e) {
+      _showErrorSnackBar('Failed to save notes');
+    }
+  }
+
+  void _createSampleNotes() {
     notes = [
       Note(
         id: '1',
         title: 'Welcome to Notepad',
-        content: 'This is your first note! You can edit, delete, or create new notes.',
+        content: 'This is your first note! You can edit, delete, or create new notes. All notes are automatically saved.',
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         updatedAt: DateTime.now().subtract(const Duration(days: 1)),
         subject: 'General',
@@ -58,6 +122,16 @@ class _NotepadScreenState extends State<NotepadScreen> {
         subject: 'Work',
       ),
     ];
+    _saveNotes();
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   List<Note> get filteredNotes {
@@ -74,17 +148,21 @@ class _NotepadScreenState extends State<NotepadScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => NoteEditorScreen(
-          onSave: (title, content, subject) {
+          onSave: (title, content, subject) async {
+            final newNote = Note(
+              id: DateTime.now().millisecondsSinceEpoch.toString(),
+              title: title,
+              content: content,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+              subject: subject,
+            );
+            
             setState(() {
-              notes.add(Note(
-                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                title: title,
-                content: content,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-                subject: subject,
-              ));
+              notes.add(newNote);
             });
+            
+            await _saveNotes();
           },
           subjects: subjects.where((s) => s != 'All').toList(),
         ),
@@ -97,13 +175,15 @@ class _NotepadScreenState extends State<NotepadScreen> {
       MaterialPageRoute(
         builder: (context) => NoteEditorScreen(
           note: note,
-          onSave: (title, content, subject) {
+          onSave: (title, content, subject) async {
             setState(() {
               note.title = title;
               note.content = content;
               note.subject = subject;
               note.updatedAt = DateTime.now();
             });
+            
+            await _saveNotes();
           },
           subjects: subjects.where((s) => s != 'All').toList(),
         ),
@@ -123,11 +203,12 @@ class _NotepadScreenState extends State<NotepadScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               setState(() {
                 notes.remove(note);
               });
-              Navigator.of(context).pop();
+              await _saveNotes();
+              if (mounted) Navigator.of(context).pop();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
@@ -189,38 +270,44 @@ class _NotepadScreenState extends State<NotepadScreen> {
           ),
           // Notes list
           Expanded(
-            child: filteredNotes.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.note_add_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          searchQuery.isNotEmpty
-                              ? 'No notes found'
-                              : 'No notes yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          searchQuery.isNotEmpty
-                              ? 'Try adjusting your search'
-                              : 'Tap + to create your first note',
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF32CD32),
                     ),
                   )
+                : filteredNotes.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.note_add_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              searchQuery.isNotEmpty
+                                  ? 'No notes found'
+                                  : 'No notes yet',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              searchQuery.isNotEmpty
+                                  ? 'Try adjusting your search'
+                                  : 'Tap + to create your first note',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                 : ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: filteredNotes.length,
@@ -367,6 +454,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   late String _selectedSubject;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -383,7 +471,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter a title')),
@@ -391,12 +479,42 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       return;
     }
 
-    widget.onSave(
-      _titleController.text.trim(),
-      _contentController.text.trim(),
-      _selectedSubject,
-    );
-    Navigator.of(context).pop();
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await widget.onSave(
+        _titleController.text.trim(),
+        _contentController.text.trim(),
+        _selectedSubject,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note saved successfully'),
+            backgroundColor: Color(0xFF32CD32),
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to save note'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -409,13 +527,25 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: Text(widget.note == null ? 'New Note' : 'Edit Note'),
         elevation: 0,
         actions: [
-          TextButton(
-            onPressed: _save,
-            child: const Text(
-              'Save',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
+          _isSaving
+              ? const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                )
+              : TextButton(
+                  onPressed: _save,
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
         ],
       ),
       body: Padding(
