@@ -1,0 +1,72 @@
+{
+  "topic": "cloze",
+  "reference":"2021 GCE",
+  "passage": "The medical breakthroughs Zambia has experienced in the recent past are no doubt a milestone. Doctors at the University Teaching Hospital have performed kidney transplants which (1)previously referred to hospitals outside the country. Credit (2) to our medical staff who have helped in (3) the lives of patients and time by (4)  those in need locally. However, the successes the medical personnel have scored have come with challenges; chief (5) them is the lack of donors to give kidneys to patients who require them. This challenge mainly arises (6) the fact that would-be donors are shrouded (7) a cloud of fear to donate organs like kidneys Would-be donors fear that they (8) live on one kidney and so they shudder to entertain the idea of giving away one of their organs. Sometimes the pressure (9) from relatives of a willing donor who will be (10) from donating an organ for fear (11) losing both the donor and the patient. Unlike the developed countries, which have banks (12) the organs can be stored, Zambia (13) on those who come forward when need (14) The achievements our medical staff have made (15) . Far until confidence in them but they need everyone's support to (16) in their future endeavors. Kidney patients (17) not have it easy in our country because the (18) of treatment is high. A patient has to part away with a substantial amount of money for one session only. The onus is (19) our medical personnel to educate the people on the fact that one can use a (20) kidney and live a healthy and long life.",
+  "blanks": {
+    "1": {
+      "word": "were"
+    },
+    "2": {
+      "word": "goes"
+    },
+    "3": {
+      "word": "saving"
+    },
+    "4": {
+      "word": "treating"
+    },
+    "5": {
+      "word": "among"
+    },
+    "6": {
+      "word": "from"
+    },
+    "7": {
+      "word": "in"
+    },
+    "8": {
+      "word": "cannot"
+    },
+    "9": {
+      "word": "Comes",
+      "synonyms": ["emanates"]
+    },
+    "10": {
+      "word": "discouraged"
+    },
+    "11": {
+      "word": "of"
+    },
+    "12": {
+      "word": "where"
+    },
+    "13": {
+      "word": "depends",
+      "synonyms": ["relies"]
+    },
+    "14": {
+      "word": "arise"
+    },
+    "15": {
+      "word": "so"
+    },
+    "16": {
+      "word": "succeed",
+      "synonyms": ["excel"]
+    },
+    "17": {
+      "word": "do"
+    },
+    "18": {
+      "word": "cost",
+      "synonyms": ["expense"]
+    },
+    "19": {
+      "word": "on"
+    },
+    "20": {
+      "word": "single",
+      "synonyms": ["one"]
+    }
+  }
+}

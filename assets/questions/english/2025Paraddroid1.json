@@ -1,0 +1,27 @@
+{
+"topic": "cloze",
+"reference": "2025 Practice Paper",
+"passage": "Technology has become an integral part of modern life, influencing how we work, communicate, and (1) information. The rise of the internet and smartphones has (2) a digital revolution, transforming industries and personal lifestyles. Today, students can (3) online resources to complement their education, while professionals can work remotely with the help of virtual tools. Despite these advancements, there are concerns about the (4) of technology. Excessive screen time, for example, has been linked to poor (5) health and reduced attention spans. Social media, while useful for staying connected, may also (6) feelings of anxiety and loneliness. Moreover, the rapid pace of technological innovation often leads to (7) of older devices and systems. This contributes to electronic waste, which (8) a serious environmental challenge. Cybersecurity is another pressing issue, as data breaches and hacking attempts have (9) in recent years. Governments and companies are investing heavily in systems to (10) sensitive information. Artificial intelligence, once considered science fiction, is now being used in everything from healthcare to finance. While AI can (11) efficiency and accuracy, it also raises ethical questions about privacy and job (12). As society becomes more (13) on technology, digital literacy is increasingly important. Schools must teach students how to (14) responsibly in the digital world. The future of technology holds great promise, but it must be guided by thoughtful (15) and equitable access. If managed well, technology can be a powerful tool for solving global (16) and improving quality of life. However, we must also be prepared to (17) the risks it brings. Collaboration between governments, developers, and users is essential to (18) a balanced digital future. Technology should not only serve the few but (19) everyone, regardless of background or geography. In this way, we can (20) a more inclusive and innovative world.",
+"blanks": {
+"1": {"word": "access", "synonyms": ["obtain"]},
+"2": {"word": "triggered", "synonyms": ["sparked"]},
+"3": {"word": "use", "synonyms": ["utilize"]},
+"4": {"word": "impact", "synonyms": ["effect"]},
+"5": {"word": "mental", "synonyms": ["psychological"]},
+"6": {"word": "cause", "synonyms": ["trigger"]},
+"7": {"word": "obsolescence", "synonyms": ["outdating"]},
+"8": {"word": "poses", "synonyms": ["presents"]},
+"9": {"word": "increased", "synonyms": ["risen"]},
+"10": {"word": "protect", "synonyms": ["safeguard"]},
+"11": {"word": "improve", "synonyms": ["enhance"]},
+"12": {"word": "displacement", "synonyms": ["loss"]},
+"13": {"word": "dependent", "synonyms": ["reliant"]},
+"14": {"word": "navigate", "synonyms": ["operate"]},
+"15": {"word": "regulation", "synonyms": ["governance"]},
+"16": {"word": "challenges", "synonyms": ["issues"]},
+"17": {"word": "manage", "synonyms": ["handle"]},
+"18": {"word": "build", "synonyms": ["create"]},
+"19": {"word": "benefit", "synonyms": ["serve"]},
+"20": {"word": "shape", "synonyms": ["forge"]}
+}
+}

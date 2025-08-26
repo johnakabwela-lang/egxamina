@@ -1,0 +1,76 @@
+{
+  "topic": "cloze",
+  "reference": "2022_P2",
+  "passage": "Peppermint is a hybrid plant with numerous health benefits. Originally from Europe, peppermint today is cultivated all (1) the world. It can consist (2) flesh and dry leaves for use in food or (3) a tea. Its essential oil is (4) in tinctures, chest rubs and creams. It can (5) taken in enteric-coated capsules for swallowing. This allows the\\npeppermint (6) pass into the intestines. Pennermint essential oil (7) concentrateled oil that is extracted (8) peppermint plant (9)  steam distillation. The whole fresh or partly dried (10) is used before it (11) to flower. Peppermint essential oil should not be (12) orally and must be diluted (13) carrier oil such as olive (14) before applying to the skin. Peppermint is a popular traditional remedy (15) a number of conditions. It calms the stomach muscles and improves (16)flow of bile. However, it should not be used by\\n(17) with gastro esophageal reflex diseases.The oil is widely used for calming skin irritation and itchiness. Applying diluted peppermint oil onto the forehead has (18) found to be effective in the (19)  of a tension headache. Menthol, the (20). Chemical component of peppermint, is an effective decongestant and expectorant.",
+  "blanks": {
+    "1": {
+      "word": "over"
+    },
+    "2": {
+      "word": "of"
+    },
+    "3": {
+      "word": "as"
+    },
+    "4": {
+      "word": "used"
+    },
+    "5": {
+      "word": "also"
+    },
+    "6": {
+      "word": "to"
+    },
+    "7": {
+      "word": "is"
+    },
+    "8": {
+      "word": "from"
+    },
+    "9": {
+      "word": "by"
+    },
+    "10": {
+      "word": "plant"
+    },
+    "11": {
+      "word": "starts",
+      "synonyms": [
+        "begins"
+      ]
+    },
+    "12": {
+      "word": "taken"
+    },
+    "13": {
+      "word": "with"
+    },
+    "14": {
+      "word": "oil"
+    },
+    "15": {
+      "word": "for"
+    },
+    "16": {
+      "word": "the"
+    },
+    "17": {
+      "word": "people",
+      "synonyms": [
+        "those"
+      ]
+    },
+    "18": {
+      "word": "been"
+    },
+    "19": {
+      "word": "treatment"
+    },
+    "20": {
+      "word": "main",
+      "synonyms": [
+        "major"
+      ]
+    }
+  }
+}

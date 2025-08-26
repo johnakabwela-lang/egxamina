@@ -1,0 +1,27 @@
+{
+"topic": "cloze",
+"reference": "2025 Practice Paper",
+"passage": "Climate change remains one of the greatest challenges facing humanity in the 21st century. The increase in global temperatures has been linked to human activities that (1) greenhouse gases into the atmosphere. Among the key culprits is carbon dioxide, which (2) from burning fossil fuels such as coal, oil, and natural gas. Scientists have (3) that if emissions are not reduced, the earth's temperature will continue to rise, leading to more frequent and severe weather (4) such as droughts, floods, and hurricanes. Governments around the world are under (5) to take action. While some have implemented policies aimed at reducing emissions, others have been (6) to act, often due to political or economic reasons. One major concern is deforestation, which not only (7) natural habitats but also contributes to climate change. Trees play a vital role in absorbing carbon dioxide, and when they are cut down, the gas is (8) back into the atmosphere. Climate change also affects agriculture, with changing rainfall patterns and increased temperatures making it harder for farmers to (9) food. This could lead to food shortages and increased (10) in many parts of the world. To combat climate change, individuals are encouraged to adopt sustainable lifestyles. This includes using energy-efficient appliances, reducing car usage, and (11) public transport or bicycles. Renewable energy sources such as solar and wind power offer hope for a cleaner future. However, the (12) to shift from fossil fuels remains a major hurdle. Experts believe that education and awareness are crucial in changing public attitudes. If people understand the impact of their actions, they are more likely to (13) environmentally friendly choices. Climate change is not a distant threat; it is happening now. The (14) of the planet depends on what actions we take today. Everyone has a role to play, and it is our collective (15) to ensure a livable world for future generations. Let us (16) hands and work towards a sustainable and resilient future. The journey may be challenging, but the rewards are (17). If we ignore the warnings, we risk (18) irreversible damage to our environment. But if we act now, we can (19) the tide and build a world that is not only habitable but also (20) for all.",
+"blanks": {
+"1": {"word": "emit", "synonyms": ["release"]},
+"2": {"word": "results", "synonyms": ["comes"]},
+"3": {"word": "warned", "synonyms": ["predicted"]},
+"4": {"word": "events", "synonyms": ["disasters"]},
+"5": {"word": "pressure", "synonyms": ["demand"]},
+"6": {"word": "reluctant", "synonyms": ["hesitant"]},
+"7": {"word": "destroys", "synonyms": ["eliminates"]},
+"8": {"word": "released", "synonyms": ["emitted"]},
+"9": {"word": "grow", "synonyms": ["produce"]},
+"10": {"word": "hunger", "synonyms": ["famine"]},
+"11": {"word": "choosing", "synonyms": ["opting"]},
+"12": {"word": "transition", "synonyms": ["shift"]},
+"13": {"word": "make", "synonyms": ["take"]},
+"14": {"word": "future", "synonyms": ["survival"]},
+"15": {"word": "responsibility", "synonyms": ["duty"]},
+"16": {"word": "join", "synonyms": ["unite"]},
+"17": {"word": "great", "synonyms": ["immense"]},
+"18": {"word": "causing", "synonyms": ["inflicting"]},
+"19": {"word": "reverse", "synonyms": ["change"]},
+"20": {"word": "thriving", "synonyms": ["flourishing"]}
+}
+}

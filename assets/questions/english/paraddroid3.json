@@ -1,0 +1,17 @@
+{
+"topic": "cloze",
+"reference": "Paraddroid 101",
+"passage": "Paraddroid, a forward-thinking tech initiative, aims to revolutionize the way people interact with digital tools and systems. By focusing on accessible innovation, it seeks to (1) barriers faced by students and small-scale entrepreneurs. Through skill-oriented programs and affordable hardware solutions, Paraddroid has (2) a significant difference in communities that were previously underserved. One key mission of the initiative is to (3) practical knowledge through workshops and digital platforms. The founders believe that real change comes from equipping people with the skills to (4) their environment. As a result, the project has not only (5) local innovation but also inspired confidence in many aspiring developers. However, challenges such as limited funding and (6) infrastructure still remain. Despite these hurdles, the team continues to (7) forward with passion and purpose. By fostering collaboration and creativity, Paraddroid hopes to (8) a culture of problem-solving and resilience. The initiative (9) its success on strong community support and ethical leadership. As it grows, it will need to (10) strategic partnerships to scale its impact.",
+"blanks": {
+"1": {"word": "remove", "synonyms": ["eliminate"]},
+"2": {"word": "made", "synonyms": ["created"]},
+"3": {"word": "deliver", "synonyms": ["provide"]},
+"4": {"word": "transform", "synonyms": ["improve"]},
+"5": {"word": "sparked", "synonyms": ["triggered"]},
+"6": {"word": "inadequate", "synonyms": ["poor"]},
+"7": {"word": "move", "synonyms": ["push"]},
+"8": {"word": "build", "synonyms": ["foster"]},
+"9": {"word": "attributes", "synonyms": ["credits"]},
+"10": {"word": "form", "synonyms": ["develop"]}
+}
+}

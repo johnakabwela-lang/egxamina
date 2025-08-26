@@ -1,0 +1,72 @@
+{
+  "topic": "cloze",
+  "reference": "2019 P2.pdf",
+  "passage": "Internet dating continues (1) grow in popularity worldwide. Internet romances may blossom quickly, but they often wither when reality sets (2). There is a greater cause (3). Concern than mere disappointment. Dating in this fashion may put you in serious danger: whether physically, emotionally (4)  spiritually. How can something that looks so innocent and safe, a computer terminal right in your own home, actually (5)  danger to you? How is such dishonesty practised on the internet? And what dangers does this present to those who are looking (6)  romance? One parent was alarmed to learn (7) large proportion of children disobey parental rules against visiting dangerous websites. When youths use the internet to meet new people, they can be in far more, danger (8) they Realise. For example, some people can use the internet to lure minors into debased sexual activities. Indeed, there have been reports of adult sexual predators who pretend to (9) youths as they prowl the internet seeking to prey on young ones. According to one study, one-in-five children who use the internet have (10) Solicited for sex. One newspaper also stated that one-in Thirty-three children between ages ten and seventeen were aggressively stalked (11) computer Conversations. Some young people have found, to their surprise, that the youth with (12)  they shared a budding romance over the internet was actually (13). Adult prison mate. Other young (14) have unwittingly become involved with sexual predators. These vile people first ‘groom’ a prospective victim, building trust through friendly on-line chats. Eventually, they seek to meet in person in order to carry (15) their perverted desires. Tragically, young people have been beaten, raped and even murdered. Wicked people do hide what they are in (16) to find victims on the internet. Anonymous communication through the internet can make it almost impossible to see through such deception. When you talk with someone in person, you may learn something from his facial expression and the tone of his (17). But on the internet, you don’t get any of that. It is easy to be fooled. Granted, not everyone you meet on the internet is a dangerous predator. However, there are additional ways in which people hide what they are. A common practice (18) those seeking romance on the internet is to exaggerate or invent good traits and to minimise or conceal serious faults. Internet dating can be bad (19) people get deceived. People often switch sexes, income levels, race, criminal records, mental health histories and marital status. To warn others, many people have reported painful experiences of (20)  misled by internet dates. Rather than believing all that is written to you by someone you have never met, consider your steps carefully.",
+  "blanks": {
+    "1": {
+      "word": "to"
+    },
+    "2": {
+      "word": "in"
+    },
+    "3": {
+      "word": "for"
+    },
+    "4": {
+      "word": "or"
+    },
+    "5": {
+      "word": "pose",
+      "synonyms": ["be", "present"]
+    },
+    "6": {
+      "word": "for"
+    },
+    "7": {
+      "word": "that"
+    },
+    "8": {
+      "word": "than"
+    },
+    "9": {
+      "word": "be"
+    },
+    "10": {
+      "word": "been"
+    },
+    "11": {
+      "word": "through",
+      "synonyms": ["by"]
+    },
+    "12": {
+      "word": "whom"
+    },
+    "13": {
+      "word": "an"
+    },
+    "14": {
+      "word": "ones",
+      "synonyms": ["people"]
+    },
+    "15": {
+      "word": "out"
+    },
+    "16": {
+      "word": "order"
+    },
+    "17": {
+      "word": "voice"
+    },
+    "18": {
+      "word": "among",
+      "synonyms": ["by", "for", "of"]
+    },
+    "19": {
+      "word": "because",
+      "synonyms": ["when", "if", "as", "since"]
+    },
+    "20": {
+      "word": "being"
+    }
+  }
+}

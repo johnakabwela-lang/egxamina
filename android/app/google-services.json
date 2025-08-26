@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "525658412878",
+    "firebase_url": "https://stock-manager-4b225-default-rtdb.firebaseio.com",
+    "project_id": "stock-manager-4b225",
+    "storage_bucket": "stock-manager-4b225.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525658412878:android:80695fcd44096aa20ff01f",
+        "android_client_info": {
+          "package_name": "com.paraddroid.pocketpos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA99bTW59LyaFrJLCxjBzCAdUG4oaD8f-4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
