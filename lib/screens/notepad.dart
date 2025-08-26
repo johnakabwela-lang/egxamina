@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 // Note model
 class Note {
@@ -48,32 +47,349 @@ class Note {
   }
 }
 
-enum ExportFormat { pdf, docx }
+// External Storage Interface
+abstract class ExternalStorage {
+  Future<void> saveNotes(List<Note> notes);
+  Future<List<Note>> loadNotes();
+  Future<void> backupNotes(List<Note> notes, String backupName);
+  Future<List<String>> getAvailableBackups();
+  Future<List<Note>> restoreFromBackup(String backupName);
+}
 
-// Note Manager Class - Reusable across the app
+// Local File Storage Implementation
+class LocalFileStorage implements ExternalStorage {
+  late Directory _storageDirectory;
+  late Directory _backupDirectory;
+
+  Future<void> initialize() async {
+    await _createStorageDirectories();
+  }
+
+  Future<void> _createStorageDirectories() async {
+    try {
+      Directory baseDir;
+      
+      if (Platform.isAndroid) {
+        // Try external storage first, fall back to app directory
+        try {
+          final externalDir = await getExternalStorageDirectory();
+          baseDir = externalDir ?? await getApplicationDocumentsDirectory();
+        } catch (e) {
+          baseDir = await getApplicationDocumentsDirectory();
+        }
+      } else {
+        // iOS uses documents directory
+        baseDir = await getApplicationDocumentsDirectory();
+      }
+
+      _storageDirectory = Directory('${baseDir.path}/ParaNotes');
+      _backupDirectory = Directory('${baseDir.path}/ParaNotes/Backups');
+
+      await _storageDirectory.create(recursive: true);
+      await _backupDirectory.create(recursive: true);
+
+      print('Storage directories created at: ${_storageDirectory.path}');
+    } catch (e) {
+      print('Error creating storage directories: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> saveNotes(List<Note> notes) async {
+    try {
+      final notesFile = File('${_storageDirectory.path}/notes.json');
+      final jsonData = {
+        'notes': notes.map((note) => note.toJson()).toList(),
+        'lastModified': DateTime.now().toIso8601String(),
+        'version': '1.0',
+      };
+      
+      final jsonString = json.encode(jsonData);
+      await notesFile.writeAsString(jsonString);
+      print('Saved ${notes.length} notes to local storage');
+    } catch (e) {
+      print('Error saving notes: $e');
+      throw Exception('Failed to save notes: $e');
+    }
+  }
+
+  @override
+  Future<List<Note>> loadNotes() async {
+    try {
+      final notesFile = File('${_storageDirectory.path}/notes.json');
+      
+      if (!await notesFile.exists()) {
+        return [];
+      }
+
+      final jsonString = await notesFile.readAsString();
+      if (jsonString.isEmpty) {
+        return [];
+      }
+
+      final jsonData = json.decode(jsonString);
+      
+      // Handle both old and new format
+      List<dynamic> notesList;
+      if (jsonData is List) {
+        // Old format - direct list of notes
+        notesList = jsonData;
+      } else if (jsonData is Map && jsonData['notes'] != null) {
+        // New format - structured data
+        notesList = jsonData['notes'];
+      } else {
+        return [];
+      }
+
+      final notes = notesList.map((noteJson) => Note.fromJson(noteJson)).toList();
+      print('Loaded ${notes.length} notes from local storage');
+      return notes;
+    } catch (e) {
+      print('Error loading notes: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> backupNotes(List<Note> notes, String backupName) async {
+    try {
+      final backupFile = File('${_backupDirectory.path}/$backupName.json');
+      final backupData = {
+        'notes': notes.map((note) => note.toJson()).toList(),
+        'backupName': backupName,
+        'createdAt': DateTime.now().toIso8601String(),
+        'noteCount': notes.length,
+        'version': '1.0',
+      };
+      
+      final jsonString = json.encode(backupData);
+      await backupFile.writeAsString(jsonString);
+      print('Backup created: $backupName with ${notes.length} notes');
+    } catch (e) {
+      print('Error creating backup: $e');
+      throw Exception('Failed to create backup: $e');
+    }
+  }
+
+  @override
+  Future<List<String>> getAvailableBackups() async {
+    try {
+      final backupFiles = _backupDirectory
+          .listSync()
+          .where((file) => file.path.endsWith('.json'))
+          .map((file) => file.path.split('/').last.replaceAll('.json', ''))
+          .toList();
+      
+      backupFiles.sort((a, b) => b.compareTo(a)); // Sort by name (newest first)
+      return backupFiles;
+    } catch (e) {
+      print('Error getting backups: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Note>> restoreFromBackup(String backupName) async {
+    try {
+      final backupFile = File('${_backupDirectory.path}/$backupName.json');
+      
+      if (!await backupFile.exists()) {
+        throw Exception('Backup file not found: $backupName');
+      }
+
+      final jsonString = await backupFile.readAsString();
+      final backupData = json.decode(jsonString);
+      
+      final notesList = backupData['notes'] as List<dynamic>;
+      final notes = notesList.map((noteJson) => Note.fromJson(noteJson)).toList();
+      
+      print('Restored ${notes.length} notes from backup: $backupName');
+      return notes;
+    } catch (e) {
+      print('Error restoring backup: $e');
+      throw Exception('Failed to restore backup: $e');
+    }
+  }
+
+  String get storagePath => _storageDirectory.path;
+}
+
+// Cloud Storage Implementation (Example with generic HTTP API)
+class CloudStorage implements ExternalStorage {
+  final String baseUrl;
+  final String apiKey;
+
+  CloudStorage({required this.baseUrl, required this.apiKey});
+
+  @override
+  Future<void> saveNotes(List<Note> notes) async {
+    try {
+      final data = {
+        'notes': notes.map((note) => note.toJson()).toList(),
+        'lastModified': DateTime.now().toIso8601String(),
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/notes'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: json.encode(data),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to save notes to cloud: ${response.statusCode}');
+      }
+
+      print('Saved ${notes.length} notes to cloud storage');
+    } catch (e) {
+      print('Error saving notes to cloud: $e');
+      throw Exception('Failed to save notes to cloud: $e');
+    }
+  }
+
+  @override
+  Future<List<Note>> loadNotes() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/notes'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to load notes from cloud: ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body);
+      final notesList = data['notes'] as List<dynamic>;
+      final notes = notesList.map((noteJson) => Note.fromJson(noteJson)).toList();
+      
+      print('Loaded ${notes.length} notes from cloud storage');
+      return notes;
+    } catch (e) {
+      print('Error loading notes from cloud: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<void> backupNotes(List<Note> notes, String backupName) async {
+    try {
+      final data = {
+        'notes': notes.map((note) => note.toJson()).toList(),
+        'backupName': backupName,
+        'createdAt': DateTime.now().toIso8601String(),
+      };
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/backups'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: json.encode(data),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to create cloud backup: ${response.statusCode}');
+      }
+
+      print('Cloud backup created: $backupName');
+    } catch (e) {
+      print('Error creating cloud backup: $e');
+      throw Exception('Failed to create cloud backup: $e');
+    }
+  }
+
+  @override
+  Future<List<String>> getAvailableBackups() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/backups'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to get cloud backups: ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body);
+      final backups = (data['backups'] as List<dynamic>)
+          .map((backup) => backup['backupName'] as String)
+          .toList();
+      
+      return backups;
+    } catch (e) {
+      print('Error getting cloud backups: $e');
+      return [];
+    }
+  }
+
+  @override
+  Future<List<Note>> restoreFromBackup(String backupName) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/backups/$backupName'),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to restore cloud backup: ${response.statusCode}');
+      }
+
+      final data = json.decode(response.body);
+      final notesList = data['notes'] as List<dynamic>;
+      final notes = notesList.map((noteJson) => Note.fromJson(noteJson)).toList();
+      
+      print('Restored ${notes.length} notes from cloud backup: $backupName');
+      return notes;
+    } catch (e) {
+      print('Error restoring cloud backup: $e');
+      throw Exception('Failed to restore cloud backup: $e');
+    }
+  }
+}
+
+// Note Manager Class - Updated with external storage
 class NoteManager {
   static final NoteManager _instance = NoteManager._internal();
   factory NoteManager() => _instance;
   NoteManager._internal();
 
   List<Note> _notes = [];
-  late Directory _notesDirectory;
+  late ExternalStorage _storage;
   bool _initialized = false;
 
   List<Note> get notes => List.unmodifiable(_notes);
 
-  Future<void> initialize() async {
+  Future<void> initialize({ExternalStorage? customStorage}) async {
     if (_initialized) return;
 
     try {
       await _requestPermissions();
-      await _createNotesDirectory();
+      
+      // Initialize storage
+      if (customStorage != null) {
+        _storage = customStorage;
+      } else {
+        final localStorage = LocalFileStorage();
+        await localStorage.initialize();
+        _storage = localStorage;
+      }
+
       await _loadNotes();
       _initialized = true;
       print('NoteManager initialized successfully');
     } catch (e) {
       print('Error initializing NoteManager: $e');
-      // Initialize with fallback directory and empty notes
       await _initializeFallback();
       _initialized = true;
     }
@@ -81,145 +397,53 @@ class NoteManager {
 
   Future<void> _initializeFallback() async {
     try {
-      // Use app documents directory as fallback
-      final appDir = await getApplicationDocumentsDirectory();
-      _notesDirectory = Directory('${appDir.path}/ParaNotes');
-      if (!await _notesDirectory.exists()) {
-        await _notesDirectory.create(recursive: true);
-      }
+      final localStorage = LocalFileStorage();
+      await localStorage.initialize();
+      _storage = localStorage;
       _notes = [];
       print('Fallback initialization successful');
     } catch (e) {
       print('Fallback initialization failed: $e');
       _notes = [];
-      // Create a temporary directory in memory
-      _notesDirectory = Directory.systemTemp;
     }
   }
 
   Future<void> _requestPermissions() async {
     if (Platform.isAndroid) {
       try {
-        // Check Android version and request appropriate permissions
         var status = await Permission.storage.status;
-        
         if (status.isDenied || status.isPermanentlyDenied) {
           status = await Permission.storage.request();
         }
         
-        // For Android 11+ (API 30+), also try manage external storage
         if (status.isDenied) {
           final manageStatus = await Permission.manageExternalStorage.request();
           print('Manage external storage permission: $manageStatus');
         }
         
         print('Storage permission status: $status');
-        // Don't throw exception, continue with available permissions
       } catch (e) {
         print('Permission request failed: $e');
-        // Continue without throwing - we'll use app directory
       }
-    }
-  }
-
-  Future<void> _createNotesDirectory() async {
-    try {
-      if (Platform.isAndroid) {
-        // Try multiple directory options for Android
-        List<Directory?> possibleDirs = [];
-        
-        try {
-          possibleDirs.add(await getExternalStorageDirectory());
-        } catch (e) {
-          print('External storage not available: $e');
-        }
-        
-        try {
-          final appDir = await getApplicationDocumentsDirectory();
-          possibleDirs.add(appDir);
-        } catch (e) {
-          print('App documents directory not available: $e');
-        }
-        
-        // Try to create directory in the first available location
-        bool created = false;
-        for (Directory? dir in possibleDirs) {
-          if (dir != null) {
-            try {
-              if (dir.path.contains('Android/data')) {
-                // Use app-specific external directory
-                _notesDirectory = Directory('${dir.path}/ParaNotes');
-              } else {
-                // Use documents directory
-                _notesDirectory = Directory('${dir.path}/ParaNotes');
-              }
-              
-              if (!await _notesDirectory.exists()) {
-                await _notesDirectory.create(recursive: true);
-              }
-              created = true;
-              print('Notes directory created at: ${_notesDirectory.path}');
-              break;
-            } catch (e) {
-              print('Failed to create directory at ${dir.path}: $e');
-              continue;
-            }
-          }
-        }
-        
-        if (!created) {
-          throw Exception('Could not create notes directory in any location');
-        }
-      } else {
-        // For iOS, use documents directory
-        final appDir = await getApplicationDocumentsDirectory();
-        _notesDirectory = Directory('${appDir.path}/ParaNotes');
-        if (!await _notesDirectory.exists()) {
-          await _notesDirectory.create(recursive: true);
-        }
-        print('iOS notes directory created at: ${_notesDirectory.path}');
-      }
-    } catch (e) {
-      print('Error creating notes directory: $e');
-      rethrow; // Let initialize() handle this with fallback
     }
   }
 
   Future<void> _loadNotes() async {
-    final notesFile = File('${_notesDirectory.path}/notes.json');
-
     try {
-      if (await notesFile.exists()) {
-        final jsonString = await notesFile.readAsString();
-        if (jsonString.isNotEmpty) {
-          final List<dynamic> jsonList = json.decode(jsonString);
-          _notes = jsonList.map((json) => Note.fromJson(json)).toList();
-          print('Loaded ${_notes.length} notes');
-        } else {
-          _notes = [];
-        }
-      } else {
-        _notes = [];
-        print('No existing notes file found');
-      }
+      _notes = await _storage.loadNotes();
+      print('Loaded ${_notes.length} notes');
     } catch (e) {
       print('Error loading notes: $e');
       _notes = [];
-      // Don't rethrow - empty notes list is acceptable
     }
   }
 
   Future<void> _saveNotes() async {
     try {
-      final notesFile = File('${_notesDirectory.path}/notes.json');
-      final jsonString = json.encode(
-        _notes.map((note) => note.toJson()).toList(),
-      );
-      await notesFile.writeAsString(jsonString);
+      await _storage.saveNotes(_notes);
       print('Saved ${_notes.length} notes');
     } catch (e) {
       print('Error saving notes: $e');
-      // Don't rethrow - we can continue without saving
     }
   }
 
@@ -266,65 +490,112 @@ class NoteManager {
     return uniqueSubjects.toList()..sort();
   }
 
-  Future<String> exportNoteToPdf(Note note) async {
-    final pdf = pw.Document();
+  // Export notes as JSON
+  Future<String> exportNotesToJson() async {
+    try {
+      final exportData = {
+        'exportedAt': DateTime.now().toIso8601String(),
+        'noteCount': _notes.length,
+        'notes': _notes.map((note) => note.toJson()).toList(),
+        'version': '1.0',
+      };
 
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                note.title,
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 10),
-              pw.Text(
-                'Subject: ${note.subject}',
-                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-              ),
-              pw.Text(
-                'Created: ${_formatDate(note.createdAt)}',
-                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-              ),
-              pw.Text(
-                'Updated: ${_formatDate(note.updatedAt)}',
-                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
-              ),
-              pw.SizedBox(height: 20),
-              pw.Text(note.content, style: pw.TextStyle(fontSize: 12)),
-            ],
-          );
-        },
-      ),
-    );
-
-    final fileName =
-        '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.pdf';
-    final file = File('${_notesDirectory.path}/$fileName');
-    await file.writeAsBytes(await pdf.save());
-    return file.path;
+      final jsonString = json.encode(exportData);
+      
+      // Save to external storage for sharing
+      Directory tempDir = await getTemporaryDirectory();
+      final fileName = 'notes_export_${DateTime.now().millisecondsSinceEpoch}.json';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsString(jsonString);
+      
+      return file.path;
+    } catch (e) {
+      print('Error exporting notes: $e');
+      throw Exception('Failed to export notes: $e');
+    }
   }
 
-  Future<String> exportNoteToDocx(Note note) async {
-    final content = '''${note.title}
+  // Import notes from JSON
+  Future<int> importNotesFromJson(String filePath) async {
+    try {
+      final file = File(filePath);
+      final jsonString = await file.readAsString();
+      final importData = json.decode(jsonString);
 
-Subject: ${note.subject}
-Created: ${_formatDate(note.createdAt)}
-Updated: ${_formatDate(note.updatedAt)}
+      List<dynamic> notesList;
+      if (importData is List) {
+        // Direct list of notes
+        notesList = importData;
+      } else if (importData is Map && importData['notes'] != null) {
+        // Structured export format
+        notesList = importData['notes'];
+      } else {
+        throw Exception('Invalid JSON format');
+      }
 
-${note.content}''';
+      int importedCount = 0;
+      for (var noteJson in notesList) {
+        try {
+          final note = Note.fromJson(noteJson);
+          // Check if note already exists (by ID)
+          if (!_notes.any((existingNote) => existingNote.id == note.id)) {
+            _notes.add(note);
+            importedCount++;
+          }
+        } catch (e) {
+          print('Error importing note: $e');
+        }
+      }
 
-    final fileName =
-        '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.docx';
-    final file = File('${_notesDirectory.path}/$fileName');
-    await file.writeAsString(content);
-    return file.path;
+      if (importedCount > 0) {
+        await _saveNotes();
+      }
+
+      return importedCount;
+    } catch (e) {
+      print('Error importing notes: $e');
+      throw Exception('Failed to import notes: $e');
+    }
+  }
+
+  // Backup operations
+  Future<void> createBackup(String backupName) async {
+    try {
+      await _storage.backupNotes(_notes, backupName);
+    } catch (e) {
+      print('Error creating backup: $e');
+      throw Exception('Failed to create backup: $e');
+    }
+  }
+
+  Future<List<String>> getAvailableBackups() async {
+    try {
+      return await _storage.getAvailableBackups();
+    } catch (e) {
+      print('Error getting backups: $e');
+      return [];
+    }
+  }
+
+  Future<void> restoreFromBackup(String backupName) async {
+    try {
+      _notes = await _storage.restoreFromBackup(backupName);
+      await _saveNotes(); // Save restored notes to current storage
+    } catch (e) {
+      print('Error restoring backup: $e');
+      throw Exception('Failed to restore backup: $e');
+    }
+  }
+
+  // Sync with external storage
+  Future<void> syncNotes() async {
+    try {
+      await _saveNotes();
+      print('Notes synced successfully');
+    } catch (e) {
+      print('Error syncing notes: $e');
+      throw Exception('Failed to sync notes: $e');
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -332,7 +603,7 @@ ${note.content}''';
   }
 }
 
-// Main Notepad Screen
+// Main Notepad Screen - Updated
 class NotepadScreen extends StatefulWidget {
   const NotepadScreen({super.key});
 
@@ -421,6 +692,62 @@ class _NotepadScreenState extends State<NotepadScreen> {
                       PopupMenuItem(value: subject, child: Text(subject)),
                 )
                 .toList(),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: _handleMenuAction,
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_download, size: 18),
+                    SizedBox(width: 8),
+                    Text('Export JSON'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'import',
+                child: Row(
+                  children: [
+                    Icon(Icons.file_upload, size: 18),
+                    SizedBox(width: 8),
+                    Text('Import JSON'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'backup',
+                child: Row(
+                  children: [
+                    Icon(Icons.backup, size: 18),
+                    SizedBox(width: 8),
+                    Text('Create Backup'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'restore',
+                child: Row(
+                  children: [
+                    Icon(Icons.restore, size: 18),
+                    SizedBox(width: 8),
+                    Text('Restore Backup'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'sync',
+                child: Row(
+                  children: [
+                    Icon(Icons.sync, size: 18),
+                    SizedBox(width: 8),
+                    Text('Sync Notes'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -572,12 +899,12 @@ class _NotepadScreenState extends State<NotepadScreen> {
               ),
             ),
             const PopupMenuItem(
-              value: 'export',
+              value: 'share',
               child: Row(
                 children: [
-                  Icon(Icons.file_download, size: 18),
+                  Icon(Icons.share, size: 18),
                   SizedBox(width: 8),
-                  Text('Export'),
+                  Text('Share as JSON'),
                 ],
               ),
             ),
@@ -597,8 +924,8 @@ class _NotepadScreenState extends State<NotepadScreen> {
               case 'edit':
                 _editNote(note);
                 break;
-              case 'export':
-                _showExportDialog(note);
+              case 'share':
+                _shareNoteAsJson(note);
                 break;
               case 'delete':
                 _deleteNote(note);
@@ -744,50 +1071,33 @@ class _NotepadScreenState extends State<NotepadScreen> {
     );
   }
 
-  void _showExportDialog(Note note) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Export Note'),
-        content: const Text('Choose export format:'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _exportNote(note, ExportFormat.pdf);
-            },
-            child: const Text('PDF'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _exportNote(note, ExportFormat.docx);
-            },
-            child: const Text('Word'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
+  void _handleMenuAction(String action) {
+    switch (action) {
+      case 'export':
+        _exportAllNotes();
+        break;
+      case 'import':
+        _showImportDialog();
+        break;
+      case 'backup':
+        _createBackup();
+        break;
+      case 'restore':
+        _showRestoreDialog();
+        break;
+      case 'sync':
+        _syncNotes();
+        break;
+    }
   }
 
-  Future<void> _exportNote(Note note, ExportFormat format) async {
+  Future<void> _exportAllNotes() async {
     try {
-      String filePath;
-
-      if (format == ExportFormat.pdf) {
-        filePath = await _noteManager.exportNoteToPdf(note);
-      } else {
-        filePath = await _noteManager.exportNoteToDocx(note);
-      }
-
+      final filePath = await _noteManager.exportNotesToJson();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Note exported to: $filePath'),
+            content: Text('Notes exported successfully'),
             backgroundColor: const Color(0xFF32CD32),
             action: SnackBarAction(
               label: 'Share',
@@ -809,9 +1119,183 @@ class _NotepadScreenState extends State<NotepadScreen> {
       }
     }
   }
+
+  Future<void> _shareNoteAsJson(Note note) async {
+    try {
+      final noteJson = {
+        'note': note.toJson(),
+        'exportedAt': DateTime.now().toIso8601String(),
+        'version': '1.0',
+      };
+
+      Directory tempDir = await getTemporaryDirectory();
+      final fileName = '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.json';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsString(json.encode(noteJson));
+
+      Share.shareXFiles([XFile(file.path)]);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Share failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import Notes'),
+        content: const Text('To import notes, place a JSON file with exported notes in your device and select it through your file manager. The app will automatically detect and import compatible JSON files.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _createBackup() async {
+    final backupName = 'backup_${DateTime.now().millisecondsSinceEpoch}';
+    
+    try {
+      await _noteManager.createBackup(backupName);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup created successfully'),
+            backgroundColor: Color(0xFF32CD32),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showRestoreDialog() async {
+    try {
+      final backups = await _noteManager.getAvailableBackups();
+      
+      if (backups.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No backups available'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Restore Backup'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: backups.length,
+                itemBuilder: (context, index) {
+                  final backup = backups[index];
+                  return ListTile(
+                    title: Text(backup),
+                    subtitle: Text('Tap to restore'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _restoreFromBackup(backup);
+                    },
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading backups: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreFromBackup(String backupName) async {
+    try {
+      await _noteManager.restoreFromBackup(backupName);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup restored successfully'),
+            backgroundColor: Color(0xFF32CD32),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _syncNotes() async {
+    try {
+      await _noteManager.syncNotes();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Notes synced successfully'),
+            backgroundColor: Color(0xFF32CD32),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sync failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 }
 
-// Note Editor Screen
+// Note Editor Screen - Same as before
 class NoteEditorScreen extends StatefulWidget {
   final Note? note;
   final Function(String title, String content, String subject) onSave;
