@@ -70,74 +70,142 @@ class NoteManager {
       await _createNotesDirectory();
       await _loadNotes();
       _initialized = true;
+      print('NoteManager initialized successfully');
     } catch (e) {
       print('Error initializing NoteManager: $e');
-      // Continue with empty notes list instead of throwing
-      _notes = [];
+      // Initialize with fallback directory and empty notes
+      await _initializeFallback();
       _initialized = true;
+    }
+  }
+
+  Future<void> _initializeFallback() async {
+    try {
+      // Use app documents directory as fallback
+      final appDir = await getApplicationDocumentsDirectory();
+      _notesDirectory = Directory('${appDir.path}/ParaNotes');
+      if (!await _notesDirectory.exists()) {
+        await _notesDirectory.create(recursive: true);
+      }
+      _notes = [];
+      print('Fallback initialization successful');
+    } catch (e) {
+      print('Fallback initialization failed: $e');
+      _notes = [];
+      // Create a temporary directory in memory
+      _notesDirectory = Directory.systemTemp;
     }
   }
 
   Future<void> _requestPermissions() async {
     if (Platform.isAndroid) {
-      // For Android 11+ (API 30+), we need different permissions
-      final status = await Permission.storage.request();
-      if (status.isDenied) {
-        print('Storage permission denied, but continuing...');
-        // Don't throw exception, just log the issue
+      try {
+        // Check Android version and request appropriate permissions
+        var status = await Permission.storage.status;
+        
+        if (status.isDenied || status.isPermanentlyDenied) {
+          status = await Permission.storage.request();
+        }
+        
+        // For Android 11+ (API 30+), also try manage external storage
+        if (status.isDenied) {
+          final manageStatus = await Permission.manageExternalStorage.request();
+          print('Manage external storage permission: $manageStatus');
+        }
+        
+        print('Storage permission status: $status');
+        // Don't throw exception, continue with available permissions
+      } catch (e) {
+        print('Permission request failed: $e');
+        // Continue without throwing - we'll use app directory
       }
     }
   }
 
   Future<void> _createNotesDirectory() async {
     try {
-      Directory? externalDir;
-
       if (Platform.isAndroid) {
-        // Try external storage first, fallback to app directory
+        // Try multiple directory options for Android
+        List<Directory?> possibleDirs = [];
+        
         try {
-          externalDir = await getExternalStorageDirectory();
-          if (externalDir != null) {
-            final paraNotesPath = '/storage/emulated/0/ParaNotes';
-            _notesDirectory = Directory(paraNotesPath);
-          }
+          possibleDirs.add(await getExternalStorageDirectory());
         } catch (e) {
-          print('External storage not available, using app directory');
-          externalDir = await getApplicationDocumentsDirectory();
-          _notesDirectory = Directory('${externalDir.path}/ParaNotes');
+          print('External storage not available: $e');
+        }
+        
+        try {
+          final appDir = await getApplicationDocumentsDirectory();
+          possibleDirs.add(appDir);
+        } catch (e) {
+          print('App documents directory not available: $e');
+        }
+        
+        // Try to create directory in the first available location
+        bool created = false;
+        for (Directory? dir in possibleDirs) {
+          if (dir != null) {
+            try {
+              if (dir.path.contains('Android/data')) {
+                // Use app-specific external directory
+                _notesDirectory = Directory('${dir.path}/ParaNotes');
+              } else {
+                // Use documents directory
+                _notesDirectory = Directory('${dir.path}/ParaNotes');
+              }
+              
+              if (!await _notesDirectory.exists()) {
+                await _notesDirectory.create(recursive: true);
+              }
+              created = true;
+              print('Notes directory created at: ${_notesDirectory.path}');
+              break;
+            } catch (e) {
+              print('Failed to create directory at ${dir.path}: $e');
+              continue;
+            }
+          }
+        }
+        
+        if (!created) {
+          throw Exception('Could not create notes directory in any location');
         }
       } else {
         // For iOS, use documents directory
-        externalDir = await getApplicationDocumentsDirectory();
-        _notesDirectory = Directory('${externalDir.path}/ParaNotes');
-      }
-
-      if (!await _notesDirectory.exists()) {
-        await _notesDirectory.create(recursive: true);
+        final appDir = await getApplicationDocumentsDirectory();
+        _notesDirectory = Directory('${appDir.path}/ParaNotes');
+        if (!await _notesDirectory.exists()) {
+          await _notesDirectory.create(recursive: true);
+        }
+        print('iOS notes directory created at: ${_notesDirectory.path}');
       }
     } catch (e) {
       print('Error creating notes directory: $e');
-      // Fallback to app documents directory
-      final appDir = await getApplicationDocumentsDirectory();
-      _notesDirectory = Directory('${appDir.path}/ParaNotes');
-      if (!await _notesDirectory.exists()) {
-        await _notesDirectory.create(recursive: true);
-      }
+      rethrow; // Let initialize() handle this with fallback
     }
   }
 
   Future<void> _loadNotes() async {
     final notesFile = File('${_notesDirectory.path}/notes.json');
 
-    if (await notesFile.exists()) {
-      try {
+    try {
+      if (await notesFile.exists()) {
         final jsonString = await notesFile.readAsString();
-        final List<dynamic> jsonList = json.decode(jsonString);
-        _notes = jsonList.map((json) => Note.fromJson(json)).toList();
-      } catch (e) {
-        print('Error loading notes: $e');
+        if (jsonString.isNotEmpty) {
+          final List<dynamic> jsonList = json.decode(jsonString);
+          _notes = jsonList.map((json) => Note.fromJson(json)).toList();
+          print('Loaded ${_notes.length} notes');
+        } else {
+          _notes = [];
+        }
+      } else {
         _notes = [];
+        print('No existing notes file found');
       }
+    } catch (e) {
+      print('Error loading notes: $e');
+      _notes = [];
+      // Don't rethrow - empty notes list is acceptable
     }
   }
 
@@ -148,8 +216,10 @@ class NoteManager {
         _notes.map((note) => note.toJson()).toList(),
       );
       await notesFile.writeAsString(jsonString);
+      print('Saved ${_notes.length} notes');
     } catch (e) {
       print('Error saving notes: $e');
+      // Don't rethrow - we can continue without saving
     }
   }
 
@@ -242,24 +312,17 @@ class NoteManager {
   }
 
   Future<String> exportNoteToDocx(Note note) async {
-    // Create a simple DOCX content
-    final content =
-        '''
-${note.title}
+    final content = '''${note.title}
 
 Subject: ${note.subject}
 Created: ${_formatDate(note.createdAt)}
 Updated: ${_formatDate(note.updatedAt)}
 
-${note.content}
-''';
+${note.content}''';
 
     final fileName =
         '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.docx';
     final file = File('${_notesDirectory.path}/$fileName');
-
-    // For simplicity, we'll create a basic text file with .docx extension
-    // In a real app, you'd use a proper DOCX library
     await file.writeAsString(content);
     return file.path;
   }
@@ -282,7 +345,6 @@ class _NotepadScreenState extends State<NotepadScreen> {
   String searchQuery = '';
   String selectedSubject = 'All';
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -291,17 +353,24 @@ class _NotepadScreenState extends State<NotepadScreen> {
   }
 
   Future<void> _initializeNoteManager() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
       await _noteManager.initialize();
-      setState(() {
-        _isLoading = false;
-        _errorMessage = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'Error initializing storage: $e';
-      });
+      print('Failed to initialize note manager: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -310,52 +379,17 @@ class _NotepadScreenState extends State<NotepadScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading notes...'),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
       return Scaffold(
-        body: Center(
+        backgroundColor: const Color(0xFFF7F7F7),
+        body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
-              SizedBox(height: 16),
-              Text(
-                'Error',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32),
-                child: Text(
-                  _errorMessage!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF32CD32)),
               ),
               SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _isLoading = true;
-                    _errorMessage = null;
-                  });
-                  _initializeNoteManager();
-                },
-                child: Text('Retry'),
-              ),
+              Text('Loading notes...', style: TextStyle(fontSize: 16)),
             ],
           ),
         ),
@@ -579,19 +613,15 @@ class _NotepadScreenState extends State<NotepadScreen> {
   List<Note> _getFilteredNotes() {
     List<Note> filtered = _noteManager.notes;
 
-    // Filter by subject
     if (selectedSubject != 'All') {
       filtered = _noteManager.getNotesBySubject(selectedSubject);
     }
 
-    // Filter by search query
     if (searchQuery.isNotEmpty) {
       filtered = _noteManager.searchNotes(searchQuery);
     }
 
-    // Sort by updated date (newest first)
     filtered.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-
     return filtered;
   }
 
@@ -630,14 +660,12 @@ class _NotepadScreenState extends State<NotepadScreen> {
           note: note,
           onSave: (title, content, subject) async {
             if (note != null) {
-              // Update existing note
               note.title = title;
               note.content = content;
               note.subject = subject;
               note.updatedAt = DateTime.now();
               await _noteManager.updateNote(note);
             } else {
-              // Create new note
               final newNote = Note(
                 id: DateTime.now().millisecondsSinceEpoch.toString(),
                 title: title,
@@ -756,25 +784,29 @@ class _NotepadScreenState extends State<NotepadScreen> {
         filePath = await _noteManager.exportNoteToDocx(note);
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Note exported to: $filePath'),
-          backgroundColor: const Color(0xFF32CD32),
-          action: SnackBarAction(
-            label: 'Share',
-            onPressed: () {
-              Share.shareXFiles([XFile(filePath)]);
-            },
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Note exported to: $filePath'),
+            backgroundColor: const Color(0xFF32CD32),
+            action: SnackBarAction(
+              label: 'Share',
+              onPressed: () {
+                Share.shareXFiles([XFile(filePath)]);
+              },
+            ),
           ),
-        ),
-      );
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Export failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
@@ -830,7 +862,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Subject field
             TextField(
               controller: subjectController,
               decoration: const InputDecoration(
@@ -842,8 +873,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Title field
             TextField(
               controller: titleController,
               decoration: const InputDecoration(
@@ -855,8 +884,6 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
-            // Content field
             Expanded(
               child: TextField(
                 controller: contentController,
@@ -904,58 +931,5 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         backgroundColor: const Color(0xFF32CD32),
       ),
     );
-  }
-}
-
-// Example of how to use NoteManager in other parts of the app
-class NotesViewer extends StatelessWidget {
-  final NoteManager _noteManager = NoteManager();
-
-  NotesViewer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Notes Viewer')),
-      body: FutureBuilder(
-        future: _noteManager.initialize(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text('Error: ${snapshot.error}'),
-                ],
-              ),
-            );
-          }
-
-          final notes = _noteManager.notes;
-
-          return ListView.builder(
-            itemCount: notes.length,
-            itemBuilder: (context, index) {
-              final note = notes[index];
-              return ListTile(
-                title: Text(note.title),
-                subtitle: Text(note.subject),
-                trailing: Text(_formatDate(note.updatedAt)),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
