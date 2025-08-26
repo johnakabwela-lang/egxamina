@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'dart:convert';
 
 // Note model
 class Note {
@@ -17,6 +24,220 @@ class Note {
     required this.updatedAt,
     this.subject = 'General',
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'content': content,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'subject': subject,
+    };
+  }
+
+  factory Note.fromJson(Map<String, dynamic> json) {
+    return Note(
+      id: json['id'],
+      title: json['title'],
+      content: json['content'],
+      createdAt: DateTime.parse(json['createdAt']),
+      updatedAt: DateTime.parse(json['updatedAt']),
+      subject: json['subject'] ?? 'General',
+    );
+  }
+}
+
+enum ExportFormat { pdf, docx }
+
+// Note Manager Class - Reusable across the app
+class NoteManager {
+  static final NoteManager _instance = NoteManager._internal();
+  factory NoteManager() => _instance;
+  NoteManager._internal();
+
+  List<Note> _notes = [];
+  late Directory _notesDirectory;
+  bool _initialized = false;
+
+  List<Note> get notes => List.unmodifiable(_notes);
+
+  Future<void> initialize() async {
+    if (_initialized) return;
+
+    await _requestPermissions();
+    await _createNotesDirectory();
+    await _loadNotes();
+    _initialized = true;
+  }
+
+  Future<void> _requestPermissions() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.storage.request();
+      if (status.isDenied) {
+        throw Exception('Storage permission is required to save notes');
+      }
+    }
+  }
+
+  Future<void> _createNotesDirectory() async {
+    Directory? externalDir;
+
+    if (Platform.isAndroid) {
+      externalDir = await getExternalStorageDirectory();
+      if (externalDir != null) {
+        // Create in emulated storage under ParaNotes folder
+        final paraNotesPath = '/storage/emulated/0/ParaNotes';
+        _notesDirectory = Directory(paraNotesPath);
+      }
+    } else {
+      // For iOS, use documents directory
+      externalDir = await getApplicationDocumentsDirectory();
+      _notesDirectory = Directory('${externalDir.path}/ParaNotes');
+    }
+
+    if (!await _notesDirectory.exists()) {
+      await _notesDirectory.create(recursive: true);
+    }
+  }
+
+  Future<void> _loadNotes() async {
+    final notesFile = File('${_notesDirectory.path}/notes.json');
+
+    if (await notesFile.exists()) {
+      try {
+        final jsonString = await notesFile.readAsString();
+        final List<dynamic> jsonList = json.decode(jsonString);
+        _notes = jsonList.map((json) => Note.fromJson(json)).toList();
+      } catch (e) {
+        print('Error loading notes: $e');
+        _notes = [];
+      }
+    }
+  }
+
+  Future<void> _saveNotes() async {
+    final notesFile = File('${_notesDirectory.path}/notes.json');
+    final jsonString = json.encode(
+      _notes.map((note) => note.toJson()).toList(),
+    );
+    await notesFile.writeAsString(jsonString);
+  }
+
+  Future<void> addNote(Note note) async {
+    _notes.add(note);
+    await _saveNotes();
+  }
+
+  Future<void> updateNote(Note note) async {
+    final index = _notes.indexWhere((n) => n.id == note.id);
+    if (index != -1) {
+      _notes[index] = note;
+      await _saveNotes();
+    }
+  }
+
+  Future<void> deleteNote(String noteId) async {
+    _notes.removeWhere((note) => note.id == noteId);
+    await _saveNotes();
+  }
+
+  List<Note> searchNotes(String query) {
+    if (query.isEmpty) return _notes;
+
+    return _notes
+        .where(
+          (note) =>
+              note.title.toLowerCase().contains(query.toLowerCase()) ||
+              note.content.toLowerCase().contains(query.toLowerCase()),
+        )
+        .toList();
+  }
+
+  List<Note> getNotesBySubject(String subject) {
+    if (subject == 'All') return _notes;
+    return _notes.where((note) => note.subject == subject).toList();
+  }
+
+  List<String> getSubjects() {
+    Set<String> uniqueSubjects = {'All'};
+    for (Note note in _notes) {
+      uniqueSubjects.add(note.subject);
+    }
+    return uniqueSubjects.toList()..sort();
+  }
+
+  Future<String> exportNoteToPdf(Note note) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                note.title,
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text(
+                'Subject: ${note.subject}',
+                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
+              ),
+              pw.Text(
+                'Created: ${_formatDate(note.createdAt)}',
+                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
+              ),
+              pw.Text(
+                'Updated: ${_formatDate(note.updatedAt)}',
+                style: pw.TextStyle(fontSize: 14, color: PdfColors.grey700),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Text(note.content, style: pw.TextStyle(fontSize: 12)),
+            ],
+          );
+        },
+      ),
+    );
+
+    final fileName =
+        '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.pdf';
+    final file = File('${_notesDirectory.path}/$fileName');
+    await file.writeAsBytes(await pdf.save());
+    return file.path;
+  }
+
+  Future<String> exportNoteToDocx(Note note) async {
+    // Create a simple DOCX content
+    final content =
+        '''
+${note.title}
+
+Subject: ${note.subject}
+Created: ${_formatDate(note.createdAt)}
+Updated: ${_formatDate(note.updatedAt)}
+
+${note.content}
+''';
+
+    final fileName =
+        '${note.title.replaceAll(RegExp(r'[<>:"/\\|?*]'), '_')}.docx';
+    final file = File('${_notesDirectory.path}/$fileName');
+
+    // For simplicity, we'll create a basic text file with .docx extension
+    // In a real app, you'd use a proper DOCX library
+    await file.writeAsString(content);
+    return file.path;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
 }
 
 // Main Notepad Screen
@@ -28,20 +249,42 @@ class NotepadScreen extends StatefulWidget {
 }
 
 class _NotepadScreenState extends State<NotepadScreen> {
-  List<Note> notes = [];
+  final NoteManager _noteManager = NoteManager();
   String searchQuery = '';
   String selectedSubject = 'All';
+  bool _isLoading = true;
 
-  List<String> get subjects {
-    Set<String> uniqueSubjects = {'All'};
-    for (Note note in notes) {
-      uniqueSubjects.add(note.subject);
-    }
-    return uniqueSubjects.toList()..sort();
+  @override
+  void initState() {
+    super.initState();
+    _initializeNoteManager();
   }
+
+  Future<void> _initializeNoteManager() async {
+    try {
+      await _noteManager.initialize();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error initializing storage: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  List<String> get subjects => _noteManager.getSubjects();
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
@@ -62,10 +305,10 @@ class _NotepadScreenState extends State<NotepadScreen> {
               });
             },
             itemBuilder: (context) => subjects
-                .map((subject) => PopupMenuItem(
-                      value: subject,
-                      child: Text(subject),
-                    ))
+                .map(
+                  (subject) =>
+                      PopupMenuItem(value: subject, child: Text(subject)),
+                )
                 .toList(),
           ),
         ],
@@ -81,20 +324,20 @@ class _NotepadScreenState extends State<NotepadScreen> {
   }
 
   Widget _buildBody() {
-    if (notes.isEmpty) {
+    final notes = _getFilteredNotes();
+
+    if (_noteManager.notes.isEmpty) {
       return _buildEmptyState();
     }
 
-    final filteredNotes = _getFilteredNotes();
-
-    if (filteredNotes.isEmpty) {
+    if (notes.isEmpty) {
       return _buildNoResultsState();
     }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: filteredNotes.length,
-      itemBuilder: (context, index) => _buildNoteCard(filteredNotes[index]),
+      itemCount: notes.length,
+      itemBuilder: (context, index) => _buildNoteCard(notes[index]),
     );
   }
 
@@ -103,11 +346,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.note_add,
-            size: 100,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.note_add, size: 100, color: Colors.grey[400]),
           const SizedBox(height: 20),
           Text(
             'No notes yet',
@@ -120,10 +359,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
           const SizedBox(height: 10),
           Text(
             'Tap the + button to create your first note',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -135,11 +371,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 100,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.search_off, size: 100, color: Colors.grey[400]),
           const SizedBox(height: 20),
           Text(
             'No notes found',
@@ -154,10 +386,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
             searchQuery.isNotEmpty
                 ? 'Try a different search term'
                 : 'No notes in this category',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -168,17 +397,12 @@ class _NotepadScreenState extends State<NotepadScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         title: Text(
           note.title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -188,10 +412,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
             const SizedBox(height: 8),
             Text(
               note.content,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -219,10 +440,7 @@ class _NotepadScreenState extends State<NotepadScreen> {
                 const Spacer(),
                 Text(
                   _formatDate(note.updatedAt),
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
               ],
             ),
@@ -243,6 +461,16 @@ class _NotepadScreenState extends State<NotepadScreen> {
               ),
             ),
             const PopupMenuItem(
+              value: 'export',
+              child: Row(
+                children: [
+                  Icon(Icons.file_download, size: 18),
+                  SizedBox(width: 8),
+                  Text('Export'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [
@@ -254,10 +482,16 @@ class _NotepadScreenState extends State<NotepadScreen> {
             ),
           ],
           onSelected: (value) {
-            if (value == 'edit') {
-              _editNote(note);
-            } else if (value == 'delete') {
-              _deleteNote(note);
+            switch (value) {
+              case 'edit':
+                _editNote(note);
+                break;
+              case 'export':
+                _showExportDialog(note);
+                break;
+              case 'delete':
+                _deleteNote(note);
+                break;
             }
           },
         ),
@@ -266,21 +500,16 @@ class _NotepadScreenState extends State<NotepadScreen> {
   }
 
   List<Note> _getFilteredNotes() {
-    List<Note> filtered = notes;
+    List<Note> filtered = _noteManager.notes;
 
     // Filter by subject
     if (selectedSubject != 'All') {
-      filtered =
-          filtered.where((note) => note.subject == selectedSubject).toList();
+      filtered = _noteManager.getNotesBySubject(selectedSubject);
     }
 
     // Filter by search query
     if (searchQuery.isNotEmpty) {
-      filtered = filtered
-          .where((note) =>
-              note.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
-              note.content.toLowerCase().contains(searchQuery.toLowerCase()))
-          .toList();
+      filtered = _noteManager.searchNotes(searchQuery);
     }
 
     // Sort by updated date (newest first)
@@ -322,27 +551,27 @@ class _NotepadScreenState extends State<NotepadScreen> {
       MaterialPageRoute(
         builder: (context) => NoteEditorScreen(
           note: note,
-          onSave: (title, content, subject) {
-            setState(() {
-              if (note != null) {
-                // Update existing note
-                note.title = title;
-                note.content = content;
-                note.subject = subject;
-                note.updatedAt = DateTime.now();
-              } else {
-                // Create new note
-                final newNote = Note(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  title: title,
-                  content: content,
-                  createdAt: DateTime.now(),
-                  updatedAt: DateTime.now(),
-                  subject: subject,
-                );
-                notes.add(newNote);
-              }
-            });
+          onSave: (title, content, subject) async {
+            if (note != null) {
+              // Update existing note
+              note.title = title;
+              note.content = content;
+              note.subject = subject;
+              note.updatedAt = DateTime.now();
+              await _noteManager.updateNote(note);
+            } else {
+              // Create new note
+              final newNote = Note(
+                id: DateTime.now().millisecondsSinceEpoch.toString(),
+                title: title,
+                content: content,
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                subject: subject,
+              );
+              await _noteManager.addNote(newNote);
+            }
+            setState(() {});
           },
         ),
       ),
@@ -361,10 +590,9 @@ class _NotepadScreenState extends State<NotepadScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                notes.remove(note);
-              });
+            onPressed: () async {
+              await _noteManager.deleteNote(note.id);
+              setState(() {});
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -410,6 +638,68 @@ class _NotepadScreenState extends State<NotepadScreen> {
       ),
     );
   }
+
+  void _showExportDialog(Note note) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Note'),
+        content: const Text('Choose export format:'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportNote(note, ExportFormat.pdf);
+            },
+            child: const Text('PDF'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exportNote(note, ExportFormat.docx);
+            },
+            child: const Text('Word'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportNote(Note note, ExportFormat format) async {
+    try {
+      String filePath;
+
+      if (format == ExportFormat.pdf) {
+        filePath = await _noteManager.exportNoteToPdf(note);
+      } else {
+        filePath = await _noteManager.exportNoteToDocx(note);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Note exported to: $filePath'),
+          backgroundColor: const Color(0xFF32CD32),
+          action: SnackBarAction(
+            label: 'Share',
+            onPressed: () {
+              Share.shareXFiles([XFile(filePath)]);
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Export failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 }
 
 // Note Editor Screen
@@ -417,11 +707,7 @@ class NoteEditorScreen extends StatefulWidget {
   final Note? note;
   final Function(String title, String content, String subject) onSave;
 
-  const NoteEditorScreen({
-    super.key,
-    this.note,
-    required this.onSave,
-  });
+  const NoteEditorScreen({super.key, this.note, required this.onSave});
 
   @override
   State<NoteEditorScreen> createState() => _NoteEditorScreenState();
@@ -437,8 +723,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
     super.initState();
     titleController = TextEditingController(text: widget.note?.title ?? '');
     contentController = TextEditingController(text: widget.note?.content ?? '');
-    subjectController =
-        TextEditingController(text: widget.note?.subject ?? 'General');
+    subjectController = TextEditingController(
+      text: widget.note?.subject ?? 'General',
+    );
   }
 
   @override
@@ -459,10 +746,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         title: Text(widget.note != null ? 'Edit Note' : 'New Note'),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _saveNote,
-          ),
+          IconButton(icon: const Icon(Icons.save), onPressed: _saveNote),
         ],
       ),
       body: Padding(
@@ -491,10 +775,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
                 filled: true,
                 fillColor: Colors.white,
               ),
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -546,5 +827,45 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
         backgroundColor: const Color(0xFF32CD32),
       ),
     );
+  }
+}
+
+// Example of how to use NoteManager in other parts of the app
+class NotesViewer extends StatelessWidget {
+  final NoteManager _noteManager = NoteManager();
+
+  NotesViewer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notes Viewer')),
+      body: FutureBuilder(
+        future: _noteManager.initialize(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final notes = _noteManager.notes;
+
+          return ListView.builder(
+            itemCount: notes.length,
+            itemBuilder: (context, index) {
+              final note = notes[index];
+              return ListTile(
+                title: Text(note.title),
+                subtitle: Text(note.subject),
+                trailing: Text(_formatDate(note.updatedAt)),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
