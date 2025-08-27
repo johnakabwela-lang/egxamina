@@ -15,11 +15,27 @@ class Element {
   final String phase;
   final String summary;
   final String? imageUrl;
+  final String? imageTitle;
+  final String? imageAttribution;
   final String block;
   final int? group;
   final int period;
   final int xpos;
   final int ypos;
+  final String? appearance;
+  final String? discoveredBy;
+  final String? namedBy;
+  final double? density;
+  final double? molarHeat;
+  final String? source;
+  final String? spectralImg;
+  final List<int>? shells;
+  final String? electronConfiguration;
+  final String? electronConfigurationSemantic;
+  final double? electronAffinity;
+  final double? electronegativityPauling;
+  final List<double>? ionizationEnergies;
+  final String? cpkHex;
 
   Element({
     required this.name,
@@ -32,11 +48,27 @@ class Element {
     required this.phase,
     required this.summary,
     this.imageUrl,
+    this.imageTitle,
+    this.imageAttribution,
     required this.block,
     this.group,
     required this.period,
     required this.xpos,
     required this.ypos,
+    this.appearance,
+    this.discoveredBy,
+    this.namedBy,
+    this.density,
+    this.molarHeat,
+    this.source,
+    this.spectralImg,
+    this.shells,
+    this.electronConfiguration,
+    this.electronConfigurationSemantic,
+    this.electronAffinity,
+    this.electronegativityPauling,
+    this.ionizationEnergies,
+    this.cpkHex,
   });
 
   factory Element.fromJson(Map<String, dynamic> json) {
@@ -51,11 +83,27 @@ class Element {
       phase: json['phase'],
       summary: json['summary'],
       imageUrl: json['image']?['url'],
+      imageTitle: json['image']?['title'],
+      imageAttribution: json['image']?['attribution'],
       block: json['block'],
       group: json['group'],
       period: json['period'],
       xpos: json['xpos'],
       ypos: json['ypos'],
+      appearance: json['appearance'],
+      discoveredBy: json['discovered_by'],
+      namedBy: json['named_by'],
+      density: json['density']?.toDouble(),
+      molarHeat: json['molar_heat']?.toDouble(),
+      source: json['source'],
+      spectralImg: json['spectral_img'],
+      shells: json['shells']?.cast<int>(),
+      electronConfiguration: json['electron_configuration'],
+      electronConfigurationSemantic: json['electron_configuration_semantic'],
+      electronAffinity: json['electron_affinity']?.toDouble(),
+      electronegativityPauling: json['electronegativity_pauling']?.toDouble(),
+      ionizationEnergies: json['ionization_energies']?.cast<double>(),
+      cpkHex: json['cpk-hex'],
     );
   }
 
@@ -85,6 +133,30 @@ class Element {
       default:
         return const Color(0xFF9E9E9E);
     }
+  }
+
+  // Get CPK color if available
+  Color? get cpkColor {
+    if (cpkHex != null) {
+      return Color(int.parse('FF${cpkHex!}', radix: 16));
+    }
+    return null;
+  }
+
+  // Format electron shells display
+  String get shellsDisplay {
+    if (shells == null) return 'N/A';
+    return shells!.join(', ');
+  }
+
+  // Format ionization energies display
+  String get ionizationEnergiesDisplay {
+    if (ionizationEnergies == null || ionizationEnergies!.isEmpty) return 'N/A';
+    return ionizationEnergies!
+            .take(3)
+            .map((e) => e.toStringAsFixed(1))
+            .join(', ') +
+        (ionizationEnergies!.length > 3 ? '...' : '');
   }
 }
 
@@ -168,6 +240,104 @@ class _PropertyItem {
   _PropertyItem(this.label, this.value);
 }
 
+// ================== IMAGE CARD WIDGET ==================
+class ImageCard extends StatelessWidget {
+  final Element element;
+
+  const ImageCard({Key? key, required this.element}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    if (element.imageUrl == null) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: AspectRatio(
+              aspectRatio: 16 / 10,
+              child: Image.network(
+                element.imageUrl!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.grey[300],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.broken_image,
+                          size: 48,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Image not available',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          element.categoryColor,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (element.imageTitle != null)
+                  Text(
+                    element.imageTitle!,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF333333),
+                    ),
+                  ),
+                if (element.imageAttribution != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    element.imageAttribution!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF666666),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ================== ELEMENT DETAIL SCREEN ==================
 class ElementDetailScreen extends StatelessWidget {
   final Element element;
@@ -191,107 +361,21 @@ class ElementDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Main element display
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: element.categoryColor,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        element.number.toString(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (element.imageUrl != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            element.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Colors.white24,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.science,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    element.symbol,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    element.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    element.category.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
+            _buildMainElementCard(),
             const SizedBox(height: 24),
 
-            // Properties section
-            _buildPropertyCard('Properties', [
+            // Image card
+            ImageCard(element: element),
+            const SizedBox(height: 16),
+
+            // Basic Properties
+            _buildPropertyCard('Basic Properties', [
               _PropertyItem('Phase', element.phase),
               _PropertyItem('Atomic Mass', '${element.atomicMass} u'),
-              if (element.melt != null)
-                _PropertyItem(
-                  'Melting Point',
-                  '${element.melt!.toStringAsFixed(2)} K',
-                ),
-              if (element.boil != null)
-                _PropertyItem(
-                  'Boiling Point',
-                  '${element.boil!.toStringAsFixed(2)} K',
-                ),
+              if (element.appearance != null)
+                _PropertyItem('Appearance', element.appearance!),
+              if (element.density != null)
+                _PropertyItem('Density', '${element.density!} g/cm³'),
               _PropertyItem('Block', element.block.toUpperCase()),
               if (element.group != null)
                 _PropertyItem('Group', element.group.toString()),
@@ -300,35 +384,163 @@ class ElementDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
+            // Thermal Properties
+            if (element.melt != null ||
+                element.boil != null ||
+                element.molarHeat != null)
+              _buildPropertyCard('Thermal Properties', [
+                if (element.melt != null)
+                  _PropertyItem(
+                    'Melting Point',
+                    '${element.melt!.toStringAsFixed(2)} K',
+                  ),
+                if (element.boil != null)
+                  _PropertyItem(
+                    'Boiling Point',
+                    '${element.boil!.toStringAsFixed(2)} K',
+                  ),
+                if (element.molarHeat != null)
+                  _PropertyItem(
+                    'Molar Heat',
+                    '${element.molarHeat!.toStringAsFixed(3)} J/(mol·K)',
+                  ),
+              ]),
+
+            const SizedBox(height: 16),
+
+            // Electronic Properties
+            _buildPropertyCard('Electronic Properties', [
+              if (element.electronConfiguration != null)
+                _PropertyItem(
+                  'Electron Configuration',
+                  element.electronConfiguration!,
+                ),
+              if (element.shells != null)
+                _PropertyItem('Electron Shells', element.shellsDisplay),
+              if (element.electronAffinity != null)
+                _PropertyItem(
+                  'Electron Affinity',
+                  '${element.electronAffinity!.toStringAsFixed(2)} kJ/mol',
+                ),
+              if (element.electronegativityPauling != null)
+                _PropertyItem(
+                  'Electronegativity',
+                  element.electronegativityPauling!.toString(),
+                ),
+              if (element.ionizationEnergies != null)
+                _PropertyItem(
+                  'Ionization Energies',
+                  '${element.ionizationEnergiesDisplay} kJ/mol',
+                ),
+            ]),
+
+            const SizedBox(height: 16),
+
+            // Discovery Information
+            if (element.discoveredBy != null || element.namedBy != null)
+              _buildPropertyCard('Discovery', [
+                if (element.discoveredBy != null)
+                  _PropertyItem('Discovered By', element.discoveredBy!),
+                if (element.namedBy != null)
+                  _PropertyItem('Named By', element.namedBy!),
+              ]),
+
+            const SizedBox(height: 16),
+
             // Summary section
             _buildSummaryCard(),
 
             const SizedBox(height: 24),
 
-            // More info button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _launchWikipedia,
-                icon: const Icon(Icons.open_in_new),
-                label: const Text('More Info on Wikipedia'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: element.categoryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
+            // Action buttons
+            _buildActionButtons(context),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildMainElementCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: element.categoryColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                element.number.toString(),
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (element.cpkColor != null)
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: element.cpkColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.palette,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            element.symbol,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 72,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            element.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            element.category.toUpperCase(),
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPropertyCard(String title, List<_PropertyItem> properties) {
+    if (properties.isEmpty) return const SizedBox.shrink();
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -351,21 +563,27 @@ class ElementDetailScreen extends StatelessWidget {
                   (prop) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          prop.label,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF666666),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            prop.label,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF666666),
+                            ),
                           ),
                         ),
-                        Text(
-                          prop.value,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF333333),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            prop.value,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF333333),
+                            ),
                           ),
                         ),
                       ],
@@ -411,8 +629,54 @@ class ElementDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _launchWikipedia,
+            icon: const Icon(Icons.open_in_new),
+            label: const Text('More Info on Wikipedia'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: element.categoryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+        if (element.spectralImg != null) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _launchUrl(element.spectralImg!),
+              icon: const Icon(Icons.bar_chart_rounded),
+              label: const Text('View Spectral Image'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
   void _launchWikipedia() async {
     final url = 'https://en.wikipedia.org/wiki/${element.name}';
+    _launchUrl(url);
+  }
+
+  void _launchUrl(String url) async {
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
@@ -479,6 +743,12 @@ class _PeriodicTableScreenState extends State<PeriodicTableScreen>
         foregroundColor: Colors.white,
         title: const Text('Periodic Table'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showLegend(context),
+          ),
+        ],
       ),
       body: _buildBody(),
     );
@@ -601,6 +871,43 @@ class _PeriodicTableScreenState extends State<PeriodicTableScreen>
             child: FadeTransition(opacity: animation, child: child),
           );
         },
+      ),
+    );
+  }
+
+  void _showLegend(BuildContext context) {
+    final categories = elements
+        .map((e) => e.category)
+        .toSet()
+        .map((category) => elements.firstWhere((e) => e.category == category))
+        .toList();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Element Categories'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: categories.map((element) {
+              return ListTile(
+                leading: Container(
+                  width: 20,
+                  height: 20,
+                  color: element.categoryColor,
+                ),
+                title: Text(element.category),
+                dense: true,
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
