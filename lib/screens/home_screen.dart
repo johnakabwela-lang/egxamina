@@ -201,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Section 2: Daily Bonus (if available)
                 if (_dailyBonusAvailable) _buildDailyBonusSection(),
                 if (_dailyBonusAvailable) const SizedBox(height: 20),
-                // Section 3: Subjects to Study
+                // Section 3: Subjects to Study (Books and Past Papers only)
                 _buildSubjectsSection(context),
                 const SizedBox(height: 20),
               ],
@@ -402,37 +402,27 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'name': 'Mathematics',
         'icon': Icons.calculate,
-        'progress': 0.7,
         'color': const Color(0xFF4285F4),
       },
       {
         'name': 'Physics',
         'icon': Icons.science,
-        'progress': 0.5,
         'color': const Color(0xFFFF6B6B),
       },
       {
         'name': 'Chemistry',
         'icon': Icons.biotech,
-        'progress': 0.8,
         'color': const Color(0xFF4ECDC4),
       },
-      {
-        'name': 'Biology',
-        'icon': Icons.eco,
-        'progress': 0.3,
-        'color': const Color(0xFF45B7D1),
-      },
+      {'name': 'Biology', 'icon': Icons.eco, 'color': const Color(0xFF45B7D1)},
       {
         'name': 'English',
         'icon': Icons.menu_book,
-        'progress': 0.6,
         'color': const Color(0xFFF39C12),
       },
       {
         'name': 'History',
         'icon': Icons.history_edu,
-        'progress': 0.4,
         'color': const Color(0xFF8E44AD),
       },
     ];
@@ -507,23 +497,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
-                        LinearProgressIndicator(
-                          value: subject['progress'] as double,
-                          backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            subject['color'] as Color,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${((subject['progress'] as double) * 100).toInt()}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -536,7 +509,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // FIXED: Now properly navigates to SubjectDetailScreen
   void _navigateToSubject(BuildContext context, Map<String, dynamic> subject) {
     Navigator.push(
       context,
@@ -547,7 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Enhanced Subject Detail Screen with improved navigation
+// Simplified Subject Detail Screen - Only Books and Past Papers
 class SubjectDetailScreen extends StatelessWidget {
   final Map<String, dynamic> subject;
 
@@ -601,36 +573,20 @@ class SubjectDetailScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: subject['progress'] as double,
-                    backgroundColor: Colors.white.withOpacity(0.3),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${((subject['progress'] as double) * 100).toInt()}% Complete',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // Navigation Options
+            // Navigation Options (Only Books and Past Papers)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Resources',
+                    'Study Resources',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -672,45 +628,11 @@ class SubjectDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 12),
-
-                  // Notes Option
-                  _buildResourceCard(
-                    context,
-                    'Notes & Summaries',
-                    'Quick revision notes and summaries',
-                    Icons.note,
-                    subject['color'] as Color,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SubjectNotesScreen(subject: subject),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Practice Tests Option
-                  _buildResourceCard(
-                    context,
-                    'Practice Tests',
-                    'Take interactive practice tests',
-                    Icons.quiz,
-                    subject['color'] as Color,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            SubjectTestsScreen(subject: subject),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -772,40 +694,6 @@ class SubjectDetailScreen extends StatelessWidget {
               ),
             ),
             Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Tests Screen
-class SubjectTestsScreen extends StatelessWidget {
-  final Map<String, dynamic> subject;
-
-  const SubjectTestsScreen({super.key, required this.subject});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        title: Text('${subject['name']} Tests'),
-        backgroundColor: subject['color'] as Color,
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.quiz, size: 64, color: subject['color'] as Color),
-            const SizedBox(height: 16),
-            Text(
-              '${subject['name']} Practice Tests',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text('Interactive practice tests will be available here'),
           ],
         ),
       ),
