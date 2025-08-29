@@ -553,6 +553,356 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 }
 
+milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            currentToolWidget = null;
+            currentToolTitle = '';
+          });
+        }
+      });
+    }
+  }
+
+  void _openTool(String title, Widget toolWidget) {
+    setState(() {
+      currentToolWidget = toolWidget;
+      currentToolTitle = title;
+    });
+  }
+
+  void _closeTool() {
+    setState(() {
+      currentToolWidget = null;
+      currentToolTitle = '';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.title, style: const TextStyle(fontSize: 18)),
+            if (totalPages > 0)
+              Text(
+                'Page ${currentPage + 1} of $totalPages',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+          ],
+        ),
+        backgroundColor: widget.subjectColor,
+        foregroundColor: Colors.white,
+        actions: [
+          if (currentToolWidget != null)
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _closeTool,
+              tooltip: 'Close $currentToolTitle',
+            ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // PDF Viewer - Always visible and interactive when no tool is open
+          PDFView(
+            filePath: widget.pdfPath,
+            enableSwipe: true,
+            swipeHorizontal: false,
+            autoSpacing: true,
+            pageSnap: true,
+            defaultPage: 0,
+            fitPolicy: FitPolicy.BOTH,
+            onRender: (pages) {
+              setState(() {
+                totalPages = pages ?? 0;
+              });
+            },
+            onError: (error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error loading PDF: $error'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            onPageChanged: (page, total) {
+              setState(() {
+                currentPage = page ?? 0;
+                totalPages = total ?? 0;
+              });
+            },
+          ),
+
+          // Current Tool Widget (Full Screen Overlay) - Only when tool is selected
+          if (currentToolWidget != null)
+            Positioned.fill(
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    // Tool Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: widget.subjectColor.withOpacity(0.1),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: widget.subjectColor.withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.build,
+                            color: widget.subjectColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            currentToolTitle,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: widget.subjectColor,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              color: widget.subjectColor,
+                            ),
+                            onPressed: _closeTool,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Tool Content
+                    Expanded(child: currentToolWidget!),
+                  ],
+                ),
+              ),
+            ),
+
+          // Tools Panel (Slide from right) - Only when panel is open AND no tool is selected
+          if (isToolsPanelOpen && currentToolWidget == null)
+            Stack(
+              children: [
+                // Semi-transparent background overlay - only tappable to close panel
+                GestureDetector(
+                  onTap: _toggleToolsPanel,
+                  child: AnimatedBuilder(
+                    animation: _panelOpacityAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
+                      );
+                    },
+                  ),
+                ),
+
+                // Sliding panel
+                AnimatedBuilder(
+                  animation: _panelSlideAnimation,
+                  builder: (context, child) {
+                    return SlideTransition(
+                      position: _panelSlideAnimation,
+                      child: Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        child: AnimatedBuilder(
+                          animation: _panelOpacityAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _panelOpacityAnimation.value,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    bottomLeft: Radius.circular(20),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(-5, 0),
+                                    ),
+                                  ],
+                                ),
+                                child: _buildToolsPanel(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+        ],
+      ),
+      floatingActionButton: AnimatedBuilder(
+        animation: _fabRotationAnimation,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: _fabRotationAnimation.value * 2 * 3.14159,
+            child: FloatingActionButton(
+              onPressed: () {
+                if (currentToolWidget != null) {
+                  // If a tool is open, close it
+                  _closeTool();
+                } else {
+                  // Toggle tools panel
+                  _toggleToolsPanel();
+                }
+              },
+              backgroundColor: widget.subjectColor,
+              child: Icon(
+                currentToolWidget != null 
+                    ? Icons.close 
+                    : isToolsPanelOpen 
+                        ? Icons.close 
+                        : Icons.build,
+                color: Colors.white,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildToolsPanel() {
+    return Column(
+      children: [
+        // Panel Header
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [widget.subjectColor, widget.subjectColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.build,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Study Tools',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Quick access utilities',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: _toggleToolsPanel,
+              ),
+            ],
+          ),
+        ),
+
+        // Tools List
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildToolTile(
+                'Calculator',
+                Icons.calculate,
+                const Color(0xFF1CB0F6),
+                'Scientific calculator',
+                () => _openTool('Calculator', const CalculatorScreen()),
+              ),
+              _buildToolTile(
+                'Unit Converter',
+                Icons.swap_horiz,
+                const Color(0xFF58CC02),
+                'Convert units easily',
+                () => _openTool('Unit Converter', const UnitConverterScreen()),
+              ),
+              _buildToolTile(
+                'Dictionary',
+                Icons.menu_book,
+                const Color(0xFFFF4B4B),
+                'Look up definitions',
+                () => _openTool('Dictionary', const DictionaryScreen()),
+              ),
+              _buildToolTile(
+                'Periodic Table',
+                Icons.science,
+                const Color(0xFFFF9600),
+                'Chemical elements',
+                () => _openTool('Periodic Table', const PeriodicTableScreen()),
+              ),
+              _buildToolTile(
+                'Wiki Browser',
+                Icons.public,
+                const Color(0xFF7B68EE),
+                'Research topics',
+                () => _openTool('Wiki Browser', const WikipediaExplorerScreen()),
+              ),
+              _buildToolTile(
+                'Notepad',
+                Icons.note_add,
+                const Color(0xFF32CD32),
+                'Take notes',
+                () => _openTool('Notepad', const NotepadScreen()),
+              ),
+              _buildToolTile(
+                'Schedule Maker',
+                Icons.schedule,
+                const Color(0xFFDA70D6),
+                'Plan your time',
+                () => _openTool('Schedule Maker', const ScheduleMakerScreen()),
+              ),
+              _buildToolTile(
+                'Study Timer',
+                Icons.timer,
+                const Color(0xFF20B2AA),
+                'Focus sessions',
+                () => _openTool('Study Timer', const StudyTimerScreen()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 // Enhanced PDF Viewer Screen with integrated tools panel - FIXED
 class PDFViewerScreen extends StatefulWidget {
   final String pdfPath;
@@ -779,64 +1129,60 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
               ),
             ),
 
-          // Tools Panel (Slide from right) - Only when panel is open AND no tool is selected
+          // Tools Panel Background Overlay - Only when panel is open AND no tool is selected
           if (isToolsPanelOpen && currentToolWidget == null)
-            Stack(
-              children: [
-                // Semi-transparent background overlay - only tappable to close panel
-                GestureDetector(
-                  onTap: _toggleToolsPanel,
-                  child: AnimatedBuilder(
-                    animation: _panelOpacityAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
-                      );
-                    },
-                  ),
-                ),
+            GestureDetector(
+              onTap: _toggleToolsPanel,
+              child: AnimatedBuilder(
+                animation: _panelOpacityAnimation,
+                builder: (context, child) {
+                  return Container(
+                    color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
+                  );
+                },
+              ),
+            ),
 
-                // Sliding panel
-                AnimatedBuilder(
-                  animation: _panelSlideAnimation,
-                  builder: (context, child) {
-                    return SlideTransition(
-                      position: _panelSlideAnimation,
-                      child: Positioned(
-                        right: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: MediaQuery.of(context).size.width * 0.85,
-                        child: AnimatedBuilder(
-                          animation: _panelOpacityAnimation,
-                          builder: (context, child) {
-                            return Opacity(
-                              opacity: _panelOpacityAnimation.value,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(20),
-                                    bottomLeft: Radius.circular(20),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(-5, 0),
-                                    ),
-                                  ],
-                                ),
-                                child: _buildToolsPanel(),
+          // Tools Panel (Slide from right) - Show when panel is open
+          if (isToolsPanelOpen)
+            AnimatedBuilder(
+              animation: _panelSlideAnimation,
+              builder: (context, child) {
+                return SlideTransition(
+                  position: _panelSlideAnimation,
+                  child: Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: MediaQuery.of(context).size.width * 0.85,
+                    child: AnimatedBuilder(
+                      animation: _panelOpacityAnimation,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: _panelOpacityAnimation.value,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                bottomLeft: Radius.circular(20),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(-5, 0),
+                                ),
+                              ],
+                            ),
+                            child: _buildToolsPanel(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              },
             ),
         ],
       ),
