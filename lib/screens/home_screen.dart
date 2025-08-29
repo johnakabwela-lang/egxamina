@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
@@ -202,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Section 2: Daily Bonus (if available)
                 if (_dailyBonusAvailable) _buildDailyBonusSection(),
                 if (_dailyBonusAvailable) const SizedBox(height: 20),
-                // Section 3: Subjects to Study (Books and Past Papers only)
+                // Section 3: Subjects to Study
                 _buildSubjectsSection(context),
                 const SizedBox(height: 20),
               ],
@@ -403,27 +402,37 @@ class _HomeScreenState extends State<HomeScreen> {
       {
         'name': 'Mathematics',
         'icon': Icons.calculate,
+        'progress': 0.7,
         'color': const Color(0xFF4285F4),
       },
       {
         'name': 'Physics',
         'icon': Icons.science,
+        'progress': 0.5,
         'color': const Color(0xFFFF6B6B),
       },
       {
         'name': 'Chemistry',
         'icon': Icons.biotech,
+        'progress': 0.8,
         'color': const Color(0xFF4ECDC4),
       },
-      {'name': 'Biology', 'icon': Icons.eco, 'color': const Color(0xFF45B7D1)},
+      {
+        'name': 'Biology',
+        'icon': Icons.eco,
+        'progress': 0.3,
+        'color': const Color(0xFF45B7D1),
+      },
       {
         'name': 'English',
         'icon': Icons.menu_book,
+        'progress': 0.6,
         'color': const Color(0xFFF39C12),
       },
       {
         'name': 'History',
         'icon': Icons.history_edu,
+        'progress': 0.4,
         'color': const Color(0xFF8E44AD),
       },
     ];
@@ -498,6 +507,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                        const SizedBox(height: 8),
+                        LinearProgressIndicator(
+                          value: subject['progress'] as double,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            subject['color'] as Color,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${((subject['progress'] as double) * 100).toInt()}%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -510,6 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // FIXED: Now properly navigates to SubjectDetailScreen
   void _navigateToSubject(BuildContext context, Map<String, dynamic> subject) {
     Navigator.push(
       context,
@@ -519,6 +546,561 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
+// Enhanced Subject Detail Screen with improved navigation
+class SubjectDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> subject;
+
+  const SubjectDetailScreen({super.key, required this.subject});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: Text(subject['name']),
+        backgroundColor: subject['color'] as Color,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Subject Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: subject['color'] as Color,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      subject['icon'] as IconData,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    subject['name'],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: subject['progress'] as double,
+                    backgroundColor: Colors.white.withOpacity(0.3),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${((subject['progress'] as double) * 100).toInt()}% Complete',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Navigation Options
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Resources',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Past Papers Option
+                  _buildResourceCard(
+                    context,
+                    'Past Papers',
+                    'Practice with previous exam papers',
+                    Icons.description,
+                    subject['color'] as Color,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SubjectPastPapersScreen(subject: subject),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Books Option
+                  _buildResourceCard(
+                    context,
+                    'Books & Study Materials',
+                    'Access textbooks and study guides',
+                    Icons.menu_book,
+                    subject['color'] as Color,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SubjectBooksScreen(subject: subject),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Notes Option
+                  _buildResourceCard(
+                    context,
+                    'Notes & Summaries',
+                    'Quick revision notes and summaries',
+                    Icons.note,
+                    subject['color'] as Color,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SubjectNotesScreen(subject: subject),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Practice Tests Option
+                  _buildResourceCard(
+                    context,
+                    'Practice Tests',
+                    'Take interactive practice tests',
+                    Icons.quiz,
+                    subject['color'] as Color,
+                    () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            SubjectTestsScreen(subject: subject),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResourceCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Tests Screen
+class SubjectTestsScreen extends StatelessWidget {
+  final Map<String, dynamic> subject;
+
+  const SubjectTestsScreen({super.key, required this.subject});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: Text('${subject['name']} Tests'),
+        backgroundColor: subject['color'] as Color,
+        foregroundColor: Colors.white,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.quiz, size: 64, color: subject['color'] as Color),
+            const SizedBox(height: 16),
+            Text(
+              '${subject['name']} Practice Tests',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text('Interactive practice tests will be available here'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Enhanced Past Paper Detail Screen
+class PastPaperDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> paper;
+
+  const PastPaperDetailScreen({super.key, required this.paper});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: Text('${paper['subject']} ${paper['year']}'),
+        backgroundColor: paper['color'] as Color,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: paper['color'] as Color,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.description,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    paper['title'] ?? '${paper['subject']} ${paper['type']}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Year: ${paper['year']}',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Paper Details
+            if (paper['duration'] != null || paper['questions'] != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      if (paper['duration'] != null) ...[
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                color: paper['color'] as Color,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${paper['duration']} min',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                'Duration',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (paper['questions'] != null) ...[
+                        if (paper['duration'] != null)
+                          Container(
+                            height: 40,
+                            width: 1,
+                            color: Colors.grey[300],
+                          ),
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.help_outline,
+                                color: paper['color'] as Color,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${paper['questions']}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              Text(
+                                'Questions',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Handle view paper action
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Opening past paper...'),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: paper['color'] as Color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.visibility),
+                          SizedBox(width: 8),
+                          Text(
+                            'View Paper',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // Handle download action
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Downloading past paper...'),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: paper['color'] as Color,
+                        side: BorderSide(color: paper['color'] as Color),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.download),
+                          SizedBox(width: 8),
+                          Text(
+                            'Download PDF',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Additional Information
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'About This Paper',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'This is the official ${paper['type']} for ${paper['subject']} from ${paper['year']}. '
+                      'It covers all the key topics and follows the standard examination format. '
+                      'Use this paper to practice and assess your understanding of the subject.',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // All Past Papers Screen (enhanced to show all subjects)
 class AllPastPapersScreen extends StatelessWidget {
   const AllPastPapersScreen({super.key});
