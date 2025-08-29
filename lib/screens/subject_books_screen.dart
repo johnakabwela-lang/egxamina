@@ -553,7 +553,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 }
 
-// Enhanced PDF Viewer Screen with integrated tools panel
+// Enhanced PDF Viewer Screen with integrated tools panel - FIXED
 class PDFViewerScreen extends StatefulWidget {
   final String pdfPath;
   final String title;
@@ -698,7 +698,7 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
       ),
       body: Stack(
         children: [
-          // PDF Viewer
+          // PDF Viewer - Always visible and interactive when no tool is open
           PDFView(
             filePath: widget.pdfPath,
             enableSwipe: true,
@@ -728,21 +728,7 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
             },
           ),
 
-          // Tools Panel Overlay
-          if (isToolsPanelOpen)
-            GestureDetector(
-              onTap: currentToolWidget == null ? _toggleToolsPanel : null,
-              child: AnimatedBuilder(
-                animation: _panelOpacityAnimation,
-                builder: (context, child) {
-                  return Container(
-                    color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
-                  );
-                },
-              ),
-            ),
-
-          // Current Tool Widget (Full Screen Overlay)
+          // Current Tool Widget (Full Screen Overlay) - Only when tool is selected
           if (currentToolWidget != null)
             Positioned.fill(
               child: Container(
@@ -793,46 +779,65 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
               ),
             ),
 
-          // Tools Panel (Slide from right)
-          AnimatedBuilder(
-            animation: _panelSlideAnimation,
-            builder: (context, child) {
-              return SlideTransition(
-                position: _panelSlideAnimation,
-                child: Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: MediaQuery.of(context).size.width * 0.85,
+          // Tools Panel (Slide from right) - Only when panel is open AND no tool is selected
+          if (isToolsPanelOpen && currentToolWidget == null)
+            Stack(
+              children: [
+                // Semi-transparent background overlay - only tappable to close panel
+                GestureDetector(
+                  onTap: _toggleToolsPanel,
                   child: AnimatedBuilder(
                     animation: _panelOpacityAnimation,
                     builder: (context, child) {
-                      return Opacity(
-                        opacity: _panelOpacityAnimation.value,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(20),
-                              bottomLeft: Radius.circular(20),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 10,
-                                offset: Offset(-5, 0),
-                              ),
-                            ],
-                          ),
-                          child: _buildToolsPanel(),
-                        ),
+                      return Container(
+                        color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
                       );
                     },
                   ),
                 ),
-              );
-            },
-          ),
+
+                // Sliding panel
+                AnimatedBuilder(
+                  animation: _panelSlideAnimation,
+                  builder: (context, child) {
+                    return SlideTransition(
+                      position: _panelSlideAnimation,
+                      child: Positioned(
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: MediaQuery.of(context).size.width * 0.85,
+                        child: AnimatedBuilder(
+                          animation: _panelOpacityAnimation,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: _panelOpacityAnimation.value,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    bottomLeft: Radius.circular(20),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 10,
+                                      offset: Offset(-5, 0),
+                                    ),
+                                  ],
+                                ),
+                                child: _buildToolsPanel(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
         ],
       ),
       floatingActionButton: AnimatedBuilder(
@@ -841,10 +846,22 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
           return Transform.rotate(
             angle: _fabRotationAnimation.value * 2 * 3.14159,
             child: FloatingActionButton(
-              onPressed: _toggleToolsPanel,
+              onPressed: () {
+                if (currentToolWidget != null) {
+                  // If a tool is open, close it
+                  _closeTool();
+                } else {
+                  // Toggle tools panel
+                  _toggleToolsPanel();
+                }
+              },
               backgroundColor: widget.subjectColor,
               child: Icon(
-                isToolsPanelOpen ? Icons.close : Icons.build,
+                currentToolWidget != null 
+                    ? Icons.close 
+                    : isToolsPanelOpen 
+                        ? Icons.close 
+                        : Icons.build,
                 color: Colors.white,
               ),
             ),
@@ -855,8 +872,6 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
   }
 
   Widget _buildToolsPanel() {
-    if (!isToolsPanelOpen) return const SizedBox.shrink();
-
     return Column(
       children: [
         // Panel Header
@@ -1057,6 +1072,7 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
     );
   }
 }
+
 
 // Updated Notes Screen (keeping original functionality)
 class SubjectNotesScreen extends StatelessWidget {
