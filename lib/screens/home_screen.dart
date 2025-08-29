@@ -4,6 +4,7 @@ import 'package:ultsukulu/managers/token_manager.dart';
 import 'package:ultsukulu/screens/shop_screen.dart';
 import 'package:ultsukulu/screens/subject_books_screen.dart';
 import 'package:ultsukulu/screens/subject_past_papers_screen.dart';
+import 'package:ultsukulu/screens/social_screen.dart'; // Import the new social screen
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -183,6 +184,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _navigateToSocial() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SocialScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -237,28 +247,51 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Good morning! 👋',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ready to continue learning?',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
                 children: [
-                  const Text(
-                    'Good morning! 👋',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  // Social button
+                  GestureDetector(
+                    onTap: _navigateToSocial,
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.people,
+                        color: Colors.white,
+                        size: 24,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Ready to continue learning?',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ),
+                  const SizedBox(width: 12),
+                  TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
                 ],
               ),
-              TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
             ],
           ),
           const SizedBox(height: 20),
@@ -519,6 +552,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// Rest of your existing code remains unchanged...
+// (SubjectDetailScreen, PastPaperDetailScreen, AllPastPapersScreen classes stay the same)
 // Simplified Subject Detail Screen - Only Books and Past Papers
 class SubjectDetailScreen extends StatelessWidget {
   final Map<String, dynamic> subject;
