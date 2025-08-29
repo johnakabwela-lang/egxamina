@@ -1,4 +1,4 @@
-// Enhanced Books Screen with Folder-Based PDF Support - FIXED
+// Enhanced Books Screen with Folder-Based PDF Support and Tools Panel
 import 'package:flutter/material.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +6,14 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:ultsukulu/screens/calculator.dart';
+import 'package:ultsukulu/screens/notepad.dart';
+import 'package:ultsukulu/screens/periodic_table.dart';
+import 'package:ultsukulu/screens/schedule_maker.dart';
+import 'package:ultsukulu/screens/study_timer.dart';
+import 'package:ultsukulu/screens/unit_converter.dart';
+import 'package:ultsukulu/screens/wiki_browser.dart';
+import 'package:ultsukulu/screens/dictionary_screen.dart';
 
 class SubjectBooksScreen extends StatefulWidget {
   final Map<String, dynamic> subject;
@@ -545,7 +553,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 }
 
-// PDF Viewer Screen
+// Enhanced PDF Viewer Screen with integrated tools panel
 class PDFViewerScreen extends StatefulWidget {
   final String pdfPath;
   final String title;
@@ -562,9 +570,102 @@ class PDFViewerScreen extends StatefulWidget {
   State<PDFViewerScreen> createState() => _PDFViewerScreenState();
 }
 
-class _PDFViewerScreenState extends State<PDFViewerScreen> {
+class _PDFViewerScreenState extends State<PDFViewerScreen>
+    with TickerProviderStateMixin {
   int currentPage = 0;
   int totalPages = 0;
+  bool isToolsPanelOpen = false;
+  Widget? currentToolWidget;
+  String currentToolTitle = '';
+  
+  late AnimationController _panelAnimationController;
+  late AnimationController _fabAnimationController;
+  late Animation<Offset> _panelSlideAnimation;
+  late Animation<double> _panelOpacityAnimation;
+  late Animation<double> _fabRotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    _panelAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _panelSlideAnimation = Tween<Offset>(
+      begin: const Offset(1.0, 0.0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _panelAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _panelOpacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _panelAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
+    _fabRotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.75,
+    ).animate(CurvedAnimation(
+      parent: _fabAnimationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _panelAnimationController.dispose();
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleToolsPanel() {
+    setState(() {
+      isToolsPanelOpen = !isToolsPanelOpen;
+    });
+
+    if (isToolsPanelOpen) {
+      _panelAnimationController.forward();
+      _fabAnimationController.forward();
+    } else {
+      _panelAnimationController.reverse();
+      _fabAnimationController.reverse();
+      // Clear current tool when closing panel
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            currentToolWidget = null;
+            currentToolTitle = '';
+          });
+        }
+      });
+    }
+  }
+
+  void _openTool(String title, Widget toolWidget) {
+    setState(() {
+      currentToolWidget = toolWidget;
+      currentToolTitle = title;
+    });
+  }
+
+  void _closeTool() {
+    setState(() {
+      currentToolWidget = null;
+      currentToolTitle = '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -586,34 +687,372 @@ class _PDFViewerScreenState extends State<PDFViewerScreen> {
         ),
         backgroundColor: widget.subjectColor,
         foregroundColor: Colors.white,
+        actions: [
+          if (currentToolWidget != null)
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: _closeTool,
+              tooltip: 'Close $currentToolTitle',
+            ),
+        ],
       ),
-      body: PDFView(
-        filePath: widget.pdfPath,
-        enableSwipe: true,
-        swipeHorizontal: false,
-        autoSpacing: true,
-        pageSnap: true,
-        defaultPage: 0,
-        fitPolicy: FitPolicy.BOTH,
-        onRender: (pages) {
-          setState(() {
-            totalPages = pages ?? 0;
-          });
-        },
-        onError: (error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error loading PDF: $error'),
-              backgroundColor: Colors.red,
+      body: Stack(
+        children: [
+          // PDF Viewer
+          PDFView(
+            filePath: widget.pdfPath,
+            enableSwipe: true,
+            swipeHorizontal: false,
+            autoSpacing: true,
+            pageSnap: true,
+            defaultPage: 0,
+            fitPolicy: FitPolicy.BOTH,
+            onRender: (pages) {
+              setState(() {
+                totalPages = pages ?? 0;
+              });
+            },
+            onError: (error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error loading PDF: $error'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            onPageChanged: (page, total) {
+              setState(() {
+                currentPage = page ?? 0;
+                totalPages = total ?? 0;
+              });
+            },
+          ),
+
+          // Tools Panel Overlay
+          if (isToolsPanelOpen)
+            GestureDetector(
+              onTap: currentToolWidget == null ? _toggleToolsPanel : null,
+              child: AnimatedBuilder(
+                animation: _panelOpacityAnimation,
+                builder: (context, child) {
+                  return Container(
+                    color: Colors.black.withOpacity(0.3 * _panelOpacityAnimation.value),
+                  );
+                },
+              ),
+            ),
+
+          // Current Tool Widget (Full Screen Overlay)
+          if (currentToolWidget != null)
+            Positioned.fill(
+              child: Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    // Tool Header
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: widget.subjectColor.withOpacity(0.1),
+                        border: Border(
+                          bottom: BorderSide(
+                            color: widget.subjectColor.withOpacity(0.2),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.build,
+                            color: widget.subjectColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            currentToolTitle,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: widget.subjectColor,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              color: widget.subjectColor,
+                            ),
+                            onPressed: _closeTool,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Tool Content
+                    Expanded(child: currentToolWidget!),
+                  ],
+                ),
+              ),
+            ),
+
+          // Tools Panel (Slide from right)
+          AnimatedBuilder(
+            animation: _panelSlideAnimation,
+            builder: (context, child) {
+              return SlideTransition(
+                position: _panelSlideAnimation,
+                child: Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  child: AnimatedBuilder(
+                    animation: _panelOpacityAnimation,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity: _panelOpacityAnimation.value,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(20),
+                              bottomLeft: Radius.circular(20),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(-5, 0),
+                              ),
+                            ],
+                          ),
+                          child: _buildToolsPanel(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      floatingActionButton: AnimatedBuilder(
+        animation: _fabRotationAnimation,
+        builder: (context, child) {
+          return Transform.rotate(
+            angle: _fabRotationAnimation.value * 2 * 3.14159,
+            child: FloatingActionButton(
+              onPressed: _toggleToolsPanel,
+              backgroundColor: widget.subjectColor,
+              child: Icon(
+                isToolsPanelOpen ? Icons.close : Icons.build,
+                color: Colors.white,
+              ),
             ),
           );
         },
-        onPageChanged: (page, total) {
-          setState(() {
-            currentPage = page ?? 0;
-            totalPages = total ?? 0;
-          });
-        },
+      ),
+    );
+  }
+
+  Widget _buildToolsPanel() {
+    if (!isToolsPanelOpen) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        // Panel Header
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [widget.subjectColor, widget.subjectColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.build,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Study Tools',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Quick access utilities',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: _toggleToolsPanel,
+              ),
+            ],
+          ),
+        ),
+
+        // Tools List
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _buildToolTile(
+                'Calculator',
+                Icons.calculate,
+                const Color(0xFF1CB0F6),
+                'Scientific calculator',
+                () => _openTool('Calculator', const CalculatorScreen()),
+              ),
+              _buildToolTile(
+                'Unit Converter',
+                Icons.swap_horiz,
+                const Color(0xFF58CC02),
+                'Convert units easily',
+                () => _openTool('Unit Converter', const UnitConverterScreen()),
+              ),
+              _buildToolTile(
+                'Dictionary',
+                Icons.menu_book,
+                const Color(0xFFFF4B4B),
+                'Look up definitions',
+                () => _openTool('Dictionary', const DictionaryScreen()),
+              ),
+              _buildToolTile(
+                'Periodic Table',
+                Icons.science,
+                const Color(0xFFFF9600),
+                'Chemical elements',
+                () => _openTool('Periodic Table', const PeriodicTableScreen()),
+              ),
+              _buildToolTile(
+                'Wiki Browser',
+                Icons.public,
+                const Color(0xFF7B68EE),
+                'Research topics',
+                () => _openTool('Wiki Browser', const WikipediaExplorerScreen()),
+              ),
+              _buildToolTile(
+                'Notepad',
+                Icons.note_add,
+                const Color(0xFF32CD32),
+                'Take notes',
+                () => _openTool('Notepad', const NotepadScreen()),
+              ),
+              _buildToolTile(
+                'Schedule Maker',
+                Icons.schedule,
+                const Color(0xFFDA70D6),
+                'Plan your time',
+                () => _openTool('Schedule Maker', const ScheduleMakerScreen()),
+              ),
+              _buildToolTile(
+                'Study Timer',
+                Icons.timer,
+                const Color(0xFF20B2AA),
+                'Focus sessions',
+                () => _openTool('Study Timer', const StudyTimerScreen()),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolTile(
+    String title,
+    IconData icon,
+    Color color,
+    String subtitle,
+    VoidCallback onTap,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.grey[200]!,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
