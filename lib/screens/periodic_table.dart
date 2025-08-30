@@ -180,8 +180,7 @@ class ElementCard extends StatelessWidget {
   final Element element;
   final VoidCallback onTap;
 
-  const ElementCard({Key? key, required this.element, required this.onTap})
-    : super(key: key);
+  const ElementCard({super.key, required this.element, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -244,7 +243,7 @@ class _PropertyItem {
 class ImageCard extends StatelessWidget {
   final Element element;
 
-  const ImageCard({Key? key, required this.element}) : super(key: key);
+  const ImageCard({super.key, required this.element});
 
   @override
   Widget build(BuildContext context) {
@@ -342,8 +341,7 @@ class ImageCard extends StatelessWidget {
 class ElementDetailScreen extends StatelessWidget {
   final Element element;
 
-  const ElementDetailScreen({Key? key, required this.element})
-    : super(key: key);
+  const ElementDetailScreen({super.key, required this.element});
 
   @override
   Widget build(BuildContext context) {
@@ -558,39 +556,37 @@ class ElementDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            ...properties
-                .map(
-                  (prop) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            prop.label,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF666666),
-                            ),
-                          ),
+            ...properties.map(
+              (prop) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        prop.label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF666666),
                         ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            prop.value,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF333333),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                )
-                .toList(),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        prop.value,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),

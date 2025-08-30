@@ -1833,7 +1833,9 @@ class _ClozeQuizScreenState extends State<ClozeQuizScreen> {
   @override
   void dispose() {
     _timer.cancel();
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -2043,8 +2045,8 @@ class _ClozeQuizScreenState extends State<ClozeQuizScreen> {
     }
 
     return Wrap(
-      children: widgets,
       crossAxisAlignment: WrapCrossAlignment.center,
+      children: widgets,
     );
   }
 

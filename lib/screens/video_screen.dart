@@ -833,7 +833,7 @@ class _VideosScreenState extends State<VideosScreen> {
       String cleanFileName = video.title
           .replaceAll(RegExp(r'[^\w\s-]'), '')
           .replaceAll(' ', '_');
-      String filePath = '${directory.path}/${cleanFileName}.mp4';
+      String filePath = '${directory.path}/$cleanFileName.mp4';
 
       Dio dio = Dio();
       dio.options.connectTimeout = const Duration(seconds: 30);
