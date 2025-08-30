@@ -1,0 +1,51 @@
+{
+  "rules": {
+    "hiuser": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "groups": {
+      "$groupId": {
+        ".read": "auth != null",
+        ".write": "auth != null && (data.child('createdBy').val() === auth.uid || !data.exists())",
+        "members": {
+          "$memberId": {
+            ".write": "auth != null && ($memberId === auth.uid || root.child('groups').child($groupId).child('createdBy').val() === auth.uid)"
+          }
+        },
+        "messages": {
+          ".read": "auth != null && root.child('groups').child($groupId).child('members').hasChild(auth.uid)",
+          ".write": "auth != null && root.child('groups').child($groupId).child('members').hasChild(auth.uid)",
+          "$messageId": {
+            ".validate": "newData.hasChildren(['senderId', 'text', 'timestamp']) && 
+                         newData.child('senderId').val() === auth.uid &&
+                         newData.child('timestamp').isNumber()"
+          }
+        }
+      }
+    },
+    "user_presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "lastOnline": {
+          ".validate": "newData.isNumber()"
+        },
+        "isOnline": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    },
+    "group_activity": {
+      "$groupId": {
+        ".read": "auth != null && root.child('groups').child($groupId).child('members').hasChild(auth.uid)",
+        ".write": "auth != null && root.child('groups').child($groupId).child('members').hasChild(auth.uid)",
+        "lastActivity": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    }
+  }
+}

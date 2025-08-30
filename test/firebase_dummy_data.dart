@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:ultsukulu/models/user_model.dart';
 import '../lib/models/group_model.dart';
 import '../lib/firebase_options.dart';
@@ -14,6 +15,7 @@ void main() async {
   // Create Firebase instances
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseDatabase database = FirebaseDatabase.instance;
 
   // List of dummy users to create
   final List<Map<String, dynamic>> dummyUsers = [
@@ -60,6 +62,19 @@ void main() async {
       );
 
       await firestore.collection('users').doc(uid).set(user.toMap());
+
+      // Set up Realtime Database user presence
+      await database.ref('users').child(uid).child('status').set({
+        'state': 'offline',
+        'lastSeen': ServerValue.timestamp,
+        'deviceInfo': {
+          'platform': 'Flutter',
+          'lastActivity': ServerValue.timestamp,
+        },
+      });
+
+      await database.ref('user_presence').child(uid).set(false);
+
       print('Created user: ${userData['email']}');
     } catch (e) {
       print('Error creating user ${userData['email']}: $e');
@@ -102,6 +117,21 @@ void main() async {
       );
 
       await firestore.collection('groups').doc(groupId).set(group.toMap());
+
+      // Set up Realtime Database group activity
+      await database.ref('group_activity').child(groupId).set({
+        'lastActivity': ServerValue.timestamp,
+        'activeMembers': {groupData['createdBy']: true},
+      });
+
+      // Initialize chat structure
+      await database.ref('chats').child(groupId).set({
+        'info': {
+          'createdAt': ServerValue.timestamp,
+          'createdBy': groupData['createdBy'],
+        },
+      });
+
       print('Created group: ${groupData['name']}');
 
       // Update the creator's currentGroup
@@ -110,6 +140,35 @@ void main() async {
       });
     } catch (e) {
       print('Error creating group ${groupData['name']}: $e');
+    }
+  }
+
+  // Add some example chat messages
+  for (var groupData in dummyGroups) {
+    try {
+      final chatRef = database
+          .ref('chats')
+          .child(groupData['name'].toLowerCase().replaceAll(' ', '_'));
+
+      // Add welcome message
+      await chatRef.child('messages').push().set({
+        'userId': groupData['createdBy'],
+        'content': 'Welcome to the ${groupData['name']}! 👋',
+        'timestamp': ServerValue.timestamp,
+        'type': 'text',
+      });
+
+      // Add sample study message
+      await chatRef.child('messages').push().set({
+        'userId': groupData['createdBy'],
+        'content': 'Let\'s start our ${groupData['subject']} study session! 📚',
+        'timestamp': ServerValue.timestamp,
+        'type': 'text',
+      });
+
+      print('Added sample messages to group: ${groupData['name']}');
+    } catch (e) {
+      print('Error adding messages to group ${groupData['name']}: $e');
     }
   }
 
