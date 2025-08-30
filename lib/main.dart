@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:ultsukulu/firebase_options.dart';
 import 'package:ultsukulu/screens/home_screen.dart';
 import 'package:ultsukulu/screens/main_quiz_screen.dart';
 import 'package:ultsukulu/screens/tools_screen.dart';
@@ -12,8 +14,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize Firebase
-    await Firebase.initializeApp();
+    if (kIsWeb) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.web);
+    } else {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
 
     // Initialize Auth Service
     await AuthService.initialize();
