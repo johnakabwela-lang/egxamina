@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isGroupMember(groupId) {
+      return request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+    }
+
+    // User rules
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // Group rules
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        // Allow update if user is the creator
+        resource.data.createdBy == request.auth.uid ||
+        // Or if they're just modifying the members list to join/leave
+        (request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['members', 'memberCount']) &&
+        isGroupMember(groupId))
+      );
+      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+    }
+  }
+}

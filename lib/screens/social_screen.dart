@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:ultsukulu/screens/create_group_screen.dart';
+import '../services/group_service.dart';
+import '../models/group_model.dart';
+import '../models/user_model.dart';
 
 // Main Social Screen
-class SocialScreen extends StatelessWidget {
+class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
+
+  @override
+  State<SocialScreen> createState() => _SocialScreenState();
+}
+
+class _SocialScreenState extends State<SocialScreen> {
+  List<GroupModel> _userGroups = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserGroups();
+  }
+
+  Future<void> _loadUserGroups() async {
+    try {
+      setState(() => _isLoading = true);
+      // TODO: Replace with actual user ID from auth
+      final userId = "current_user_id";
+      final groups = await GroupService.getUserGroups(userId);
+      setState(() {
+        _userGroups = groups.map((g) => GroupModel.fromMap(g)).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      // TODO: Handle error
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,11 +63,7 @@ class SocialScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Icon(
-                  Icons.people,
-                  color: Colors.white,
-                  size: 48,
-                ),
+                const Icon(Icons.people, color: Colors.white, size: 48),
                 const SizedBox(height: 12),
                 const Text(
                   'Connect & Learn Together',
@@ -200,36 +230,54 @@ class SocialScreen extends StatelessWidget {
   }
 
   Widget _buildMyGroupsList(BuildContext context) {
-    // Sample groups data - replace with actual data from your backend
-    final myGroups = [
-      {
-        'id': '1',
-        'name': 'Mathematics Study Circle',
-        'subject': 'Mathematics',
-        'members': 8,
-        'color': const Color(0xFF4285F4),
-        'icon': Icons.calculate,
-        'lastActivity': '2 hours ago',
-      },
-      {
-        'id': '2',
-        'name': 'Physics Lab Group',
-        'subject': 'Physics',
-        'members': 5,
-        'color': const Color(0xFFFF6B6B),
-        'icon': Icons.science,
-        'lastActivity': '1 day ago',
-      },
-      {
-        'id': '3',
-        'name': 'Biology Research Team',
-        'subject': 'Biology',
-        'members': 12,
-        'color': const Color(0xFF45B7D1),
-        'icon': Icons.eco,
-        'lastActivity': '3 hours ago',
-      },
-    ];
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final myGroups = _userGroups.map((group) {
+      IconData icon;
+      Color color;
+
+      switch (group.subject.toLowerCase()) {
+        case 'mathematics':
+          icon = Icons.calculate;
+          color = const Color(0xFF4285F4);
+          break;
+        case 'physics':
+          icon = Icons.science;
+          color = const Color(0xFFFF6B6B);
+          break;
+        case 'biology':
+          icon = Icons.eco;
+          color = const Color(0xFF45B7D1);
+          break;
+        case 'chemistry':
+          icon = Icons.biotech;
+          color = const Color(0xFF4ECDC4);
+          break;
+        case 'english':
+          icon = Icons.menu_book;
+          color = const Color(0xFFF39C12);
+          break;
+        case 'history':
+          icon = Icons.history_edu;
+          color = const Color(0xFF8E44AD);
+          break;
+        default:
+          icon = Icons.school;
+          color = const Color(0xFF58CC02);
+      }
+
+      return {
+        'id': group.id,
+        'name': group.name,
+        'subject': group.subject,
+        'members': group.memberCount,
+        'color': color,
+        'icon': icon,
+        'lastActivity': 'Active', // TODO: Implement last activity tracking
+      };
+    }).toList();
 
     if (myGroups.isEmpty) {
       return Container(
@@ -248,11 +296,7 @@ class SocialScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.group_outlined,
-              size: 48,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.group_outlined, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
               'No Study Groups Yet',
@@ -265,10 +309,7 @@ class SocialScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Create or join a study group to get started',
-              style: TextStyle(
-                color: Colors.grey[500],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],
@@ -286,7 +327,18 @@ class SocialScreen extends StatelessWidget {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => GroupActivitiesScreen(group: group),
+                  builder: (context) => GroupActivitiesScreen(
+                    group: GroupModel(
+                      id: group['id'] as String,
+                      name: group['name'] as String,
+                      subject: group['subject'] as String,
+                      memberCount: group['members'] as int,
+                      createdBy: '',
+                      members: [],
+                      totalPoints: 0,
+                      createdAt: DateTime.now(),
+                    ),
+                  ),
                 ),
               ),
               child: Container(
@@ -379,289 +431,6 @@ class SocialScreen extends StatelessWidget {
   }
 }
 
-// Create Study Group Screen
-class CreateGroupScreen extends StatefulWidget {
-  const CreateGroupScreen({super.key});
-
-  @override
-  State<CreateGroupScreen> createState() => _CreateGroupScreenState();
-}
-
-class _CreateGroupScreenState extends State<CreateGroupScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _groupNameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  String? _selectedSubject;
-  bool _isPrivate = false;
-
-  final subjects = [
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'English',
-    'History',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      appBar: AppBar(
-        title: const Text('Create Study Group'),
-        backgroundColor: const Color(0xFF4285F4),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF4285F4),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.group_add,
-                    color: Colors.white,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Create Your Study Group',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Set up a collaborative learning space',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Form
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Group Details',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Group Name
-                          TextFormField(
-                            controller: _groupNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Group Name',
-                              hintText: 'e.g., Advanced Mathematics Study Circle',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              prefixIcon: const Icon(Icons.group),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter a group name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Subject Selection
-                          DropdownButtonFormField<String>(
-                            value: _selectedSubject,
-                            decoration: InputDecoration(
-                              labelText: 'Subject',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              prefixIcon: const Icon(Icons.school),
-                            ),
-                            items: subjects.map((subject) {
-                              return DropdownMenuItem(
-                                value: subject,
-                                child: Text(subject),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedSubject = value;
-                              });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please select a subject';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Description
-                          TextFormField(
-                            controller: _descriptionController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              labelText: 'Description (Optional)',
-                              hintText: 'Describe what your group will focus on...',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              alignLabelWithHint: true,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Privacy Setting
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _isPrivate ? Icons.lock : Icons.public,
-                                  color: _isPrivate ? Colors.orange : Colors.green,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        _isPrivate ? 'Private Group' : 'Public Group',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      Text(
-                                        _isPrivate
-                                            ? 'Only invited members can join'
-                                            : 'Anyone can find and join',
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Switch(
-                                  value: _isPrivate,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _isPrivate = value;
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Create Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _createGroup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4285F4),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Create Study Group',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _createGroup() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Implement group creation logic
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Study group created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    }
-  }
-
-  @override
-  void dispose() {
-    _groupNameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-}
-
 // Join Study Group Screen
 class JoinGroupScreen extends StatefulWidget {
   const JoinGroupScreen({super.key});
@@ -671,64 +440,79 @@ class JoinGroupScreen extends StatefulWidget {
 }
 
 class _JoinGroupScreenState extends State<JoinGroupScreen> {
+  Color _getGroupColor(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return const Color(0xFF4285F4);
+      case 'physics':
+        return const Color(0xFFFF6B6B);
+      case 'biology':
+        return const Color(0xFF45B7D1);
+      case 'chemistry':
+        return const Color(0xFF4ECDC4);
+      case 'english':
+        return const Color(0xFFF39C12);
+      case 'history':
+        return const Color(0xFF8E44AD);
+      default:
+        return const Color(0xFF58CC02);
+    }
+  }
+
+  IconData _getGroupIcon(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return Icons.calculate;
+      case 'physics':
+        return Icons.science;
+      case 'biology':
+        return Icons.eco;
+      case 'chemistry':
+        return Icons.biotech;
+      case 'english':
+        return Icons.menu_book;
+      case 'history':
+        return Icons.history_edu;
+      default:
+        return Icons.school;
+    }
+  }
+
   final _searchController = TextEditingController();
   String? _selectedSubject;
-  List<Map<String, dynamic>> _filteredGroups = [];
+  List<GroupModel> _availableGroups = [];
+  List<GroupModel> _filteredGroups = [];
+  bool _isLoading = true;
 
-  final subjects = ['All', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History'];
-
-  // Sample available groups - replace with actual data from your backend
-  final availableGroups = [
-    {
-      'id': '4',
-      'name': 'Chemistry Exam Prep',
-      'subject': 'Chemistry',
-      'members': 15,
-      'maxMembers': 20,
-      'color': const Color(0xFF4ECDC4),
-      'icon': Icons.biotech,
-      'description': 'Preparing for upcoming chemistry finals together',
-      'isPrivate': false,
-    },
-    {
-      'id': '5',
-      'name': 'English Literature Circle',
-      'subject': 'English',
-      'members': 8,
-      'maxMembers': 12,
-      'color': const Color(0xFFF39C12),
-      'icon': Icons.menu_book,
-      'description': 'Analyzing and discussing classic literature',
-      'isPrivate': false,
-    },
-    {
-      'id': '6',
-      'name': 'Advanced Physics',
-      'subject': 'Physics',
-      'members': 6,
-      'maxMembers': 10,
-      'color': const Color(0xFFFF6B6B),
-      'icon': Icons.science,
-      'description': 'Tackling complex physics problems together',
-      'isPrivate': false,
-    },
-    {
-      'id': '7',
-      'name': 'History Research Group',
-      'subject': 'History',
-      'members': 10,
-      'maxMembers': 15,
-      'color': const Color(0xFF8E44AD),
-      'icon': Icons.history_edu,
-      'description': 'Collaborative historical research and discussion',
-      'isPrivate': false,
-    },
+  final subjects = [
+    'All',
+    'Mathematics',
+    'Physics',
+    'Chemistry',
+    'Biology',
+    'English',
+    'History',
   ];
 
   @override
   void initState() {
     super.initState();
-    _filteredGroups = List.from(availableGroups);
+    _loadAvailableGroups();
+  }
+
+  Future<void> _loadAvailableGroups() async {
+    try {
+      setState(() => _isLoading = true);
+      final groups = await GroupService.getAllGroups(onlyJoinable: true);
+      setState(() {
+        _availableGroups = groups;
+        _filteredGroups = groups;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      // TODO: Handle error
+    }
   }
 
   @override
@@ -756,11 +540,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
             ),
             child: Column(
               children: [
-                const Icon(
-                  Icons.search,
-                  color: Colors.white,
-                  size: 48,
-                ),
+                const Icon(Icons.search, color: Colors.white, size: 48),
                 const SizedBox(height: 12),
                 const Text(
                   'Find Study Groups',
@@ -813,7 +593,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                     itemBuilder: (context, index) {
                       final subject = subjects[index];
                       final isSelected = _selectedSubject == subject;
-                      
+
                       return Container(
                         margin: const EdgeInsets.only(right: 8),
                         child: FilterChip(
@@ -826,10 +606,14 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                             _filterGroups(_searchController.text);
                           },
                           backgroundColor: Colors.white,
-                          selectedColor: const Color(0xFFFF6B6B).withOpacity(0.1),
+                          selectedColor: const Color(
+                            0xFFFF6B6B,
+                          ).withOpacity(0.1),
                           checkmarkColor: const Color(0xFFFF6B6B),
                           labelStyle: TextStyle(
-                            color: isSelected ? const Color(0xFFFF6B6B) : Colors.black87,
+                            color: isSelected
+                                ? const Color(0xFFFF6B6B)
+                                : Colors.black87,
                           ),
                         ),
                       );
@@ -865,11 +649,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No Groups Found',
@@ -882,19 +662,17 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
           const SizedBox(height: 8),
           Text(
             'Try adjusting your search or filters',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey[500], fontSize: 14),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGroupCard(Map<String, dynamic> group) {
-    final isFull = group['members'] >= group['maxMembers'];
-    
+  Widget _buildGroupCard(GroupModel group) {
+    final isFull = group.memberCount >= 50; // Using default max members of 50
+    final color = _getGroupColor(group.subject);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -917,12 +695,12 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: (group['color'] as Color).withOpacity(0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  group['icon'] as IconData,
-                  color: group['color'] as Color,
+                  _getGroupIcon(group.subject),
+                  color: color,
                   size: 24,
                 ),
               ),
@@ -932,7 +710,7 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      group['name'] as String,
+                      group.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -940,9 +718,9 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      group['subject'] as String,
+                      group.subject,
                       style: TextStyle(
-                        color: group['color'] as Color,
+                        color: color,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -952,7 +730,10 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
               ),
               if (isFull)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -969,12 +750,10 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
             ],
           ),
           const SizedBox(height: 12),
+          // Group description is not part of GroupModel, so we'll show subject instead
           Text(
-            group['description'] as String,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
+            'A study group for ${group.subject}',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
           ),
           const SizedBox(height: 12),
           Row(
@@ -985,20 +764,20 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
                   Icon(Icons.people, size: 16, color: Colors.grey[500]),
                   const SizedBox(width: 4),
                   Text(
-                    '${group['members']}/${group['maxMembers']} members',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
+                    '${group.memberCount}/50 members',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ],
               ),
               ElevatedButton(
                 onPressed: isFull ? null : () => _joinGroup(group),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: group['color'] as Color,
+                  backgroundColor: color,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1017,39 +796,66 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
 
   void _filterGroups(String query) {
     setState(() {
-      _filteredGroups = availableGroups.where((group) {
-        final matchesSearch = group['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
-            group['description'].toString().toLowerCase().contains(query.toLowerCase());
-        final matchesSubject = _selectedSubject == null || 
-            _selectedSubject == 'All' || 
-            group['subject'] == _selectedSubject;
-        
+      _filteredGroups = _availableGroups.where((group) {
+        final matchesSearch =
+            group.name.toLowerCase().contains(query.toLowerCase()) ||
+            group.subject.toLowerCase().contains(query.toLowerCase());
+        final matchesSubject =
+            _selectedSubject == null ||
+            _selectedSubject == 'All' ||
+            group.subject == _selectedSubject;
+
         return matchesSearch && matchesSubject;
       }).toList();
     });
   }
 
-  void _joinGroup(Map<String, dynamic> group) {
-    // TODO: Implement join group logic
+  Future<void> _joinGroup(GroupModel group) async {
+    // TODO: Replace with actual user ID from auth
+    final userId = "current_user_id";
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Join Study Group'),
-        content: Text('Are you sure you want to join "${group['name']}"?'),
+        content: Text('Are you sure you want to join "${group.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Successfully joined ${group['name']}!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await GroupService.joinGroup(group.id, "current_user_id");
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Successfully joined ${group.name}!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // Refresh the groups list in SocialScreen
+                if (context.mounted) {
+                  Navigator.pop(context); // Return to social screen
+                  if (context.mounted) {
+                    final socialScreen = context
+                        .findAncestorStateOfType<_SocialScreenState>();
+                    if (socialScreen != null) {
+                      await socialScreen._loadUserGroups();
+                    }
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to join group: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Join'),
           ),
@@ -1067,17 +873,55 @@ class _JoinGroupScreenState extends State<JoinGroupScreen> {
 
 // Group Activities Screen
 class GroupActivitiesScreen extends StatelessWidget {
-  final Map<String, dynamic> group;
+  final GroupModel group;
 
   const GroupActivitiesScreen({super.key, required this.group});
+
+  Color _getGroupColor(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return const Color(0xFF4285F4);
+      case 'physics':
+        return const Color(0xFFFF6B6B);
+      case 'biology':
+        return const Color(0xFF45B7D1);
+      case 'chemistry':
+        return const Color(0xFF4ECDC4);
+      case 'english':
+        return const Color(0xFFF39C12);
+      case 'history':
+        return const Color(0xFF8E44AD);
+      default:
+        return const Color(0xFF58CC02);
+    }
+  }
+
+  IconData _getGroupIcon(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return Icons.calculate;
+      case 'physics':
+        return Icons.science;
+      case 'biology':
+        return Icons.eco;
+      case 'chemistry':
+        return Icons.biotech;
+      case 'english':
+        return Icons.menu_book;
+      case 'history':
+        return Icons.history_edu;
+      default:
+        return Icons.school;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: Text(group['name']),
-        backgroundColor: group['color'] as Color,
+        title: Text(group.name),
+        backgroundColor: _getGroupColor(group.subject),
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -1090,50 +934,7 @@ class GroupActivitiesScreen extends StatelessWidget {
       body: Column(
         children: [
           // Group Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: group['color'] as Color,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(20),
-                bottomRight: Radius.circular(20),
-              ),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    group['icon'] as IconData,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  group['name'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${group['members']} members • ${group['subject']}',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildGroupHeader(),
 
           const SizedBox(height: 20),
 
@@ -1262,14 +1063,59 @@ class GroupActivitiesScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGroupHeader() {
+    final Color color = _getGroupColor(group.subject);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _getGroupIcon(group.subject),
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            group.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${group.memberCount} members • ${group.subject}',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1303,7 +1149,10 @@ class GroupActivitiesScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.exit_to_app, color: Colors.red),
-              title: const Text('Leave Group', style: TextStyle(color: Colors.red)),
+              title: const Text(
+                'Leave Group',
+                style: TextStyle(color: Colors.red),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showLeaveGroupDialog(context);
@@ -1324,27 +1173,49 @@ class GroupActivitiesScreen extends StatelessWidget {
     );
   }
 
-  void _showLeaveGroupDialog(BuildContext context) {
+  Future<void> _showLeaveGroupDialog(BuildContext context) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Leave Group'),
-        content: Text('Are you sure you want to leave "${group['name']}"?'),
+        content: Text('Are you sure you want to leave "${group.name}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Go back to social screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Left ${group['name']}'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
+            onPressed: () async {
+              try {
+                // TODO: Replace with actual user ID from auth
+                await GroupService.leaveGroup(group.id, "current_user_id");
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  Navigator.pop(context); // Go back to social screen
+                  if (context.mounted) {
+                    final socialScreen = context
+                        .findAncestorStateOfType<_SocialScreenState>();
+                    if (socialScreen != null) {
+                      await socialScreen._loadUserGroups();
+                    }
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Left ${group.name}'),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to leave group: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Leave'),
