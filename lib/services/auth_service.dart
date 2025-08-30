@@ -145,6 +145,9 @@ class AuthService {
   /// Sign in with Google
   static Future<UserCredential> signInWithGoogle() async {
     try {
+      // Start token refresh service
+      TokenService.startTokenRefresh();
+
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
@@ -193,6 +196,9 @@ class AuthService {
   /// Sign out
   static Future<void> signOut() async {
     try {
+      // Stop token refresh
+      TokenService.stopTokenRefresh();
+
       // Sign out from both Google and Firebase
       await Future.wait([_googleSignIn.signOut(), _auth.signOut()]);
     } catch (e) {

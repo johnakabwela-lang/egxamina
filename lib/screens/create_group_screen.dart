@@ -56,10 +56,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
 
     try {
+      // Create group with description and default max members
       await GroupService.createGroup(
         name: _nameController.text.trim(),
         subject: _selectedSubject!,
         createdBy: userId,
+        description: _descriptionController.text.trim(),
+        maxMembers: 50, // Default max members
       );
 
       if (mounted) {

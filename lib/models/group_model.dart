@@ -2,6 +2,7 @@ class GroupModel {
   final String id;
   final String name;
   final String subject;
+  final String description;
   final String createdBy;
   final List<String> members;
   final int memberCount;
@@ -12,6 +13,7 @@ class GroupModel {
     required this.id,
     required this.name,
     required this.subject,
+    this.description = '', // Default to empty string if not provided
     required this.createdBy,
     required this.members,
     required this.memberCount,
@@ -24,6 +26,7 @@ class GroupModel {
       id: map['id'] as String,
       name: map['name'] as String,
       subject: map['subject'] as String,
+      description: (map['description'] as String?) ?? '',
       createdBy: map['createdBy'] as String,
       members: List<String>.from(map['members'] as List),
       memberCount: map['memberCount'] as int,
@@ -37,6 +40,7 @@ class GroupModel {
       'id': id,
       'name': name,
       'subject': subject,
+      'description': description,
       'createdBy': createdBy,
       'members': members,
       'memberCount': memberCount,

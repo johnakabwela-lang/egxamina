@@ -24,8 +24,11 @@ class GroupService {
     required String name,
     required String subject,
     required String createdBy,
+    String? description,
     int maxMembers = 50,
   }) async {
+    String? newGroupId;
+
     try {
       // Validate input
       if (name.trim().isEmpty) {
@@ -34,10 +37,24 @@ class GroupService {
       if (subject.trim().isEmpty) {
         throw Exception('Subject cannot be empty');
       }
+      if (maxMembers < 2 || maxMembers > 100) {
+        throw Exception('Group size must be between 2 and 100 members');
+      }
+
+      // Check for duplicate group names
+      final existingGroups = await _firestore
+          .collection(_groupsCollection)
+          .where('name', isEqualTo: name.trim())
+          .get();
+
+      if (existingGroups.docs.isNotEmpty) {
+        throw Exception('A group with this name already exists');
+      }
 
       final groupData = {
         'name': name.trim(),
         'subject': subject.trim(),
+        'description': description?.trim() ?? '', // Optional description field
         'createdBy': createdBy,
         'members': [createdBy], // Creator is automatically a member
         'memberCount': 1,
@@ -47,16 +64,43 @@ class GroupService {
         'lastActivity': FieldValue.serverTimestamp(),
       };
 
-      final docRef = await _firestore
-          .collection(_groupsCollection)
-          .add(groupData);
+      // Create group document
+      final docRef = _firestore.collection(_groupsCollection).doc();
+      newGroupId = docRef.id;
 
-      // Update user's currentGroup field
-      await UserService.updateUserFields(createdBy, currentGroup: docRef.id);
+      // Use a transaction to ensure atomicity
+      await _firestore.runTransaction((transaction) async {
+        // Create the group
+        transaction.set(docRef, {...groupData, 'id': newGroupId});
+
+        // Update user's current group and owned groups in the same transaction
+        final userRef = _firestore.collection('users').doc(createdBy);
+        transaction.update(userRef, {
+          'currentGroup': newGroupId,
+          'joinedGroupAt': FieldValue.serverTimestamp(),
+          'ownedGroups': FieldValue.arrayUnion([newGroupId]),
+        });
+      });
+
+      // Fetch and return the created group
+      return await getGroupDetails(newGroupId);
 
       // Fetch the created group to return with server timestamp
-      return await getGroupDetails(docRef.id);
+      return await getGroupDetails(newGroupId);
     } catch (e) {
+      // If an error occurs during group creation, clean up
+      try {
+        if (newGroupId != null) {
+          await _firestore
+              .collection(_groupsCollection)
+              .doc(newGroupId)
+              .delete();
+        }
+      } catch (cleanupError) {
+        // Log cleanup error but throw the original error
+        print('Cleanup failed after group creation error: $cleanupError');
+      }
+
       if (e.toString().contains('Group name cannot be empty') ||
           e.toString().contains('Subject cannot be empty')) {
         rethrow;
