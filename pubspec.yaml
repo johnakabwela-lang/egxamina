@@ -29,8 +29,8 @@ dependencies:
   pdf: ^3.11.3
   # Firebase dependencies
   firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
+  firebase_auth: ^4.15.0
+  cloud_firestore: ^4.13.0
   firebase_database: ^10.4.0
   google_sign_in: ^6.1.6
 
