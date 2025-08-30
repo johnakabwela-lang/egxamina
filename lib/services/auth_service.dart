@@ -12,7 +12,7 @@ class AuthService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Email & Password Sign Up
+  // Email & Password Sign Up yes
   static Future<UserCredential> signUpWithEmailPassword(
     String email,
     String password,
