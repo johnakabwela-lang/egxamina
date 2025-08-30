@@ -7,8 +7,6 @@ import 'package:ultsukulu/managers/token_manager.dart';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'dart:io';
-
 import 'package:ultsukulu/screens/shop_screen.dart';
 
 class QuizScreen extends StatefulWidget {

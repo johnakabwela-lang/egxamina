@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ultsukulu/managers/token_manager.dart';
 import 'package:ultsukulu/screens/quiz_game_screen.dart';
 
 class StreakManager {

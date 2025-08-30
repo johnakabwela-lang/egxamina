@@ -166,12 +166,6 @@ class _VideoScreenState extends State<VideoScreen> {
     ),
   ];
 
-  // Map to store custom video URLs for pasted URLs
-  final Map<String, String> _customVideoUrls = {
-    // Default demo videos for common YouTube URLs
-    'default': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-  };
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,9 +221,7 @@ class _VideoScreenState extends State<VideoScreen> {
         onTap: () => _navigateToVideos(subject),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -241,11 +233,7 @@ class _VideoScreenState extends State<VideoScreen> {
                     color: subject.color.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    subject.icon,
-                    size: 32,
-                    color: subject.color,
-                  ),
+                  child: Icon(subject.icon, size: 32, color: subject.color),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -270,7 +258,7 @@ class _VideoScreenState extends State<VideoScreen> {
 
   void _showPasteUrlDialog() {
     final TextEditingController urlController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -358,7 +346,7 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
 
   void _extractVideoInfo() {
     String videoId = _extractVideoId(widget.url);
-    
+
     if (videoId.isNotEmpty) {
       setState(() {
         videoTitle = _getTitleFromUrl(widget.url);
@@ -389,7 +377,7 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
       caseSensitive: false,
       multiLine: false,
     );
-    
+
     Match? match = regExp.firstMatch(url);
     return match?.group(1) ?? '';
   }
@@ -397,29 +385,31 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
   String _getDownloadUrlForPastedUrl(String originalUrl) {
     // For demonstration, we'll use different demo videos based on the URL
     String videoId = _extractVideoId(originalUrl);
-    
+
     // Map different video IDs to different demo videos
     Map<String, String> demoVideoMap = {
-      'dQw4w9WgXcQ': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', // Rick Roll
-      'kJQP7kiw5Fk': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Despacito
-      'fJ9rUzIMcZQ': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', // Bohemian Rhapsody
-      'default': 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+      'dQw4w9WgXcQ':
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', // Rick Roll
+      'kJQP7kiw5Fk':
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Despacito
+      'fJ9rUzIMcZQ':
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', // Bohemian Rhapsody
+      'default':
+          'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     };
-    
+
     return demoVideoMap[videoId] ?? demoVideoMap['default']!;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Download Video'),
-      ),
+      appBar: AppBar(title: const Text('Download Video')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : _buildVideoCard(),
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _buildVideoCard(),
       ),
     );
   }
@@ -456,15 +446,15 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            
+
             Text(
               videoTitle ?? 'Unknown Video',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            
+
             Text(
               widget.url,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -473,19 +463,17 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),
-            
+
             if (isDownloading) ...[
               const SizedBox(height: 16),
-              LinearProgressIndicator(
-                value: downloadProgress / 100,
-              ),
+              LinearProgressIndicator(value: downloadProgress / 100),
               const SizedBox(height: 8),
               Text(
                 'Downloading... ${downloadProgress.toStringAsFixed(1)}%',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-            
+
             const SizedBox(height: 24),
             Row(
               children: [
@@ -521,7 +509,8 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
         Permission.manageExternalStorage,
       ].request();
 
-      bool permissionGranted = statuses[Permission.storage]?.isGranted == true ||
+      bool permissionGranted =
+          statuses[Permission.storage]?.isGranted == true ||
           statuses[Permission.manageExternalStorage]?.isGranted == true;
 
       if (!permissionGranted) {
@@ -535,7 +524,7 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
       });
 
       Directory? directory;
-      
+
       if (Platform.isAndroid) {
         directory = Directory('/storage/emulated/0/Download');
         if (!await directory.exists()) {
@@ -554,8 +543,8 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
       }
 
       String videoId = _extractVideoId(widget.url);
-      String fileName = videoId.isNotEmpty 
-          ? 'video_$videoId.mp4' 
+      String fileName = videoId.isNotEmpty
+          ? 'video_$videoId.mp4'
           : 'custom_video_${DateTime.now().millisecondsSinceEpoch}.mp4';
       String filePath = '${directory.path}/$fileName';
 
@@ -587,7 +576,6 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
       });
 
       _showMessage('Download completed: $filePath');
-
     } catch (e) {
       setState(() {
         isDownloading = false;
@@ -598,9 +586,9 @@ class _UrlDownloaderScreenState extends State<UrlDownloaderScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _openYouTubeVideo(String url) async {
@@ -682,7 +670,8 @@ class _VideosScreenState extends State<VideosScreen> {
     bool isDownloading = downloadingStatus[video.title] ?? false;
     double progress = downloadProgress[video.title] ?? 0.0;
     String videoId = _extractVideoId(video.url);
-    String thumbnailUrl = 'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
+    String thumbnailUrl =
+        'https://img.youtube.com/vi/$videoId/maxresdefault.jpg';
 
     return Card(
       elevation: 2,
@@ -722,9 +711,8 @@ class _VideosScreenState extends State<VideosScreen> {
                     children: [
                       Text(
                         video.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -740,19 +728,17 @@ class _VideosScreenState extends State<VideosScreen> {
                 ),
               ],
             ),
-            
+
             if (isDownloading) ...[
               const SizedBox(height: 16),
-              LinearProgressIndicator(
-                value: progress / 100,
-              ),
+              LinearProgressIndicator(value: progress / 100),
               const SizedBox(height: 8),
               Text(
                 'Downloading... ${progress.toStringAsFixed(1)}%',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
-            
+
             const SizedBox(height: 16),
             Row(
               children: [
@@ -766,7 +752,9 @@ class _VideosScreenState extends State<VideosScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: isDownloading ? null : () => _downloadVideo(video),
+                    onPressed: isDownloading
+                        ? null
+                        : () => _downloadVideo(video),
                     icon: Icon(
                       isDownloading ? Icons.hourglass_empty : Icons.download,
                     ),
@@ -787,13 +775,15 @@ class _VideosScreenState extends State<VideosScreen> {
       caseSensitive: false,
       multiLine: false,
     );
-    
+
     Match? match = regExp.firstMatch(url);
     return match?.group(1) ?? '';
   }
 
   Widget _buildQualityBadge(VideoQuality quality) {
-    String qualityText = quality == VideoQuality.hd1080 ? 'HD 1080p' : 'HD 720p';
+    String qualityText = quality == VideoQuality.hd1080
+        ? 'HD 1080p'
+        : 'HD 720p';
     return Chip(
       label: Text(qualityText),
       backgroundColor: widget.subject.color.withOpacity(0.1),
@@ -807,7 +797,8 @@ class _VideosScreenState extends State<VideosScreen> {
         Permission.manageExternalStorage,
       ].request();
 
-      bool permissionGranted = statuses[Permission.storage]?.isGranted == true ||
+      bool permissionGranted =
+          statuses[Permission.storage]?.isGranted == true ||
           statuses[Permission.manageExternalStorage]?.isGranted == true;
 
       if (!permissionGranted) {
@@ -821,7 +812,7 @@ class _VideosScreenState extends State<VideosScreen> {
       });
 
       Directory? directory;
-      
+
       if (Platform.isAndroid) {
         directory = Directory('/storage/emulated/0/Download');
         if (!await directory.exists()) {
@@ -839,7 +830,9 @@ class _VideosScreenState extends State<VideosScreen> {
         return;
       }
 
-      String cleanFileName = video.title.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+      String cleanFileName = video.title
+          .replaceAll(RegExp(r'[^\w\s-]'), '')
+          .replaceAll(' ', '_');
       String filePath = '${directory.path}/${cleanFileName}.mp4';
 
       Dio dio = Dio();
@@ -870,7 +863,6 @@ class _VideosScreenState extends State<VideosScreen> {
       });
 
       _showMessage('Download completed: $filePath');
-
     } catch (e) {
       setState(() {
         downloadingStatus[video.title] = false;
@@ -881,9 +873,9 @@ class _VideosScreenState extends State<VideosScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _openYouTubeVideo(String url) async {
@@ -926,10 +918,10 @@ class YouTubeVideo {
   final String downloadUrl; // New field for the actual download URL
 
   YouTubeVideo(
-    this.title, 
-    this.url, 
-    this.description, 
-    this.quality, 
+    this.title,
+    this.url,
+    this.description,
+    this.quality,
     this.downloadUrl, // Added download URL parameter
   );
 }
