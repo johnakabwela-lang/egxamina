@@ -11,6 +11,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
+  bool _isSignUp = false;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -44,7 +48,40 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleEmailPasswordAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      if (_isSignUp) {
+        await AuthService.signUpWithEmailPassword(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+      } else {
+        await AuthService.signInWithEmailPassword(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+      }
+      // Navigation will be handled by AuthWrapper automatically
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _signInWithGoogle() async {
@@ -90,6 +127,26 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    if (!value.contains('@') || !value.contains('.')) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password is required';
+    }
+    if (_isSignUp && value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,6 +179,77 @@ class _LoginScreenState extends State<LoginScreen>
                       _buildFeaturesList(),
 
                       const SizedBox(height: 60),
+
+                      // Email/Password Form
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _emailController,
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                prefixIcon: const Icon(Icons.email),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: _validateEmail,
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: const Icon(Icons.lock),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              obscureText: true,
+                              validator: _validatePassword,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : _handleEmailPasswordAuth,
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 50),
+                              ),
+                              child: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _isSignUp = !_isSignUp;
+                                });
+                              },
+                              child: Text(
+                                _isSignUp
+                                    ? 'Already have an account? Sign In'
+                                    : 'Don\'t have an account? Sign Up',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      const Row(
+                        children: [
+                          Expanded(child: Divider()),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text('OR'),
+                          ),
+                          Expanded(child: Divider()),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
 
                       // Google Sign-In Button
                       _buildSignInButton(),

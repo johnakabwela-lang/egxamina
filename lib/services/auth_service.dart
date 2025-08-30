@@ -11,6 +11,65 @@ class AuthService {
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Email & Password Sign Up
+  static Future<UserCredential> signUpWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      if (userCredential.user != null) {
+        await _createUserProfile(userCredential.user!);
+      }
+
+      return userCredential;
+    } catch (e) {
+      throw _handleAuthError(e);
+    }
+  }
+
+  // Email & Password Sign In
+  static Future<UserCredential> signInWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      return await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (e) {
+      throw _handleAuthError(e);
+    }
+  }
+
+  // Handle Firebase Auth Errors
+  static String _handleAuthError(dynamic error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'weak-password':
+          return 'The password provided is too weak.';
+        case 'email-already-in-use':
+          return 'An account already exists for that email.';
+        case 'invalid-email':
+          return 'The email address is not valid.';
+        case 'user-disabled':
+          return 'This user account has been disabled.';
+        case 'user-not-found':
+          return 'No user found for that email.';
+        case 'wrong-password':
+          return 'Wrong password provided.';
+        case 'too-many-requests':
+          return 'Too many attempts. Please try again later.';
+        default:
+          return 'An error occurred. Please try again.';
+      }
+    }
+    return error.toString();
+  }
+
   // Random emoji avatars for new users
   static const List<String> _emojiAvatars = [
     '🐱',

@@ -375,6 +375,23 @@ class GroupService {
     }
   }
 
+  /// Get all groups a user is a member of
+  static Future<List<Map<String, dynamic>>> getUserGroups(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(_groupsCollection)
+          .where('members', arrayContains: userId)
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        return {'id': doc.id, 'name': data['name'] as String, ...data};
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to fetch user groups: ${e.toString()}');
+    }
+  }
+
   /// Get user's current group
   static Future<GroupModel?> getUserCurrentGroup(String userId) async {
     try {

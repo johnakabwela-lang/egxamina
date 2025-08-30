@@ -4,7 +4,8 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:ultsukulu/managers/streak_manager.dart';
+import '../models/question_model.dart';
+import 'quiz_result_screen.dart';
 
 class QuizGameScreen extends StatefulWidget {
   final String subject;
@@ -59,12 +60,12 @@ class PressEffectedWidget extends StatelessWidget {
     }
 
     if (isCorrect) {
-      return const Color(0xFF58CC02).withOpacity(0.1);
+      return const Color(0xFF58CC02).withAlpha(26); // 0.1 * 255
     } else if (isSelected) {
-      return const Color(0xFFE74C3C).withOpacity(0.1);
+      return const Color(0xFFE74C3C).withAlpha(26); // 0.1 * 255
     }
 
-    return Colors.white.withOpacity(0.6);
+    return Colors.white.withAlpha(153); // 0.6 * 255
   }
 
   Color _getBorderColor() {
@@ -497,13 +498,19 @@ class QuizGameScreenState extends State<QuizGameScreen>
   Future<void> _playCorrectSound() async {
     try {
       await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
-    } catch (e) {}
+    } catch (e) {
+      // Ignore sound errors to avoid disrupting gameplay
+      debugPrint('Failed to play correct sound: $e');
+    }
   }
 
   Future<void> _playWrongSound() async {
     try {
       await _audioPlayer.play(AssetSource('sounds/wrong.mp3'));
-    } catch (e) {}
+    } catch (e) {
+      // Ignore sound errors to avoid disrupting gameplay
+      debugPrint('Failed to play wrong sound: $e');
+    }
   }
 
   Future<void> _loadQuestions() async {
@@ -1329,91 +1336,7 @@ class QuizGameScreenState extends State<QuizGameScreen>
   }
 }
 
-class Question {
-  final int? id;
-  final String question;
-  final String? questionType;
-  final List<String> options;
-  int correctAnswer;
-  final String? explanation;
-  final String? reference;
-  final String? imagePath;
-
-  // Store original options and correct answer for shuffling
-  late List<String> _originalOptions;
-  late int _originalCorrectAnswer;
-
-  Question({
-    this.id,
-    required this.question,
-    this.questionType,
-    required this.options,
-    required this.correctAnswer,
-    this.explanation,
-    this.reference,
-    this.imagePath,
-  }) {
-    _originalOptions = List.from(options);
-    _originalCorrectAnswer = correctAnswer;
-  }
-
-  factory Question.fromJson(Map<String, dynamic> json) {
-    return Question(
-      id: json['id'] as int?,
-      question:
-          json['question'] as String? ??
-          '', // Handle empty question for image-only questions
-      questionType: json['questionType'] as String?,
-      options: List<String>.from(json['options']),
-      correctAnswer: json['correctAnswer'] as int,
-      explanation: json['explanation'] as String?,
-      reference: json['reference'] as String?,
-      imagePath: json['imagePath'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      if (id != null) 'id': id,
-      'question': question,
-      if (questionType != null) 'questionType': questionType,
-      'options': options,
-      'correctAnswer': correctAnswer,
-      if (explanation != null) 'explanation': explanation,
-      if (reference != null) 'reference': reference,
-      if (imagePath != null) 'imagePath': imagePath,
-    };
-  }
-
-  // Helper methods to check question type
-  bool get isTextOnly => questionType == 'text';
-  bool get isTextWithImage => questionType == 'text_with_image';
-  bool get isImageOnly => questionType == 'image_only';
-  bool get hasImage => imagePath != null && imagePath!.isNotEmpty;
-  bool get hasText => question.isNotEmpty;
-
-  void shuffleOptions() {
-    List<MapEntry<int, String>> indexedOptions = [];
-    for (int i = 0; i < options.length; i++) {
-      indexedOptions.add(MapEntry(i, options[i]));
-    }
-
-    indexedOptions.shuffle(Random());
-
-    for (int i = 0; i < indexedOptions.length; i++) {
-      options[i] = indexedOptions[i].value;
-      if (indexedOptions[i].key == _originalCorrectAnswer) {
-        correctAnswer = i;
-      }
-    }
-  }
-
-  void resetOptions() {
-    options.clear();
-    options.addAll(_originalOptions);
-    correctAnswer = _originalCorrectAnswer;
-  }
-}
+// Question class moved to models/question_model.dart
 
 // New MultilineOptionButton widget to handle multiline text properly
 class MultilineOptionButton extends StatelessWidget {
