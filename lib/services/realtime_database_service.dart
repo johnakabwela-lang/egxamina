@@ -20,6 +20,50 @@ class RealtimeDatabaseService {
   static DatabaseReference _getGroupActivityRef(String groupId) =>
       databaseRef.child('group_activity').child(groupId);
 
+  // Public method to get group activity reference
+  static DatabaseReference getGroupActivityReference(String groupId) =>
+      _getGroupActivityRef(groupId);
+
+  // Group member presence reference
+  static DatabaseReference _getGroupMemberPresenceRef(
+    String groupId,
+    String userId,
+  ) => _getGroupActivityRef(groupId).child('activeMembers').child(userId);
+
+  /// Initialize presence tracking for a user in a group
+  static Future<void> initializeGroupPresence(
+    String groupId,
+    String userId,
+  ) async {
+    final memberPresenceRef = _getGroupMemberPresenceRef(groupId, userId);
+    final userStatusRef = _getUserStatusRef(userId);
+    final groupActivityRef = _getGroupActivityRef(groupId);
+
+    // Set up disconnect cleanup
+    await memberPresenceRef.onDisconnect().remove();
+
+    // Update user's group presence status
+    await memberPresenceRef.set({
+      'status': 'online',
+      'lastSeen': ServerValue.timestamp,
+      'joinedAt': ServerValue.timestamp,
+    });
+
+    // Update group's last activity
+    await groupActivityRef.update({'lastActivity': ServerValue.timestamp});
+
+    // Set up status listener
+    userStatusRef.onValue.listen((event) {
+      if (event.snapshot.value != null) {
+        final status = (event.snapshot.value as Map)['state'];
+        memberPresenceRef.update({
+          'status': status,
+          'lastSeen': ServerValue.timestamp,
+        });
+      }
+    });
+  }
+
   // Initialize user presence
   static Future<void> initializeUserPresence(String uid) async {
     final userStatusRef = _getUserStatusRef(uid);
@@ -76,4 +120,10 @@ class RealtimeDatabaseService {
       return DateTime.fromMillisecondsSinceEpoch(timestamp);
     });
   }
+
+  // Get current user ID (utility method using the _auth field)
+  static String? get currentUserId => _auth.currentUser?.uid;
+
+  // Check if user is authenticated
+  static bool get isAuthenticated => _auth.currentUser != null;
 }

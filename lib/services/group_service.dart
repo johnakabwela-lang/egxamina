@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart' as rtdb;
 import '../models/group_model.dart';
 import '../models/user_model.dart';
 import 'user_service.dart';
+import 'realtime_database_service.dart';
 
 class GroupService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -28,6 +31,7 @@ class GroupService {
     int maxMembers = 50,
   }) async {
     String? newGroupId;
+    final database = rtdb.FirebaseDatabase.instance;
 
     try {
       // Validate input
@@ -82,10 +86,33 @@ class GroupService {
         });
       });
 
-      // Fetch and return the created group
-      return await getGroupDetails(newGroupId);
+      // Initialize real-time database structure for the group
+      await database.ref('group_activity').child(newGroupId).set({
+        'lastActivity': rtdb.ServerValue.timestamp,
+        'activeMembers': {createdBy: true},
+        'info': {
+          'createdAt': rtdb.ServerValue.timestamp,
+          'createdBy': createdBy,
+        },
+      });
 
-      // Fetch the created group to return with server timestamp
+      // Initialize chat structure
+      await database.ref('chats').child(newGroupId).set({
+        'info': {
+          'createdAt': rtdb.ServerValue.timestamp,
+          'createdBy': createdBy,
+        },
+      });
+
+      // Initialize user presence in the group
+      await RealtimeDatabaseService.getGroupActivityReference(
+        newGroupId,
+      ).child('activeMembers').child(createdBy).set(true);
+      await RealtimeDatabaseService.initializeGroupPresence(
+        newGroupId,
+        createdBy,
+      );
+      // Fetch and return the created group
       return await getGroupDetails(newGroupId);
     } catch (e) {
       // If an error occurs during group creation, clean up
@@ -98,7 +125,10 @@ class GroupService {
         }
       } catch (cleanupError) {
         // Log cleanup error but throw the original error
-        print('Cleanup failed after group creation error: $cleanupError');
+        developer.log(
+          'Cleanup failed after group creation error',
+          error: cleanupError,
+        );
       }
 
       if (e.toString().contains('Group name cannot be empty') ||
@@ -152,6 +182,9 @@ class GroupService {
           'joinedGroupAt': FieldValue.serverTimestamp(),
         });
       });
+
+      // Initialize real-time presence for the new member
+      await RealtimeDatabaseService.initializeGroupPresence(groupId, userId);
     } catch (e) {
       if (e.toString().contains(_groupNotFoundError) ||
           e.toString().contains(_userAlreadyInGroupError) ||
@@ -274,7 +307,7 @@ class GroupService {
           .collection(_groupsCollection)
           .orderBy('name')
           .startAt([searchTerm])
-          .endAt([searchTerm + '\uf8ff'])
+          .endAt(['$searchTerm\uf8ff'])
           .limit(20)
           .get();
 
@@ -434,6 +467,19 @@ class GroupService {
     } catch (e) {
       throw Exception('Failed to fetch user groups: ${e.toString()}');
     }
+  }
+
+  /// Get real-time stream of all groups a user is a member of
+  static Stream<List<GroupModel>> getUserGroupsStream(String userId) {
+    return _firestore
+        .collection(_groupsCollection)
+        .where('members', arrayContains: userId)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return GroupModel.fromMap({'id': doc.id, ...doc.data()});
+          }).toList();
+        });
   }
 
   /// Get user's current group

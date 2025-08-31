@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class GroupModel {
   final String id;
   final String name;
@@ -22,6 +24,16 @@ class GroupModel {
   });
 
   factory GroupModel.fromMap(Map<String, dynamic> map) {
+    // Handle different timestamp formats from Firestore
+    DateTime parseTimestamp(dynamic timestamp) {
+      if (timestamp == null) return DateTime.now();
+      if (timestamp is int)
+        return DateTime.fromMillisecondsSinceEpoch(timestamp);
+      if (timestamp is DateTime) return timestamp;
+      if (timestamp is Timestamp) return timestamp.toDate();
+      return DateTime.now();
+    }
+
     return GroupModel(
       id: map['id'] as String,
       name: map['name'] as String,
@@ -31,7 +43,7 @@ class GroupModel {
       members: List<String>.from(map['members'] as List),
       memberCount: map['memberCount'] as int,
       totalPoints: map['totalPoints'] as int,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      createdAt: parseTimestamp(map['createdAt']),
     );
   }
 
@@ -45,7 +57,7 @@ class GroupModel {
       'members': members,
       'memberCount': memberCount,
       'totalPoints': totalPoints,
-      'createdAt': createdAt.millisecondsSinceEpoch,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 
