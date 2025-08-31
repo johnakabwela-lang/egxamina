@@ -14,11 +14,16 @@ service cloud.firestore {
       return request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
     }
 
+    function isGroupOwner(groupId) {
+      return request.auth.uid == get(/databases/$(database)/documents/groups/$(groupId)).data.createdBy;
+    }
+
     // User rules
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentGroup', 'joinedGroupAt', 'ownedGroups', 'leftGroupAt']));
       allow delete: if isOwner(userId);
     }
 
@@ -27,7 +32,11 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
-        // Allow update if user is the creator
+        isGroupOwner(groupId) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberCount', 'lastActivity']) &&
+         (request.auth.uid in request.resource.data.members || request.auth.uid in resource.data.members))
+      );
+      allow delete: if isSignedIn() && isGroupOwner(groupId);
         resource.data.createdBy == request.auth.uid ||
         // Or if they're just modifying the members list to join/leave
         (request.resource.data.diff(resource.data).affectedKeys()

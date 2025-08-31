@@ -46,6 +46,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '646738027057',
     projectId: 'stk-manager-af4e4',
     authDomain: 'stk-manager-af4e4.firebaseapp.com',
+    databaseURL: 'https://stk-manager-af4e4-default-rtdb.firebaseio.com',
     storageBucket: 'stk-manager-af4e4.firebasestorage.app',
   );
 
@@ -54,6 +55,7 @@ class DefaultFirebaseOptions {
     appId: '1:646738027057:android:f62cd870265ed343fdeb10',
     messagingSenderId: '646738027057',
     projectId: 'stk-manager-af4e4',
+    databaseURL: 'https://stk-manager-af4e4-default-rtdb.firebaseio.com',
     storageBucket: 'stk-manager-af4e4.firebasestorage.app',
   );
 
@@ -62,6 +64,7 @@ class DefaultFirebaseOptions {
     appId: '1:646738027057:ios:your-ios-app-id',
     messagingSenderId: '646738027057',
     projectId: 'stk-manager-af4e4',
+    databaseURL: 'https://stk-manager-af4e4-default-rtdb.firebaseio.com',
     storageBucket: 'stk-manager-af4e4.firebasestorage.app',
     iosBundleId: 'com.example.ultsukulu',
   );
@@ -71,6 +74,7 @@ class DefaultFirebaseOptions {
     appId: '1:646738027057:macos:your-macos-app-id',
     messagingSenderId: '646738027057',
     projectId: 'stk-manager-af4e4',
+    databaseURL: 'https://stk-manager-af4e4-default-rtdb.firebaseio.com',
     storageBucket: 'stk-manager-af4e4.firebasestorage.app',
     iosBundleId: 'com.example.ultsukulu',
   );
@@ -80,6 +84,7 @@ class DefaultFirebaseOptions {
     appId: '1:646738027057:windows:your-windows-app-id',
     messagingSenderId: '646738027057',
     projectId: 'stk-manager-af4e4',
+    databaseURL: 'https://stk-manager-af4e4-default-rtdb.firebaseio.com',
     authDomain: 'stk-manager-af4e4.firebaseapp.com',
     storageBucket: 'stk-manager-af4e4.firebasestorage.app',
   );
