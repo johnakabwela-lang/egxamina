@@ -8,6 +8,7 @@ class GroupModel {
   final String createdBy;
   final List<String> members;
   final int memberCount;
+  final int maxMembers;
   final int totalPoints;
   final DateTime createdAt;
 
@@ -19,6 +20,7 @@ class GroupModel {
     required this.createdBy,
     required this.members,
     required this.memberCount,
+    this.maxMembers = 50, // Default max members if not specified
     required this.totalPoints,
     required this.createdAt,
   });
@@ -42,6 +44,7 @@ class GroupModel {
       createdBy: map['createdBy'] as String,
       members: List<String>.from(map['members'] as List),
       memberCount: map['memberCount'] as int,
+      maxMembers: (map['maxMembers'] as int?) ?? 50, // Default to 50 if not in map
       totalPoints: map['totalPoints'] as int,
       createdAt: parseTimestamp(map['createdAt']),
     );
@@ -56,6 +59,7 @@ class GroupModel {
       'createdBy': createdBy,
       'members': members,
       'memberCount': memberCount,
+      'maxMembers': maxMembers,
       'totalPoints': totalPoints,
       'createdAt': Timestamp.fromDate(createdAt),
     };
@@ -65,9 +69,11 @@ class GroupModel {
     String? id,
     String? name,
     String? subject,
+    String? description,
     String? createdBy,
     List<String>? members,
     int? memberCount,
+    int? maxMembers,
     int? totalPoints,
     DateTime? createdAt,
   }) {
@@ -75,13 +81,21 @@ class GroupModel {
       id: id ?? this.id,
       name: name ?? this.name,
       subject: subject ?? this.subject,
+      description: description ?? this.description,
       createdBy: createdBy ?? this.createdBy,
       members: members ?? List.from(this.members),
       memberCount: memberCount ?? this.memberCount,
+      maxMembers: maxMembers ?? this.maxMembers,
       totalPoints: totalPoints ?? this.totalPoints,
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  // Helper method to check if group is full
+  bool get isFull => memberCount >= maxMembers;
+
+  // Helper method to get available spots
+  int get availableSpots => maxMembers - memberCount;
 
   @override
   bool operator ==(Object other) {
@@ -90,9 +104,11 @@ class GroupModel {
         other.id == id &&
         other.name == name &&
         other.subject == subject &&
+        other.description == description &&
         other.createdBy == createdBy &&
         _listEquals(other.members, members) &&
         other.memberCount == memberCount &&
+        other.maxMembers == maxMembers &&
         other.totalPoints == totalPoints &&
         other.createdAt == createdAt;
   }
@@ -103,9 +119,11 @@ class GroupModel {
       id,
       name,
       subject,
+      description,
       createdBy,
       Object.hashAll(members),
       memberCount,
+      maxMembers,
       totalPoints,
       createdAt,
     );
@@ -113,7 +131,7 @@ class GroupModel {
 
   @override
   String toString() {
-    return 'GroupModel(id: $id, name: $name, subject: $subject, createdBy: $createdBy, members: $members, memberCount: $memberCount, totalPoints: $totalPoints, createdAt: $createdAt)';
+    return 'GroupModel(id: $id, name: $name, subject: $subject, description: $description, createdBy: $createdBy, members: $members, memberCount: $memberCount, maxMembers: $maxMembers, totalPoints: $totalPoints, createdAt: $createdAt)';
   }
 
   // Helper method for list comparison
