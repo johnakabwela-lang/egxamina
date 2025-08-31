@@ -27,6 +27,20 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
     }
 
+    // Quiz Session rules
+    match /quizSessions/{sessionId} {
+      allow read: if isSignedIn() && isGroupMember(resource.data.groupId);
+      allow create: if isSignedIn() && isGroupMember(request.resource.data.groupId);
+      allow update: if isSignedIn() && (
+        // Allow host to update session
+        resource.data.hostUserId == request.auth.uid ||
+        // Allow participants to join/leave if they're group members
+        (isGroupMember(resource.data.groupId) && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants']))
+      );
+      allow delete: if isSignedIn() && resource.data.hostUserId == request.auth.uid;
+    }
+
     // Group rules
     match /groups/{groupId} {
       allow read: if isSignedIn();

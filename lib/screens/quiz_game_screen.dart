@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import '../models/question_model.dart';
+import '../services/auth_service.dart';
 import 'quiz_result_screen.dart';
+import '../widgets/play_with_group_dialog.dart';
 
 class QuizGameScreen extends StatefulWidget {
   final String subject;
@@ -23,6 +25,23 @@ class QuizGameScreen extends StatefulWidget {
 
   @override
   QuizGameScreenState createState() => QuizGameScreenState();
+
+  // Helper method to show play with group dialog
+  static Future<void> showPlayWithGroupDialog(
+    BuildContext context, {
+    required String subject,
+    required String fileName,
+  }) {
+    return showDialog(
+      context: context,
+      builder: (context) => PlayWithGroupDialog(
+        subject: subject,
+        fileName: fileName,
+        groupId:
+            '', // Add an empty string or get a proper group ID from somewhere
+      ),
+    );
+  }
 }
 
 // Independent Options Card Widget
@@ -430,6 +449,12 @@ class QuizGameScreenState extends State<QuizGameScreen>
   bool showConfetti = false;
   int streakCount = 0;
   int pressedButtonIndex = -1;
+
+  // Whether the user can create multiplayer sessions
+  bool get _canPlayWithGroup =>
+      AuthService.isSignedIn && // User must be signed in
+      !isAnswered && // Can't start group play after answering
+      currentQuestionIndex == 0; // Can only start at beginning of quiz
 
   // Audio player for sound effects
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -980,46 +1005,70 @@ class QuizGameScreenState extends State<QuizGameScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // Streak indicator
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isSmallScreen ? 6 : 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: streakCount >= 3
-                                  ? const Color(0xFFFF9500).withOpacity(0.1)
-                                  : const Color(0xFF777777).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: streakCount >= 3
-                                    ? const Color(0xFFFF9500).withOpacity(0.3)
-                                    : const Color(0xFF777777).withOpacity(0.3),
+                          if (_canPlayWithGroup)
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                QuizGameScreen.showPlayWithGroupDialog(
+                                  context,
+                                  subject: widget.subject,
+                                  fileName: widget.fileName,
+                                );
+                              },
+                              icon: const Icon(Icons.group_add),
+                              label: const Text('Play with Group'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF58CC02),
+                                side: const BorderSide(
+                                  color: Color(0xFF58CC02),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.local_fire_department,
-                                  size: isSmallScreen ? 14 : 16,
+                          if (!_canPlayWithGroup)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmallScreen ? 6 : 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: streakCount >= 3
+                                    ? const Color(0xFFFF9500).withOpacity(0.1)
+                                    : const Color(0xFF777777).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
                                   color: streakCount >= 3
-                                      ? const Color(0xFFFF9500)
-                                      : const Color(0xFF777777),
+                                      ? const Color(0xFFFF9500).withOpacity(0.3)
+                                      : const Color(
+                                          0xFF777777,
+                                        ).withOpacity(0.3),
                                 ),
-                                SizedBox(width: isSmallScreen ? 2 : 4),
-                                Text(
-                                  '$streakCount',
-                                  style: TextStyle(
-                                    fontSize: isSmallScreen ? 12 : 14,
-                                    fontWeight: FontWeight.bold,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department,
+                                    size: isSmallScreen ? 14 : 16,
                                     color: streakCount >= 3
                                         ? const Color(0xFFFF9500)
                                         : const Color(0xFF777777),
                                   ),
-                                ),
-                              ],
+                                  SizedBox(width: isSmallScreen ? 2 : 4),
+                                  Text(
+                                    '$streakCount',
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 12 : 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: streakCount >= 3
+                                          ? const Color(0xFFFF9500)
+                                          : const Color(0xFF777777),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
 
                           // Timer
                           AnimatedBuilder(

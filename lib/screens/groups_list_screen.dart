@@ -452,15 +452,15 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredGroups.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _filteredGroups.length,
-                        itemBuilder: (context, index) {
-                          final group = _filteredGroups[index];
-                          return _buildGroupCard(group);
-                        },
-                      ),
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _filteredGroups.length,
+                    itemBuilder: (context, index) {
+                      final group = _filteredGroups[index];
+                      return _buildGroupCard(group);
+                    },
+                  ),
           ),
         ],
       ),

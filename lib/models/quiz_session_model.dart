@@ -61,6 +61,7 @@ class QuizSessionModel {
   final Map<String, QuizParticipant> participants;
   final DateTime? startedAt;
   final String quizName;
+  final String? hostId;
 
   const QuizSessionModel({
     required this.id,
@@ -69,6 +70,8 @@ class QuizSessionModel {
     required this.participants,
     this.startedAt,
     required this.quizName,
+    required this.hostId,
+    required String hostUserId,
   });
 
   factory QuizSessionModel.fromMap(Map<String, dynamic> map) {
@@ -93,6 +96,8 @@ class QuizSessionModel {
           ? DateTime.fromMillisecondsSinceEpoch(map['startedAt'] as int)
           : null,
       quizName: map['quizName'] as String,
+      hostId: '${map['hostId']}',
+      hostUserId: '',
     );
   }
 
@@ -129,6 +134,8 @@ class QuizSessionModel {
           : Map.from(this.participants),
       startedAt: startedAt ?? this.startedAt,
       quizName: quizName ?? this.quizName,
+      hostId: hostId ?? this.hostId,
+      hostUserId: '',
     );
   }
 

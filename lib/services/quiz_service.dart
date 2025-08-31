@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../models/quiz_session_model.dart';
-import '../models/group_model.dart';
 
 class QuizService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _sessionsCollection = 'quiz_sessions';
+  final String _sessionsCollection =
+      'quizSessions'; // Changed from 'quiz_sessions'
 
   static final QuizService _instance = QuizService._internal();
   factory QuizService() => _instance;
@@ -34,6 +34,8 @@ class QuizService {
       },
       startedAt: null,
       quizName: quizName,
+      hostUserId: hostUserId,
+      hostId: '', // Make sure this field is included
     );
 
     await sessionRef.set(session.toMap());
