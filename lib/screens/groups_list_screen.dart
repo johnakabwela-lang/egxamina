@@ -68,6 +68,60 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
     }
   }
 
+  Color _getGroupColor(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return const Color(0xFF4285F4);
+      case 'physics':
+        return const Color(0xFFFF6B6B);
+      case 'biology':
+        return const Color(0xFF45B7D1);
+      case 'chemistry':
+        return const Color(0xFF4ECDC4);
+      case 'english':
+        return const Color(0xFFF39C12);
+      case 'history':
+        return const Color(0xFF8E44AD);
+      default:
+        return const Color(0xFF58CC02);
+    }
+  }
+
+  IconData _getGroupIcon(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+        return Icons.calculate;
+      case 'physics':
+        return Icons.science;
+      case 'biology':
+        return Icons.eco;
+      case 'chemistry':
+        return Icons.biotech;
+      case 'english':
+        return Icons.menu_book;
+      case 'history':
+        return Icons.history_edu;
+      default:
+        return Icons.school;
+    }
+  }
+
+  void _filterGroups(String query) {
+    setState(() {
+      _filteredGroups = _groups.where((group) {
+        final matchesSearch =
+            group.name.toLowerCase().contains(query.toLowerCase()) ||
+            group.subject.toLowerCase().contains(query.toLowerCase());
+        final matchesSubject =
+            _selectedSubject == null ||
+            _selectedSubject == 'All' ||
+            group.subject == _selectedSubject;
+
+        return matchesSearch && matchesSubject;
+      }).toList();
+    });
+  }
+
   Future<void> _joinGroup(GroupModel group) async {
     final userId = AuthService.currentUserId;
     if (userId == null) {
@@ -82,29 +136,46 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
       return;
     }
 
-    try {
-      await GroupService.joinGroup(group.id, userId);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully joined group!'),
-            backgroundColor: Colors.green,
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Join Study Group'),
+        content: Text('Are you sure you want to join "${group.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-        );
-      }
-
-      _loadGroups(); // Refresh the list
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to join group: ${e.toString()}'),
-            backgroundColor: Colors.red,
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                Navigator.pop(context);
+                await GroupService.joinGroup(group.id, userId);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Successfully joined ${group.name}!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+                _loadGroups(); // Refresh the list
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to join group: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Join'),
           ),
-        );
-      }
-    }
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState() {
@@ -112,40 +183,20 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.group_off, size: 64, color: Colors.grey[400]),
+          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No study groups found',
+            'No Groups Found',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: Colors.grey[600],
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _selectedSubject == null || _selectedSubject == 'All'
-                ? 'Try creating a new group!'
-                : 'Try selecting a different subject',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateGroupScreen(),
-                ),
-              ).then((_) => _loadGroups());
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Create New Group'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF58CC02),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
+            'Try adjusting your search or filters',
+            style: TextStyle(color: Colors.grey[500], fontSize: 14),
           ),
         ],
       ),
@@ -153,103 +204,133 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
   }
 
   Widget _buildGroupCard(GroupModel group) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  _getSubjectIcon(group.subject),
-                  color: _getSubjectColor(group.subject),
+    final isFull = group.memberCount >= 50; // Using default max members of 50
+    final color = _getGroupColor(group.subject);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(
+              red: 0,
+              green: 0,
+              blue: 0,
+              alpha: 13,
+            ),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+                child: Icon(
+                  _getGroupIcon(group.subject),
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      group.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      group.subject,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isFull)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Text(
-                    group.name,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    'FULL',
+                    style: TextStyle(
+                      color: Colors.red[700],
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              group.subject,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.people, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  '${group.memberCount} members',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () => _joinGroup(group),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF58CC02),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Group description
+          Text(
+            'A study group for ${group.subject}',
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.people, size: 16, color: Colors.grey[500]),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${group.memberCount}/50 members',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
-                  child: const Text('Join Group'),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: isFull ? null : () => _joinGroup(group),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-              ],
-            ),
-          ],
-        ),
+                child: Text(
+                  isFull ? 'Full' : 'Join',
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
-  }
-
-  IconData _getSubjectIcon(String subject) {
-    switch (subject.toLowerCase()) {
-      case 'mathematics':
-        return Icons.calculate;
-      case 'physics':
-        return Icons.science;
-      case 'chemistry':
-        return Icons.biotech;
-      case 'biology':
-        return Icons.eco;
-      case 'english':
-        return Icons.menu_book;
-      case 'history':
-        return Icons.history_edu;
-      default:
-        return Icons.school;
-    }
-  }
-
-  Color _getSubjectColor(String subject) {
-    switch (subject.toLowerCase()) {
-      case 'mathematics':
-        return Colors.blue;
-      case 'physics':
-        return Colors.purple;
-      case 'chemistry':
-        return Colors.green;
-      case 'biology':
-        return Colors.teal;
-      case 'english':
-        return Colors.orange;
-      case 'history':
-        return Colors.brown;
-      default:
-        return Colors.grey;
-    }
   }
 
   @override
@@ -257,93 +338,131 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: const Text('Study Groups'),
-        backgroundColor: const Color(0xFF58CC02),
+        title: const Text('Join Study Group'),
+        backgroundColor: const Color(0xFFFF6B6B),
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CreateGroupScreen(),
-                ),
-              ).then((_) => _loadGroups());
-            },
-          ),
-        ],
+        elevation: 0,
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadGroups,
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search groups...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _filteredGroups = _groups.where((group) {
-                            return group.name.toLowerCase().contains(
-                                  value.toLowerCase(),
-                                ) ||
-                                group.subject.toLowerCase().contains(
-                                  value.toLowerCase(),
-                                );
-                          }).toList();
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  DropdownButton<String>(
-                    value: _selectedSubject ?? 'All',
-                    items: _subjects.map((String subject) {
-                      return DropdownMenuItem(
-                        value: subject,
-                        child: Text(subject),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        _selectedSubject = newValue;
-                      });
-                      _loadGroups();
-                    },
-                  ),
-                ],
+      body: Column(
+        children: [
+          // Header (matching JoinGroupScreen)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFFFF6B6B),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(20),
+                bottomRight: Radius.circular(20),
               ),
             ),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredGroups.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.builder(
-                      itemCount: _filteredGroups.length,
-                      padding: const EdgeInsets.only(bottom: 16),
-                      itemBuilder: (context, index) {
-                        return _buildGroupCard(_filteredGroups[index]);
-                      },
-                    ),
+            child: Column(
+              children: [
+                const Icon(Icons.search, color: Colors.white, size: 48),
+                const SizedBox(height: 12),
+                const Text(
+                  'Find Study Groups',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Discover and join study groups',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Search and Filter (matching JoinGroupScreen)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                // Search Bar
+                TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search groups...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  onChanged: _filterGroups,
+                ),
+                const SizedBox(height: 12),
+
+                // Subject Filter
+                SizedBox(
+                  height: 40,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _subjects.length,
+                    itemBuilder: (context, index) {
+                      final subject = _subjects[index];
+                      final isSelected = _selectedSubject == subject;
+
+                      return Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text(subject),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedSubject = selected ? subject : null;
+                            });
+                            _filterGroups(_searchController.text);
+                          },
+                          backgroundColor: Colors.white,
+                          selectedColor: const Color(0xFFFF6B6B).withValues(
+                            red: 255,
+                            green: 107,
+                            blue: 107,
+                            alpha: 25,
+                          ),
+                          checkmarkColor: const Color(0xFFFF6B6B),
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? const Color(0xFFFF6B6B)
+                                : Colors.black87,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Groups List
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredGroups.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _filteredGroups.length,
+                        itemBuilder: (context, index) {
+                          final group = _filteredGroups[index];
+                          return _buildGroupCard(group);
+                        },
+                      ),
+          ),
+        ],
       ),
     );
   }
