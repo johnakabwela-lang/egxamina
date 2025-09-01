@@ -1,0 +1,218 @@
+enum QuizStatus { waiting, active, completed, cancelled, expired }
+
+enum ConnectionStatus { online, offline, reconnecting }
+
+class QuizParticipant {
+  final String userId;
+  final String userName;
+  final int score;
+  final bool hasJoined;
+  final DateTime? joinedAt;
+  final ConnectionStatus connectionStatus;
+  final DateTime? lastHeartbeat;
+  final DateTime? disconnectedAt;
+  final bool hasLockedAnswer;
+
+  const QuizParticipant({
+    required this.userId,
+    required this.userName,
+    this.score = 0,
+    this.hasJoined = false,
+    this.joinedAt,
+    this.connectionStatus = ConnectionStatus.online,
+    this.lastHeartbeat,
+    this.disconnectedAt,
+    this.hasLockedAnswer = false,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userId': userId,
+      'userName': userName,
+      'score': score,
+      'hasJoined': hasJoined,
+      'joinedAt': joinedAt?.millisecondsSinceEpoch,
+      'connectionStatus': connectionStatus.name,
+      'lastHeartbeat': lastHeartbeat?.millisecondsSinceEpoch,
+      'disconnectedAt': disconnectedAt?.millisecondsSinceEpoch,
+      'hasLockedAnswer': hasLockedAnswer,
+    };
+  }
+
+  factory QuizParticipant.fromMap(Map<String, dynamic> map) {
+    return QuizParticipant(
+      userId: map['userId'] as String,
+      userName: map['userName'] as String,
+      score: map['score'] as int? ?? 0,
+      hasJoined: map['hasJoined'] as bool? ?? false,
+      joinedAt: map['joinedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['joinedAt'] as int)
+          : null,
+      connectionStatus: ConnectionStatus.values.firstWhere(
+        (e) => e.name == (map['connectionStatus'] as String?),
+        orElse: () => ConnectionStatus.offline,
+      ),
+      lastHeartbeat: map['lastHeartbeat'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['lastHeartbeat'] as int)
+          : null,
+      disconnectedAt: map['disconnectedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['disconnectedAt'] as int)
+          : null,
+      hasLockedAnswer: map['hasLockedAnswer'] as bool? ?? false,
+    );
+  }
+
+  QuizParticipant copyWith({
+    String? userId,
+    String? userName,
+    int? score,
+    bool? hasJoined,
+    DateTime? joinedAt,
+    ConnectionStatus? connectionStatus,
+    DateTime? lastHeartbeat,
+    DateTime? disconnectedAt,
+    bool? hasLockedAnswer,
+  }) {
+    return QuizParticipant(
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      score: score ?? this.score,
+      hasJoined: hasJoined ?? this.hasJoined,
+      joinedAt: joinedAt ?? this.joinedAt,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      lastHeartbeat: lastHeartbeat ?? this.lastHeartbeat,
+      disconnectedAt: disconnectedAt ?? this.disconnectedAt,
+      hasLockedAnswer: hasLockedAnswer ?? this.hasLockedAnswer,
+    );
+  }
+}
+
+class QuizSessionModel {
+  final String id;
+  final String groupId;
+  final String quizName;
+  final String hostId;
+  final QuizStatus status;
+  final Map<String, QuizParticipant> participants;
+  final DateTime createdAt;
+  final DateTime? startedAt;
+  final DateTime? expiresAt;
+
+  const QuizSessionModel({
+    required this.id,
+    required this.groupId,
+    required this.quizName,
+    required this.hostId,
+    required this.status,
+    required this.participants,
+    required this.createdAt,
+    this.startedAt,
+    this.expiresAt,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'groupId': groupId,
+      'quizName': quizName,
+      'hostId': hostId,
+      'status': status.name,
+      'participants': participants.map((key, value) => MapEntry(key, value.toMap())),
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'startedAt': startedAt?.millisecondsSinceEpoch,
+      'expiresAt': expiresAt?.millisecondsSinceEpoch,
+    };
+  }
+
+  factory QuizSessionModel.fromMap(Map<String, dynamic> map) {
+    return QuizSessionModel(
+      id: map['id'] as String,
+      groupId: map['groupId'] as String,
+      quizName: map['quizName'] as String,
+      hostId: map['hostId'] as String,
+      status: QuizStatus.values.firstWhere(
+        (e) => e.name == (map['status'] as String),
+        orElse: () => QuizStatus.waiting,
+      ),
+      participants: (map['participants'] as Map<String, dynamic>).map(
+        (key, value) => MapEntry(
+          key,
+          QuizParticipant.fromMap(value as Map<String, dynamic>),
+        ),
+      ),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+      startedAt: map['startedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['startedAt'] as int)
+          : null,
+      expiresAt: map['expiresAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['expiresAt'] as int)
+          : null,
+    );
+  }
+
+  QuizSessionModel copyWith({
+    String? id,
+    String? groupId,
+    String? quizName,
+    String? hostId,
+    QuizStatus? status,
+    Map<String, QuizParticipant>? participants,
+    DateTime? createdAt,
+    DateTime? startedAt,
+    DateTime? expiresAt,
+  }) {
+    return QuizSessionModel(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      quizName: quizName ?? this.quizName,
+      hostId: hostId ?? this.hostId,
+      status: status ?? this.status,
+      participants: participants ?? this.participants,
+      createdAt: createdAt ?? this.createdAt,
+      startedAt: startedAt ?? this.startedAt,
+      expiresAt: expiresAt ?? this.expiresAt,
+    );
+  }
+
+  // Helper methods
+  bool get isWaiting => status == QuizStatus.waiting;
+  bool get isActive => status == QuizStatus.active;
+  bool get isExpired => status == QuizStatus.expired;
+  bool get isCancelled => status == QuizStatus.cancelled;
+  bool get isCompleted => status == QuizStatus.completed;
+
+  bool get shouldPauseQuiz => !hasMinimumOnlinePlayers;
+
+  int get onlineCount => onlineParticipants.length;
+  int get totalCount => participants.length;
+
+  List<MapEntry<String, QuizParticipant>> get onlineParticipants =>
+      participants.entries
+          .where((e) => e.value.connectionStatus == ConnectionStatus.online)
+          .toList();
+
+  List<MapEntry<String, QuizParticipant>> get reconnectingParticipants =>
+      participants.entries
+          .where((e) => e.value.connectionStatus == ConnectionStatus.reconnecting)
+          .toList();
+
+  List<MapEntry<String, QuizParticipant>> get offlineParticipants =>
+      participants.entries
+          .where((e) => e.value.connectionStatus == ConnectionStatus.offline)
+          .toList();
+
+  bool get hasMinimumOnlinePlayers => onlineCount >= 2;
+
+  bool hasExpired() {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  bool canStartQuiz() {
+    return isWaiting && hasMinimumOnlinePlayers && !hasExpired();
+  }
+
+  QuizParticipant? getParticipant(String userId) {
+    return participants[userId];
+  }
+}

@@ -1,4 +1,6 @@
-enum QuizStatus { waiting, active, completed, cancelled }
+enum QuizStatus { waiting, active, completed, cancelled, expired }
+
+enum ConnectionStatus { online, offline, reconnecting }
 
 class QuizParticipant {
   final String userId;
@@ -6,6 +8,10 @@ class QuizParticipant {
   final int score;
   final bool hasJoined;
   final DateTime? joinedAt;
+  final ConnectionStatus connectionStatus;
+  final DateTime? lastHeartbeat;
+  final DateTime? disconnectedAt;
+  final bool hasLockedAnswer;
 
   const QuizParticipant({
     required this.userId,
@@ -13,6 +19,10 @@ class QuizParticipant {
     this.score = 0,
     this.hasJoined = false,
     this.joinedAt,
+    this.connectionStatus = ConnectionStatus.online,
+    this.lastHeartbeat,
+    this.disconnectedAt,
+    this.hasLockedAnswer = false,
   });
 
   factory QuizParticipant.fromMap(Map<String, dynamic> map) {
@@ -24,6 +34,17 @@ class QuizParticipant {
       joinedAt: map['joinedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['joinedAt'] as int)
           : null,
+      connectionStatus: ConnectionStatus.values.firstWhere(
+        (e) => e.name == (map['connectionStatus'] as String?),
+        orElse: () => ConnectionStatus.offline,
+      ),
+      lastHeartbeat: map['lastHeartbeat'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['lastHeartbeat'] as int)
+          : null,
+      disconnectedAt: map['disconnectedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['disconnectedAt'] as int)
+          : null,
+      hasLockedAnswer: map['hasLockedAnswer'] as bool? ?? false,
     );
   }
 
@@ -34,6 +55,10 @@ class QuizParticipant {
       'score': score,
       'hasJoined': hasJoined,
       'joinedAt': joinedAt?.millisecondsSinceEpoch,
+      'connectionStatus': connectionStatus.name,
+      'lastHeartbeat': lastHeartbeat?.millisecondsSinceEpoch,
+      'disconnectedAt': disconnectedAt?.millisecondsSinceEpoch,
+      'hasLockedAnswer': hasLockedAnswer,
     };
   }
 
@@ -43,6 +68,10 @@ class QuizParticipant {
     int? score,
     bool? hasJoined,
     DateTime? joinedAt,
+    ConnectionStatus? connectionStatus,
+    DateTime? lastHeartbeat,
+    DateTime? disconnectedAt,
+    bool? hasLockedAnswer,
   }) {
     return QuizParticipant(
       userId: userId ?? this.userId,
@@ -50,6 +79,10 @@ class QuizParticipant {
       score: score ?? this.score,
       hasJoined: hasJoined ?? this.hasJoined,
       joinedAt: joinedAt ?? this.joinedAt,
+      connectionStatus: connectionStatus ?? this.connectionStatus,
+      lastHeartbeat: lastHeartbeat ?? this.lastHeartbeat,
+      disconnectedAt: disconnectedAt ?? this.disconnectedAt,
+      hasLockedAnswer: hasLockedAnswer ?? this.hasLockedAnswer,
     );
   }
 }
@@ -61,17 +94,20 @@ class QuizSessionModel {
   final Map<String, QuizParticipant> participants;
   final DateTime? startedAt;
   final String quizName;
-  final String? hostId;
+  final String hostId;
+  final DateTime createdAt;
+  final DateTime? expiresAt;
 
   const QuizSessionModel({
     required this.id,
     required this.groupId,
     this.status = QuizStatus.waiting,
     required this.participants,
-    this.startedAt,
     required this.quizName,
     required this.hostId,
-    required String hostUserId,
+    required this.createdAt,
+    this.startedAt,
+    this.expiresAt,
   });
 
   factory QuizSessionModel.fromMap(Map<String, dynamic> map) {
@@ -97,7 +133,9 @@ class QuizSessionModel {
           : null,
       quizName: map['quizName'] as String,
       hostId: '${map['hostId']}',
-      hostUserId: '',
+      createdAt: map['createdAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int)
+          : DateTime.now(),
     );
   }
 
@@ -124,6 +162,9 @@ class QuizSessionModel {
     Map<String, QuizParticipant>? participants,
     DateTime? startedAt,
     String? quizName,
+    String? hostId,
+    DateTime? createdAt,
+    DateTime? expiresAt,
   }) {
     return QuizSessionModel(
       id: id ?? this.id,
@@ -135,7 +176,8 @@ class QuizSessionModel {
       startedAt: startedAt ?? this.startedAt,
       quizName: quizName ?? this.quizName,
       hostId: hostId ?? this.hostId,
-      hostUserId: '',
+      createdAt: createdAt ?? this.createdAt,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 
@@ -175,6 +217,12 @@ class QuizSessionModel {
   bool get isWaiting => status == QuizStatus.waiting;
   bool get isCompleted => status == QuizStatus.completed;
   bool get isCancelled => status == QuizStatus.cancelled;
+  bool get isExpired => status == QuizStatus.expired;
+
+  bool hasExpired() {
+    if (expiresAt == null) return false;
+    return DateTime.now().isAfter(expiresAt!);
+  }
 
   int get participantCount => participants.length;
   int get joinedParticipantCount =>
@@ -184,6 +232,39 @@ class QuizSessionModel {
     final participantList = participants.values.toList();
     participantList.sort((a, b) => b.score.compareTo(a.score));
     return participantList;
+  }
+
+  // Connection status helpers
+  List<QuizParticipant> get onlineParticipants => participants.values
+      .where((p) => p.connectionStatus == ConnectionStatus.online)
+      .toList();
+
+  List<QuizParticipant> get offlineParticipants => participants.values
+      .where((p) => p.connectionStatus == ConnectionStatus.offline)
+      .toList();
+
+  List<QuizParticipant> get reconnectingParticipants => participants.values
+      .where((p) => p.connectionStatus == ConnectionStatus.reconnecting)
+      .toList();
+
+  bool get hasMinimumOnlinePlayers => onlineParticipants.length >= 2;
+
+  bool get shouldPauseQuiz => isActive && !hasMinimumOnlinePlayers;
+
+  int get onlineCount => onlineParticipants.length;
+
+  int get totalCount => participants.length;
+
+  bool canStartQuiz() {
+    return isWaiting && hasMinimumOnlinePlayers;
+  }
+
+  bool isReconnectionTimeoutExpired(String userId) {
+    final participant = getParticipant(userId);
+    if (participant?.disconnectedAt == null) return false;
+
+    return DateTime.now().difference(participant!.disconnectedAt!) >
+        const Duration(minutes: 1);
   }
 
   QuizParticipant? getParticipant(String userId) => participants[userId];

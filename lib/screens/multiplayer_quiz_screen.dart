@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/quiz_session_model.dart';
 import '../services/quiz_service.dart';
-import '../services/auth_service.dart';
-import '../services/quiz_presence_service.dart';
+import '../services/quiz_connection_service.dart';
+import '../widgets/participant_status_list.dart';
 import './main_quiz_screen.dart';
 
 class MultiplayerQuizScreen extends StatefulWidget {
@@ -16,20 +17,21 @@ class MultiplayerQuizScreen extends StatefulWidget {
   });
 
   @override
-  _MultiplayerQuizScreenState createState() => _MultiplayerQuizScreenState();
+  MultiplayerQuizScreenState createState() => MultiplayerQuizScreenState();
 }
 
-class _MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
+class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   late Stream<QuizSessionModel> _sessionStream;
-  late Stream<Map<String, bool>> _presenceStream;
   final QuizService _quizService = QuizService();
-  final AuthService _authService = AuthService();
-  final QuizPresenceService _presenceService = QuizPresenceService();
-  Map<String, bool> _presence = {};
+  final QuizConnectionService _connectionService = QuizConnectionService();
+  bool _isDisposed = false;
+  bool _isCancelling = false;
 
   @override
   void dispose() {
-    _presenceService.stopTracking(widget.session.id);
+    _isDisposed = true;
+    // Fixed: Use leaveSession instead of disposeSession
+    _quizService.leaveSession(widget.session.id, widget.currentUserId);
     super.dispose();
   }
 
@@ -37,8 +39,21 @@ class _MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   void initState() {
     super.initState();
     _sessionStream = _quizService.getSessionUpdates(widget.session.id);
-    _presenceStream = _presenceService.getPresenceUpdates(widget.session.id);
-    _presenceService.startTracking(widget.session.id);
+    _initializeConnection();
+  }
+
+  void _initializeConnection() {
+    // Start heartbeat monitoring
+    _connectionService.startHeartbeat(widget.session.id, widget.currentUserId);
+
+    // Initialize regular connection status checks
+    Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      _connectionService.checkConnectionStatus(widget.session.id);
+    });
   }
 
   Widget _buildWaitingRoom(QuizSessionModel session) {
@@ -54,200 +69,304 @@ class _MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        _buildParticipantsList(session),
+        Expanded(child: ParticipantStatusList(session: session)),
         const SizedBox(height: 20),
         if (_isHost(session)) _buildHostControls(session),
       ],
     );
   }
 
-  Widget _buildParticipantsList(QuizSessionModel session) {
-    return StreamBuilder<Map<String, bool>>(
-      stream: _presenceStream,
-      builder: (context, presenceSnapshot) {
-        _presence = presenceSnapshot.data ?? {};
+  Widget _buildHostControls(QuizSessionModel session) {
+    final bool canStart = session.canStartQuiz();
 
-        return ListView.builder(
-          shrinkWrap: true,
-          itemCount: session.participants.length,
-          itemBuilder: (context, index) {
-            final participant = session.sortedParticipantsByScore[index];
-            return ListTile(
-              leading: Stack(
-                children: [
-                  CircleAvatar(
-                    child: Text(participant.userName[0].toUpperCase()),
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: canStart ? () => _quizService.startQuiz(session.id) : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          ),
+          child: Text(
+            canStart ? 'Start Quiz' : 'Need at least 2 online players',
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Cancel Quiz Session Button
+        ElevatedButton(
+          onPressed: _isCancelling
+              ? null
+              : () => _showCancelConfirmationDialog(session),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.red,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          ),
+          child: _isCancelling
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
-                  if (_presence[participant.userId] == true)
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                ],
+                )
+              : const Text(
+                  'Cancel Quiz',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _showCancelConfirmationDialog(QuizSessionModel session) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Cancel Quiz Session'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Are you sure you want to cancel this quiz session?'),
+              const SizedBox(height: 8),
+              Text(
+                'Quiz: ${session.quizName}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              title: Text(participant.userName),
-              trailing: session.isCompleted
-                  ? Text(
-                      '${participant.score} points',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    )
-                  : _buildParticipantStatus(participant),
-            );
-          },
+              Text(
+                'Participants: ${session.participants.length}',
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'This action cannot be undone and all participants will be notified.',
+                style: TextStyle(color: Colors.orange, fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Keep Session'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _cancelQuizSession(session);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text(
+                'Cancel Quiz',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildParticipantStatus(QuizParticipant participant) {
-    if (!participant.hasJoined) {
-      return const Text(
-        'Not Joined',
-        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-      );
-    }
+  Future<void> _cancelQuizSession(QuizSessionModel session) async {
+    if (!mounted) return;
 
-    if (_presence[participant.userId] == true) {
-      return const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Online',
-            style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
+    setState(() {
+      _isCancelling = true;
+    });
+
+    try {
+      await _quizService.cancelSession(session.id);
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Quiz session cancelled successfully'),
+            backgroundColor: Colors.orange,
           ),
-          SizedBox(width: 4),
-          Icon(Icons.check_circle, color: Colors.green, size: 16),
-        ],
-      );
-    }
+        );
 
-    return const Text(
-      'Offline',
-      style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
-    );
-  }
+        // Navigate back immediately
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCancelling = false;
+        });
 
-  Widget _buildHostControls(QuizSessionModel session) {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: session.joinedParticipantCount > 1
-              ? () => _quizService.startQuiz(session.id)
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel quiz: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
-          child: const Text('Start Quiz', style: TextStyle(fontSize: 18)),
-        ),
-        const SizedBox(height: 10),
-        TextButton(
-          onPressed: () => _quizService.cancelSession(session.id),
-          child: const Text('Cancel Session'),
-        ),
-      ],
-    );
+        );
+      }
+    }
   }
 
   bool _isHost(QuizSessionModel session) {
-    return session.participants[widget.currentUserId]?.userId ==
-        widget.currentUserId;
+    return session.hostId == widget.currentUserId;
   }
 
-  Widget _buildLeaderboard(QuizSessionModel session) {
-    final sortedParticipants = session.sortedParticipantsByScore;
-
-    return Column(
-      children: [
-        const Text(
-          'Final Results',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 20),
-        ListView.builder(
-          shrinkWrap: true,
-          itemCount: sortedParticipants.length,
-          itemBuilder: (context, index) {
-            final participant = sortedParticipants[index];
-            final isWinner = index == 0;
-
-            return Card(
-              elevation: isWinner ? 5 : 1,
-              margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: isWinner ? Colors.yellow : Colors.grey[300],
-                  child: Text('${index + 1}'),
-                ),
-                title: Text(
-                  participant.userName,
-                  style: TextStyle(
-                    fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+  Widget _buildQuizInProgress(QuizSessionModel session) {
+    if (session.shouldPauseQuiz) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.pause_circle_outline,
+              size: 64,
+              color: Colors.orange,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Quiz Paused',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Waiting for players to reconnect...',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            Expanded(child: ParticipantStatusList(session: session)),
+            // Add cancel option even during paused state for host
+            if (_isHost(session)) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _isCancelling
+                    ? null
+                    : () => _showCancelConfirmationDialog(session),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
                   ),
                 ),
-                trailing: Text(
-                  '${participant.score} points',
-                  style: TextStyle(
-                    color: isWinner ? Colors.green : Colors.grey[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: _isCancelling
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Cancel Quiz',
+                        style: TextStyle(color: Colors.white),
+                      ),
               ),
-            );
-          },
+              const SizedBox(height: 20),
+            ],
+          ],
         ),
-      ],
-    );
+      );
+    }
+
+    return const QuizScreen();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.session.quizName),
-        backgroundColor: Colors.teal.shade600,
-      ),
-      body: StreamBuilder<QuizSessionModel>(
-        stream: _sessionStream,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+    return StreamBuilder<QuizSessionModel>(
+      stream: _sessionStream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Error: ${snapshot.error}')),
+          );
+        }
 
-          final session = snapshot.data!;
+        final session = snapshot.data!;
 
-          if (session.isCancelled) {
-            return const Center(child: Text('Quiz session was cancelled'));
-          }
-
-          if (session.isCompleted) {
-            return _buildLeaderboard(session);
-          }
-
-          if (session.isWaiting) {
-            return _buildWaitingRoom(session);
-          }
-
-          // Active quiz session
-          return const QuizScreen();
-        },
-      ),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(widget.session.quizName),
+            backgroundColor: Colors.teal.shade600,
+            actions: [
+              // Show reconnection status if applicable
+              if (session.reconnectingParticipants.isNotEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      '${session.reconnectingParticipants.length} reconnecting...',
+                      style: const TextStyle(color: Colors.orange),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          body: Builder(
+            builder: (context) {
+              switch (session.status) {
+                case QuizStatus.waiting:
+                  return _buildWaitingRoom(session);
+                case QuizStatus.active:
+                  return _buildQuizInProgress(session);
+                case QuizStatus.completed:
+                  return Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ParticipantStatusList(
+                      session: session,
+                      showStatusDot: false,
+                    ),
+                  );
+                case QuizStatus.cancelled:
+                  if (!_isDisposed && mounted) {
+                    // Show cancellation message briefly before navigating back
+                    Future.microtask(() {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Quiz session has been cancelled'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        Navigator.of(context).pop();
+                      }
+                    });
+                  }
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.cancel_outlined,
+                          size: 64,
+                          color: Colors.orange,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Quiz has been cancelled',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                case QuizStatus.expired:
+                  // TODO: Handle this case.
+                  throw UnimplementedError();
+              }
+            },
+          ),
+        );
+      },
     );
   }
 }
