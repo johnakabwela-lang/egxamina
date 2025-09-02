@@ -65,6 +65,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String _getTimeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    
+    if (hour < 12) {
+      return 'Good morning! 🌅';
+    } else if (hour < 17) {
+      return 'Good afternoon! ☀️';
+    } else if (hour < 21) {
+      return 'Good evening! 🌆';
+    } else {
+      return 'Good night! 🌙';
+    }
+  }
+
   Future<void> _claimDailyBonus() async {
     final result = await TokenManager.instance.claimDailyBonus();
 
@@ -197,126 +211,130 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadUserData,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Section 1: Greetings and Statistics
-                _buildGreetingSection(),
-                const SizedBox(height: 24),
-                // Section 2: Daily Bonus (if available)
-                if (_dailyBonusAvailable) _buildDailyBonusSection(),
-                if (_dailyBonusAvailable) const SizedBox(height: 20),
-                // Section 3: Subjects to Study (Books and Past Papers only)
-                _buildSubjectsSection(context),
-                const SizedBox(height: 20),
-              ],
-            ),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF58CC02),
+        elevation: 0,
+        toolbarHeight: 0, // Hide the app bar content since we're using a custom header
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadUserData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section 1: Connected Header with Greetings and Statistics
+              _buildConnectedHeader(),
+              const SizedBox(height: 24),
+              // Section 2: Daily Bonus (if available)
+              if (_dailyBonusAvailable) _buildDailyBonusSection(),
+              if (_dailyBonusAvailable) const SizedBox(height: 20),
+              // Section 3: Subjects to Study (Books and Past Papers only)
+              _buildSubjectsSection(context),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGreetingSection() {
+  Widget _buildConnectedHeader() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [Color(0xFF58CC02), Color(0xFF46A302)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Good morning! 👋',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Ready to continue learning?',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Social button
-                  GestureDetector(
-                    onTap: _navigateToSocial,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.people,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getTimeBasedGreeting(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Ready to continue learning?',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
+                  Row(
+                    children: [
+                      // Social button
+                      GestureDetector(
+                        onTap: _navigateToSocial,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.people,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      TokenDisplayer(tokens: _currentTokens, onTap: _showTokenShop),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  _buildStatCard(
+                    'Streak',
+                    '$_currentStreak',
+                    _isStreakActive
+                        ? Icons.local_fire_department
+                        : Icons.local_fire_department_outlined,
+                    _isStreakActive ? Colors.orange : Colors.grey,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildStatCard('XP', '$_totalXP', Icons.stars, Colors.purple),
+                  const SizedBox(width: 16),
+                  _buildStatCard(
+                    'Rank',
+                    '#$_currentRank',
+                    Icons.leaderboard,
+                    Colors.blue,
+                  ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              _buildStatCard(
-                'Streak',
-                '$_currentStreak',
-                _isStreakActive
-                    ? Icons.local_fire_department
-                    : Icons.local_fire_department_outlined,
-                _isStreakActive ? Colors.orange : Colors.grey,
-              ),
-              const SizedBox(width: 16),
-              _buildStatCard('XP', '$_totalXP', Icons.stars, Colors.purple),
-              const SizedBox(width: 16),
-              _buildStatCard(
-                'Rank',
-                '#$_currentRank',
-                Icons.leaderboard,
-                Colors.blue,
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -457,6 +475,46 @@ class _HomeScreenState extends State<HomeScreen> {
         'name': 'History',
         'icon': Icons.history_edu,
         'color': const Color(0xFF8E44AD),
+      },
+      {
+        'name': 'Accounts',
+        'icon': Icons.account_balance,
+        'color': const Color(0xFF27AE60),
+      },
+      {
+        'name': 'Civic Education',
+        'icon': Icons.gavel,
+        'color': const Color(0xFFE67E22),
+      },
+      {
+        'name': 'Additional Mathematics',
+        'icon': Icons.functions,
+        'color': const Color(0xFF2980B9),
+      },
+      {
+        'name': 'Design and Technology',
+        'icon': Icons.engineering,
+        'color': const Color(0xFFD35400),
+      },
+      {
+        'name': 'Commerce',
+        'icon': Icons.business,
+        'color': const Color(0xFF16A085),
+      },
+      {
+        'name': 'Physical Education',
+        'icon': Icons.sports_soccer,
+        'color': const Color(0xFFE74C3C),
+      },
+      {
+        'name': 'Ichibemba',
+        'icon': Icons.language,
+        'color': const Color(0xFF9B59B6),
+      },
+      {
+        'name': 'Nyanja',
+        'icon': Icons.translate,
+        'color': const Color(0xFF34495E),
       },
     ];
 
