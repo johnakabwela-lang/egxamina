@@ -528,9 +528,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
       enableSwipe: false,
       swipeHorizontal: false,
       autoSpacing: false,
-      pageSnap: false,
-      defaultPage: 0,
-      fitPolicy: FitPolicy.BOTH,
+      pageSnap: false,      defaultPage: 0,      fitPolicy: FitPolicy.BOTH,
       preventLinkNavigation: true,
       onRender: (pages) {
         // PDF rendered successfully
@@ -553,7 +551,7 @@ class _PDFBookCardState extends State<PDFBookCard> {
   }
 }
 
-// Enhanced PDF Viewer Screen with properly working tools panel
+// Enhanced PDF Viewer Screen with tools displayed within the panel
 class PDFViewerScreen extends StatefulWidget {
   final String pdfPath;
   final String title;
@@ -577,6 +575,7 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
   bool isToolsPanelOpen = false;
   Widget? currentToolWidget;
   String currentToolTitle = '';
+  String currentView = 'grid'; // 'grid' or 'tool'
   
   late AnimationController _panelController;
   late Animation<double> _panelAnimation;
@@ -611,8 +610,9 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
       _panelController.forward();
     } else {
       _panelController.reverse();
-      // Clear current tool when closing panel
+      // Reset to grid view when closing panel
       setState(() {
+        currentView = 'grid';
         currentToolWidget = null;
         currentToolTitle = '';
       });
@@ -623,11 +623,13 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
     setState(() {
       currentToolWidget = toolWidget;
       currentToolTitle = title;
+      currentView = 'tool';
     });
   }
 
-  void _closeTool() {
+  void _backToGrid() {
     setState(() {
+      currentView = 'grid';
       currentToolWidget = null;
       currentToolTitle = '';
     });
@@ -653,101 +655,41 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
         ),
         backgroundColor: widget.subjectColor,
         foregroundColor: Colors.white,
-        actions: [
-          if (currentToolWidget != null)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: _closeTool,
-              tooltip: 'Close $currentToolTitle',
-            ),
-        ],
       ),
       body: Stack(
         children: [
-          // PDF Viewer - Always visible and interactive when no tool is open
-          if (currentToolWidget == null)
-            PDFView(
-              filePath: widget.pdfPath,
-              enableSwipe: true,
-              swipeHorizontal: false,
-              autoSpacing: true,
-              pageSnap: true,
-              defaultPage: currentPage,
-              fitPolicy: FitPolicy.BOTH,
-              onRender: (pages) {
-                setState(() {
-                  totalPages = pages ?? 0;
-                });
-              },
-              onError: (error) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error loading PDF: $error'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              },
-              onPageChanged: (page, total) {
-                setState(() {
-                  currentPage = page ?? 0;
-                  totalPages = total ?? 0;
-                });
-              },
-            ),
-
-          // Current Tool Widget (Full Screen)
-          if (currentToolWidget != null)
-            Positioned.fill(
-              child: Material(
-                color: Colors.white,
-                child: Column(
-                  children: [
-                    // Tool Header
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: widget.subjectColor.withOpacity(0.1),
-                        border: Border(
-                          bottom: BorderSide(
-                            color: widget.subjectColor.withOpacity(0.2),
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.build,
-                            color: widget.subjectColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            currentToolTitle,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: widget.subjectColor,
-                            ),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: Icon(
-                              Icons.close,
-                              color: widget.subjectColor,
-                            ),
-                            onPressed: _closeTool,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Tool Content
-                    Expanded(child: currentToolWidget!),
-                  ],
+          // PDF Viewer - Always visible
+          PDFView(
+            filePath: widget.pdfPath,
+            enableSwipe: true,
+            swipeHorizontal: false,
+            autoSpacing: true,
+            pageSnap: true,
+            defaultPage: currentPage,
+            fitPolicy: FitPolicy.BOTH,
+            onRender: (pages) {
+              setState(() {
+                totalPages = pages ?? 0;
+              });
+            },
+            onError: (error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error loading PDF: $error'),
+                  backgroundColor: Colors.red,
                 ),
-              ),
-            ),
+              );
+            },
+            onPageChanged: (page, total) {
+              setState(() {
+                currentPage = page ?? 0;
+                totalPages = total ?? 0;
+              });
+            },
+          ),
 
           // Tools Panel (Modal Bottom Sheet Style)
-          if (isToolsPanelOpen && currentToolWidget == null)
+          if (isToolsPanelOpen)
             GestureDetector(
               onTap: _toggleToolsPanel,
               child: AnimatedBuilder(
@@ -767,7 +709,7 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
                             child: GestureDetector(
                               onTap: () {}, // Prevent tap-through
                               child: Container(
-                                height: MediaQuery.of(context).size.height * 0.7,
+                                height: MediaQuery.of(context).size.height * 0.75,
                                 decoration: const BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.only(
@@ -775,7 +717,9 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
                                     topRight: Radius.circular(20),
                                   ),
                                 ),
-                                child: _buildToolsPanel(),
+                                child: currentView == 'grid'
+                                    ? _buildToolsGrid()
+                                    : _buildToolView(),
                               ),
                             ),
                           ),
@@ -788,24 +732,22 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
             ),
         ],
       ),
-      floatingActionButton: currentToolWidget == null
-          ? FloatingActionButton(
-              onPressed: _toggleToolsPanel,
-              backgroundColor: widget.subjectColor,
-              child: AnimatedRotation(
-                turns: isToolsPanelOpen ? 0.25 : 0,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isToolsPanelOpen ? Icons.close : Icons.build,
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggleToolsPanel,
+        backgroundColor: widget.subjectColor,
+        child: AnimatedRotation(
+          turns: isToolsPanelOpen ? 0.25 : 0,
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            isToolsPanelOpen ? Icons.close : Icons.build,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildToolsPanel() {
+  Widget _buildToolsGrid() {
     return Column(
       children: [
         // Panel Handle
@@ -932,6 +874,81 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
     );
   }
 
+  Widget _buildToolView() {
+    return Column(
+      children: [
+        // Panel Handle
+        Container(
+          margin: const EdgeInsets.only(top: 8),
+          width: 40,
+          height: 4,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+
+        // Tool Header
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: widget.subjectColor.withOpacity(0.1),
+            border: Border(
+              bottom: BorderSide(
+                color: widget.subjectColor.withOpacity(0.2),
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: widget.subjectColor,
+                ),
+                onPressed: _backToGrid,
+                tooltip: 'Back to tools',
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.build,
+                color: widget.subjectColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  currentToolTitle,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: widget.subjectColor,
+                  ),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: widget.subjectColor,
+                ),
+                onPressed: _toggleToolsPanel,
+                tooltip: 'Close panel',
+              ),
+            ],
+          ),
+        ),
+
+        // Tool Content
+        Expanded(
+          child: Container(
+            width: double.infinity,
+            color: Colors.white,
+            child: currentToolWidget ?? const SizedBox(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildToolGridTile(
     String title,
     IconData icon,
@@ -945,7 +962,6 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
         onTap: () {
           HapticFeedback.lightImpact();
           onTap();
-          _toggleToolsPanel(); // Close panel after selecting tool
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -1004,7 +1020,6 @@ class _PDFViewerScreenState extends State<PDFViewerScreen>
     );
   }
 }
-
 // Updated Notes Screen (keeping original functionality)
 class SubjectNotesScreen extends StatelessWidget {
   final Map<String, dynamic> subject;
