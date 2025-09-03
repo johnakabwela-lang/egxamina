@@ -1,6 +1,4 @@
-// Mobile-optimized QuizScreen with education color scheme
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/managers/streak_manager.dart';
 import 'package:ultsukulu/managers/token_manager.dart';
@@ -187,14 +185,14 @@ class _QuizScreenState extends State<QuizScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.blue.shade600],
+                  colors: [Colors.green.shade400, Colors.green.shade600],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: Colors.green.withOpacity(0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -232,14 +230,14 @@ class _QuizScreenState extends State<QuizScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade500,
+                  backgroundColor: Colors.green.shade500,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   elevation: 6,
-                  shadowColor: Colors.blue.withOpacity(0.3),
+                  shadowColor: Colors.green.withOpacity(0.3),
                 ),
                 child: const Text(
                   'AWESOME! 🚀',
@@ -268,8 +266,8 @@ class _QuizScreenState extends State<QuizScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
-              backgroundColor: Colors.blue.shade100,
-              foregroundColor: Colors.blue.shade700,
+              backgroundColor: Colors.green.shade100,
+              foregroundColor: Colors.green.shade700,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
@@ -376,7 +374,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade600, // Education blue background
+      backgroundColor: Colors.green.shade600, // Duolingo green background
       body: SafeArea(
         child: Column(
           children: [
@@ -434,12 +432,12 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ],
             ),
-            child: Icon(Icons.school, color: Colors.blue.shade600, size: 24),
+            child: Icon(Icons.school, color: Colors.green.shade600, size: 24),
           ),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'ISUKULU',
+              'EGXAMINA',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
@@ -502,14 +500,14 @@ class _QuizScreenState extends State<QuizScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.blue.shade400, Colors.blue.shade600],
+              colors: [Colors.green.shade400, Colors.green.shade600],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.blue.withOpacity(0.3),
+                color: Colors.green.withOpacity(0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -574,14 +572,14 @@ class _QuizScreenState extends State<QuizScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade300, Colors.blue.shade500],
+            colors: [Colors.green.shade300, Colors.green.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.2),
+              color: Colors.green.withOpacity(0.2),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -629,17 +627,9 @@ class _QuizScreenState extends State<QuizScreen> {
         childAspectRatio: 1.1, // Optimized for mobile
         children: [
           SubjectCard(
-            title: 'Accounting',
-            icon: Icons.account_balance,
-            color: Colors.blue.shade600,
-            tokenCost: TokenManager.QUIZ_COST,
-            onTap: () =>
-                _startQuiz(context, 'Accounting', 'accounting_questions.json'),
-          ),
-          SubjectCard(
             title: 'Mathematics',
             icon: Icons.calculate,
-            color: Colors.blue.shade500,
+            color: Colors.blue.shade600,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () => _startQuiz(
               context,
@@ -648,26 +638,97 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           SubjectCard(
-            title: 'Science',
-            icon: Icons.science,
-            color: Colors.blue.shade700,
+            title: 'Accounting',
+            icon: Icons.account_balance,
+            color: Colors.indigo.shade600,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () =>
-                _startQuiz(context, 'Science', 'science_questions.json'),
+                _startQuiz(context, 'Accounting', 'accounting_questions.json'),
           ),
           SubjectCard(
-            title: 'History',
-            icon: Icons.history_edu,
-            color: Colors.blue.shade400,
+            title: 'Geography',
+            icon: Icons.public,
+            color: Colors.green.shade600,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () =>
-                _startQuiz(context, 'History', 'history_questions.json'),
+                _startQuiz(context, 'Geography', 'geography_questions.json'),
+          ),
+          SubjectCard(
+            title: 'Civic Education',
+            icon: Icons.how_to_vote,
+            color: Colors.purple.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'Civic Education',
+              'civic_education_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'O-Level Chemistry',
+            icon: Icons.science,
+            color: Colors.orange.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'O-Level Chemistry',
+              'olevel_chemistry_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'O-Level Physics',
+            icon: Icons.flash_on,
+            color: Colors.red.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'O-Level Physics',
+              'olevel_physics_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'Commerce',
+            icon: Icons.business_center,
+            color: Colors.brown.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () =>
+                _startQuiz(context, 'Commerce', 'commerce_questions.json'),
+          ),
+          SubjectCard(
+            title: 'A-Level Chemistry',
+            icon: Icons.biotech,
+            color: Colors.deepOrange.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'A-Level Chemistry',
+              'alevel_chemistry_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'A-Level Physics',
+            icon: Icons.electrical_services,
+            color: Colors.pink.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () => _startQuiz(
+              context,
+              'A-Level Physics',
+              'alevel_physics_questions.json',
+            ),
+          ),
+          SubjectCard(
+            title: 'Biology',
+            icon: Icons.eco,
+            color: Colors.teal.shade600,
+            tokenCost: TokenManager.QUIZ_COST,
+            onTap: () =>
+                _startQuiz(context, 'Biology', 'biology_questions.json'),
           ),
           // English subject card with mode selection
           SubjectCard(
             title: 'English',
             icon: Icons.language,
-            color: Colors.green.shade600,
+            color: Colors.cyan.shade600,
             tokenCost: TokenManager.QUIZ_COST,
             onTap: () => _showEnglishModeSelection(),
           ),
@@ -740,8 +801,8 @@ class _QuizScreenState extends State<QuizScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.green.shade400,
-                                Colors.green.shade600,
+                                Colors.cyan.shade400,
+                                Colors.cyan.shade600,
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -749,7 +810,7 @@ class _QuizScreenState extends State<QuizScreen> {
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.green.withOpacity(0.3),
+                                color: Colors.cyan.withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -1054,14 +1115,14 @@ class _QuizScreenState extends State<QuizScreen> {
                       _showTokenShop();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade500,
+                      backgroundColor: Colors.green.shade500,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 6,
-                      shadowColor: Colors.blue.withOpacity(0.3),
+                      shadowColor: Colors.green.withOpacity(0.3),
                     ),
                     child: const Text(
                       'GET TOKENS! 💰',
@@ -1080,7 +1141,6 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 }
-
 // Simplified Subject Card - Mobile optimized
 class SubjectCard extends StatelessWidget {
   final String title;
