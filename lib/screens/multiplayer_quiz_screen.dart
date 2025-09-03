@@ -100,10 +100,13 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
   // Update user count and start button state
   void _updateOnlineUsersCount(QuizSessionModel session) {
+    if (!mounted) return;
+
     final onlineCount = session.participants.values
         .where((p) => p.connectionStatus == ConnectionStatus.online)
         .length;
 
+    // Only update if the count has actually changed
     if (onlineCount != _onlineUsersCount) {
       setState(() {
         _onlineUsersCount = onlineCount;
@@ -475,6 +478,9 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
           }
 
           final session = snapshot.data!;
+
+          // Update online users count immediately
+          _updateOnlineUsersCount(session);
 
           return Scaffold(
             appBar: AppBar(
