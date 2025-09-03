@@ -10,9 +10,8 @@ import 'user_service.dart';
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Email & Password Sign Up yes
+  // Email & Password Sign Up yess
   static Future<UserCredential> signUpWithEmailPassword(
     String email,
     String password,

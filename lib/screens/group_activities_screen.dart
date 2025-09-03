@@ -24,7 +24,6 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
   final QuizService _quizService = QuizService();
   Map<String, dynamic>? _deletionStatus;
   bool _isOwner = false;
-  bool _loadingDeletionStatus = true;
 
   @override
   void initState() {
@@ -35,22 +34,24 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
 
   Future<void> _checkDeletionStatus() async {
     try {
-      final status = await GroupDeletionService.getDeletionStatus(widget.group.id);
+      final status = await GroupDeletionService.getDeletionStatus(
+        widget.group.id,
+      );
       setState(() {
         _deletionStatus = status;
-        _loadingDeletionStatus = false;
       });
     } catch (e) {
-      setState(() {
-        _loadingDeletionStatus = false;
-      });
+      setState(() {});
     }
   }
 
   Future<void> _checkOwnership() async {
     final user = AuthService.currentUser;
     if (user != null) {
-      final canDelete = await GroupDeletionService.canDeleteGroup(widget.group.id, user.uid);
+      final canDelete = await GroupDeletionService.canDeleteGroup(
+        widget.group.id,
+        user.uid,
+      );
       setState(() {
         _isOwner = canDelete;
       });
@@ -69,8 +70,8 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
     }
 
     // Get active sessions for this group
-    final Stream<List<QuizSessionModel>> activeSessionsStream = 
-        _quizService.getActiveGroupSessions(widget.group.id);
+    final Stream<List<QuizSessionModel>> activeSessionsStream = _quizService
+        .getActiveGroupSessions(widget.group.id);
 
     showModalBottomSheet(
       context: context,
@@ -105,10 +106,7 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                 children: [
                   const Text(
                     'Group Quiz',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton.icon(
@@ -133,12 +131,16 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                     const SizedBox(height: 8),
                     ...waitingSessions.map((session) {
                       final hostName = session.participants.values
-                          .firstWhere((p) => p.userId == session.participants.keys.first)
+                          .firstWhere(
+                            (p) => p.userId == session.participants.keys.first,
+                          )
                           .userName;
 
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: _getGroupColor(widget.group.subject).withOpacity(0.2),
+                          backgroundColor: _getGroupColor(
+                            widget.group.subject,
+                          ).withOpacity(0.2),
                           child: const Icon(Icons.quiz),
                         ),
                         title: Text(session.quizName),
@@ -195,7 +197,10 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
     }
   }
 
-  Future<void> _joinQuizSession(BuildContext context, QuizSessionModel session) async {
+  Future<void> _joinQuizSession(
+    BuildContext context,
+    QuizSessionModel session,
+  ) async {
     try {
       final user = AuthService.currentUser!;
       final profile = await AuthService.getCurrentUserProfile();
@@ -231,13 +236,13 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
   }
 
   Widget _buildDeletionWarningBanner() {
-    if (_deletionStatus == null || 
+    if (_deletionStatus == null ||
         _deletionStatus!['scheduledForDeletion'] != true) {
       return const SizedBox.shrink();
     }
 
     final deletionDate = _deletionStatus!['deletionDate'];
-    final remainingTime = deletionDate != null 
+    final remainingTime = deletionDate != null
         ? deletionDate.toDate().difference(DateTime.now())
         : Duration.zero;
 
@@ -279,10 +284,7 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
             ),
           ),
           if (_isOwner)
-            TextButton(
-              onPressed: _cancelDeletion,
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: _cancelDeletion, child: const Text('Cancel')),
         ],
       ),
     );
@@ -292,9 +294,9 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
     try {
       final user = AuthService.currentUser!;
       await GroupDeletionService.cancelDeletion(widget.group.id, user.uid);
-      
+
       await _checkDeletionStatus(); // Refresh status
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -335,10 +337,10 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
         children: [
           // Group Header
           _buildGroupHeader(),
-          
+
           // Deletion Warning Banner
           _buildDeletionWarningBanner(),
-          
+
           const SizedBox(height: 20),
           // Activity Options
           Expanded(
@@ -455,7 +457,7 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                 _showComingSoon(context, 'Notifications');
               },
             ),
-            
+
             // Show deletion options for group owners
             if (_isOwner) ...[
               const Divider(),
@@ -473,7 +475,10 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                 )
               else ...[
                 ListTile(
-                  leading: const Icon(Icons.schedule_send, color: Colors.orange),
+                  leading: const Icon(
+                    Icons.schedule_send,
+                    color: Colors.orange,
+                  ),
                   title: const Text(
                     'Schedule Deletion',
                     style: TextStyle(color: Colors.orange),
@@ -522,9 +527,13 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('This will schedule "${widget.group.name}" for deletion in 24 hours.'),
+            Text(
+              'This will schedule "${widget.group.name}" for deletion in 24 hours.',
+            ),
             const SizedBox(height: 8),
-            const Text('All members will be notified and you can cancel anytime before the deadline.'),
+            const Text(
+              'All members will be notified and you can cancel anytime before the deadline.',
+            ),
           ],
         ),
         actions: [
@@ -540,9 +549,9 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                   widget.group.id,
                   user.uid,
                 );
-                
+
                 await _checkDeletionStatus(); // Refresh status
-                
+
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -557,7 +566,9 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to schedule deletion: ${e.toString()}'),
+                      content: Text(
+                        'Failed to schedule deletion: ${e.toString()}',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );
@@ -581,7 +592,9 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Are you sure you want to permanently delete "${widget.group.name}"?'),
+            Text(
+              'Are you sure you want to permanently delete "${widget.group.name}"?',
+            ),
             const SizedBox(height: 8),
             const Text(
               'This action cannot be undone and all group data will be lost.',
@@ -602,11 +615,11 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                   widget.group.id,
                   user.uid,
                 );
-                
+
                 if (context.mounted) {
                   Navigator.pop(context); // Close dialog
                   Navigator.pop(context); // Go back to social screen
-                  
+
                   if (context.mounted) {
                     final socialScreen = context
                         .findAncestorStateOfType<SocialScreenState>();

@@ -1,0 +1,10 @@
+{
+  "questions": [
+    {
+      "question": "What is the hybridization of carbon in benzene?",
+      "options": ["sp3", "sp2", "sp", "sp3d"],
+      "correctAnswer": "sp2",
+      "explanation": "In benzene, each carbon atom is sp2 hybridized, forming three sigma bonds and one p orbital for pi bonding."
+    }
+  ]
+}

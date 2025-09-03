@@ -1,134 +1,2565 @@
 [
-  {
-    "question": "What is the fundamental accounting equation?",
-    "options": [
-      "Assets = Liabilities + Equity",
-      "Assets = Liabilities - Equity",
-      "Assets + Liabilities = Equity",
-      "Assets - Equity = Liabilities"
-    ],
-    "correctAnswer": 0,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "Which of the following is NOT a current asset?",
-    "options": [
-      "Cash",
-      "Inventory",
-      "Buildings",
-      "Accounts Receivable"
-    ],
-    "correctAnswer": 2,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "What does GAAP stand for?",
-    "options": [
-      "Generally Accepted Accounting Principles",
-      "Global Accounting Audit Procedures",
-      "General Asset Allocation Protocol",
-      "Governmental Accounting Assessment Program"
-    ],
-    "correctAnswer": 0,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "When revenue is recorded when earned, regardless of when cash is received, this is called:",
-    "options": [
-      "Cash basis accounting",
-      "Accrual basis accounting",
-      "Modified cash basis",
-      "Hybrid accounting"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "A debit entry will:",
-    "options": [
-      "Increase liability accounts",
-      "Increase asset accounts",
-      "Increase revenue accounts",
-      "Decrease expense accounts"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "The trial balance is prepared to:",
-    "options": [
-      "Calculate net income",
-      "Verify that debits equal credits",
-      "Prepare financial statements",
-      "Close accounts at year-end"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "Which financial statement shows a company's financial position at a specific point in time?",
-    "options": [
-      "Income Statement",
-      "Balance Sheet",
-      "Cash Flow Statement",
-      "Statement of Retained Earnings"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "Depreciation is:",
-    "options": [
-      "The allocation of an asset's cost over its useful life",
-      "The decrease in market value of an asset",
-      "The maintenance cost of an asset",
-      "The insurance cost of an asset"
-    ],
-    "correctAnswer": 0,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "Which of the following is an example of an intangible asset?",
-    "options": [
-      "Building",
-      "Equipment",
-      "Patent",
-      "Inventory"
-    ],
-    "correctAnswer": 2,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "The matching principle states that:",
-    "options": [
-      "Revenues should match cash receipts",
-      "Expenses should be matched with related revenues",
-      "Assets should match liabilities",
-      "Debits should match credits"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "What is the normal balance of an expense account?",
-    "options": [
-      "Credit",
-      "Debit",
-      "Zero",
-      "It depends on the expense type"
-    ],
-    "correctAnswer": 1,
-    "reference": "Paper 1 2024 GCE"
-  },
-  {
-    "question": "Which of the following accounts would be closed at the end of an accounting period?",
-    "options": [
-      "Cash",
-      "Accounts Payable",
-      "Sales Revenue",
-      "Equipment"
-    ],
-    "correctAnswer": 2,
-    "reference": "Paper 1 2024 GCE"
-  }
-]
+    {
+      "question": "The importance of accounting information is to ...",
+      "options": [
+        "measure the performance of the business.",
+        "pay salaries to workers.",
+        "test the market share.",
+        "forecast purchases."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q1"
+    },
+    {
+      "question": "Which of the following are job opportunities for someone who has studied Accounts? (i) Secretary (ii) Public Relations Manager (iii) Minister of Finance (iv) Technician (v) Bursar (vi) Buyer (vii) Stores Manager",
+      "options": [
+        "(iii), (v)",
+        "(i), (iv)",
+        "(ii), (vi)",
+        "(V), (vii)"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q2"
+    },
+    {
+      "question": "Explain the term business transaction.",
+      "options": [
+        "The exchange of goods and services for money's worth.",
+        "The recording of information in the books of the business.",
+        "The exchange of goods for goods.",
+        "A meeting for business executives."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q3"
+    },
+    {
+      "question": "The exchange of goods, money and services between persons is called ...",
+      "options": [
+        "business transaction.",
+        "barter transaction.",
+        "trade transaction.",
+        "selling and buying"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q4"
+    },
+    {
+      "question": "Which of the following are not included in the Sales Day Book?",
+      "options": [
+        "Cash Sales",
+        "Credit sales made to overseas customers",
+        "Credit sales made without deduction of trade discount",
+        "Credit sales which eventually turn out to be bad debts"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q5"
+    },
+    {
+      "question": "If a Debtor's Account is overcharged on the invoice, which document is sent to him to adjust the amount due from him?",
+      "options": [
+        "Credit Note",
+        "Purchases Invoice",
+        "Sales Invoice",
+        "Debit Note"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q6"
+    },
+    {
+      "question": "The Ledger is the main book of accounts where ... are completed.",
+      "options": [
+        "double entries",
+        "calculations",
+        "transactions",
+        "single entries"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q7"
+    },
+    {
+      "question": "... is an example of a nominal account.",
+      "options": [
+        "Expense",
+        "Asset",
+        "Liability",
+        "Capital"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q8"
+    },
+    {
+      "question": "The double entry is completed in the...",
+      "options": [
+        "Ledger book.",
+        "Sales book.",
+        "Purchases book.",
+        "General book."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q9"
+    },
+    {
+      "question": "The personal accounts of debtors are found in the",
+      "options": [
+        "Sales Ledger.",
+        "General Ledger.",
+        "Purchases Ledger.",
+        "Nominal Ledger."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q10"
+    },
+    {
+      "question": "A Trial Balance is prepared to check the...",
+      "options": [
+        "arithmetical accuracy of the accounts.",
+        "financial position of the business.",
+        "profitability position of the business.",
+        "accuracy of the accounts."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q11"
+    },
+    {
+      "question": "The Balance Sheet can be defined as a ...",
+      "options": [
+        "statement of assets and liabilities.",
+        "list of balances after calculating net profit.",
+        "trial balance at different dates.",
+        "list of balances before calculating net profit."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q13"
+    },
+    {
+      "question": "In which statement is gross profit calculated?",
+      "options": [
+        "Trading Account",
+        "Balance Sheet",
+        "Trial Balance",
+        "Profit and Loss Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q14"
+    },
+    {
+      "question": "Calculate the Cost of Goods sold from the following items: Closing stock K72 400, Carriage Inwards K5 700, Purchases K213 600, Opening Stock K21 360",
+      "options": [
+        "K270 340",
+        "K156 860",
+        "K168 260",
+        "K313 060"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q15"
+    },
+    {
+      "question": "Which of these would appear as a current liability in the Balance Sheet?",
+      "options": [
+        "Wages due",
+        "Rent receivable due",
+        "Insurance premium paid in advance",
+        "Advertising charges carried forward"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q16"
+    },
+    {
+      "question": "The cost of a machine is K250 000, provision for depreciation is K60 000, depreciation charges for the year are K19 000. In the Balance Sheet, the machine will be shown at a net value of ...",
+      "options": [
+        "K171 000.",
+        "K190 000.",
+        "K231 000.",
+        "K250 000."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q17"
+    },
+    {
+      "question": "Which of the following errors would not affect the balancing of a Trial Balance?",
+      "options": [
+        "An amount omitted entirely from the books.",
+        "An amount not posted to E. Nyirenda.",
+        "An amount posted to the wrong side of the account.",
+        "An amount overcast in one account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q18"
+    },
+    {
+      "question": "Which of these errors will be revealed by the Trial Balance?",
+      "options": [
+        "Overcast of total on sales account.",
+        "Error on a Purchases Invoice.",
+        "Purchases from M Sakala entered in R Sakala's account.",
+        "Carriage outwards debited to Purchases Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q19"
+    },
+    {
+      "question": "Discount received K2 000 has been posted on the debit side of Discount allowed account. The entry to correct the error is...",
+      "options": [
+        "Suspense Dr K2 000 Discount received Cr K2 000",
+        "Discount allowed Dr K2 000 Discount received Cr K2 000",
+        "Suspense Dr K4 000 Discount allowed Cr K 2 000 Discount received Cr K2 000",
+        "Discount allowed Dr K4 000 Discount received Cr K4 000"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q20"
+    },
+    {
+      "question": "Which statement is sent by the bank to its customers to verify the balance at bank at the end of the month?",
+      "options": [
+        "Bank Statement",
+        "Statement of Account",
+        "Cash Statement",
+        "Bank Reconciliation Statement"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q21"
+    },
+    {
+      "question": "Which one of the following does not create a difference, between the bank balance of the firm and the balance shown by the bank statement?",
+      "options": [
+        "Cheques received appearing both on the bank statement and in the bank account.",
+        "Errors made by the firm's bank.",
+        "Cheques written by the firm which have not yet appeared on its bank statement.",
+        "Lodgements made by the firm which have not yet appeared on its bank statement."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q22"
+    },
+    {
+      "question": "Why do Accountants prepare Control Accounts? To...",
+      "options": [
+        "prevent errors quickly.",
+        "calculate the sales and purchases.",
+        "find errors quickly.",
+        "make the Trial balance' balance."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q23"
+    },
+    {
+      "question": "Which item appears on the credit side of a Purchases Ledger Control Account?",
+      "options": [
+        "Refund from suppliers",
+        "Cheques paid",
+        "Discount received",
+        "Purchases returns"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q24"
+    },
+    {
+      "question": "Which of the following is similar to a club's Receipts and Payments Account?",
+      "options": [
+        "Cash or Bank Account",
+        "Income and Expenditure Account",
+        "Profit and Loss Account",
+        "Balance Sheet"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q25"
+    },
+    {
+      "question": "Social club's records for the year show Subscriptions K8 000, Sales of refreshments K4 000, Purchase of refreshments K2 000, Opening stock of refreshments K800, Closing stock of refreshments K600. What is the total net income for the year?",
+      "options": [
+        "K9 800",
+        "K8 000",
+        "K10 000",
+        "K12 000"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q26"
+    },
+    {
+      "question": "Which item should be treated as capital expenditure in the accounts of a Company?",
+      "options": [
+        "Legal costs for the purchase of property.",
+        "Purchase of a new computer for resale.",
+        "Renewing the electrical wiring in the office.",
+        "Repairs to plant and machinery."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q27"
+    },
+    {
+      "question": "Which of the following is a revenue receipt for a newspaper agent?",
+      "options": [
+        "Commission received from the sale of newspapers.",
+        "The proceeds of the sale of plant and equipment.",
+        "Money received from an insurance company as a result of crashing a delivery vehicle.",
+        "A refund received from a supplier as Compensation for damaged stock supplied."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q28"
+    },
+    {
+      "question": "Single entry records are kept by .",
+      "options": [
+        "small traders.",
+        "all the traders.",
+        "partnerships.",
+        "companies."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q29"
+    },
+    {
+      "question": "Which of the following is not used in the calculation of profit for incomplete records?",
+      "options": [
+        "Drawings = Closing capital – opening capital.",
+        "Opening capital = opening assets – opening liabilities.",
+        "Closing capital = closing assets – closing liabilities.",
+        "Net profit = closing capital – opening capital + drawings – additional investment."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q30"
+    },
+    {
+      "question": "Which of the following item is used in sales calculation for single entry organisations?",
+      "options": [
+        "Discount allowed",
+        "Cash payments to creditors",
+        "Discount received",
+        "Returns outwards"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q31"
+    },
+    {
+      "question": "A partnership is formed by …",
+      "options": [
+        "a partnership deed.",
+        "a partnership act.",
+        "a verbal agreement.",
+        "an agreement in writing."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q32"
+    },
+    {
+      "question": "Which one is not an appropriation of profit?",
+      "options": [
+        "Partner's interest on loan",
+        "Partner's interest on capital",
+        "Partner's interest on drawings",
+        "Partner's share of profits"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q33"
+    },
+    {
+      "question": "In Manufacturing account, prime cost is equal to total...",
+      "options": [
+        "direct manufacturing costs.",
+        "manufacturing costs.",
+        "indirect costs.",
+        "overhead expenses."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q34"
+    },
+    {
+      "question": "The manufacturer provides you with the following balances: Raw materials (opening stock) K60 000, Direct Labour K23 000, Royalties K2 000, Factory overheads K37 000, Depreciation of plant K53 000, Sale of scrapped raw materials K5 000. What is the prime cost?",
+      "options": [
+        "K85 000",
+        "K80 000",
+        "K180 000",
+        "K175 000"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q35"
+    },
+    {
+      "question": "In manufacturing business, royalty paid on every item manufactured is regarded as ...",
+      "options": [
+        "a direct expense.",
+        "an indirect expense.",
+        "part of raw materials used.",
+        "a factory overhead expense."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q36"
+    },
+    {
+      "question": "Why is it against Accounting Ethics and Standards to value closing stock in the final account at market value? It ...",
+      "options": [
+        "would overstate the profits.",
+        "has double effect on profits.",
+        "has no effect on the profits.",
+        "Would understate the profit."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q37"
+    },
+    {
+      "question": "Explain the meaning of ethics in accountancy. Study of...",
+      "options": [
+        "morals, values and judgement as they apply in accountancy.",
+        "how to make profits in a business",
+        "business etiquette as they apply in accountancy.",
+        "banking procedures in a business as they apply in accountancy."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q38"
+    },
+    {
+      "question": "The Acid Test Ratio is calculated by..",
+      "options": [
+        "Current Assets less Closing Stock and Prepayment ÷ Current Liabilities.",
+        "Current Assets ÷ Current Liabilities.",
+        "Debtors ÷ Creditors.",
+        "Current Assets less Debtors ÷ Current Liabilities."
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q39"
+    },
+    {
+      "question": "Which organization has a high Rate of Stock Turnover?",
+      "options": [
+        "Fast food outlet",
+        "Electrical wholesale chain",
+        "Estate agency",
+        "Travel agency"
+      ],
+      "correctAnswer": 0,
+      "reference": "2016 P1 Q40"
+    },
+    {
+      "question": "Accounting can be defined as a process of identifying, measuring and communicating ... information to permit informed judgment and decision by users of the information.",
+      "options": [
+        "accounting",
+        "confidential",
+        "economic",
+        "transactional"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q1"
+    },
+    {
+      "question": "What is meant by the historical cost principle?",
+      "options": [
+        "Transactions are recorded at actual cost.",
+        "Each transaction must have a debit and credit of equal value.",
+        "Reported profits are realistic and overstated.",
+        "Similar transactions should be recorded in the same way."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q2"
+    },
+    {
+      "question": "Which one of the following is not an example of a business transaction?",
+      "options": [
+        "Preparing financial report.",
+        "Borrowing from the bank.",
+        "Sale of goods.",
+        "Purchase of goods."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q3"
+    },
+    {
+      "question": "Keelo buys goods from Rosa paying for them by cheque. What kind of transaction is this?",
+      "options": [
+        "Cash",
+        "Bank",
+        "Barter",
+        "Credit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q4"
+    },
+    {
+      "question": "Which one of the following is both a book of prime entry and double entry?",
+      "options": [
+        "Cash Book.",
+        "Petty Cash Book.",
+        "Purchases Day Book.",
+        "Sales Day Book."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q5"
+    },
+    {
+      "question": "The Purchases Journal is the book where we record goods ...",
+      "options": [
+        "bought on credit and are meant for resale.",
+        "sold on credit to make a profit.",
+        "sold by cheque to make profit.",
+        "bought by cheque and are meant for resale."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q6"
+    },
+    {
+      "question": "The double entry rule states that for every",
+      "options": [
+        "debit entry there must be a corresponding credit entry.",
+        "debit entry there must be a corresponding debit entry.",
+        "credit entry there must be a corresponding credit entry.",
+        "debit and credit balance there must be a corresponding debit entry."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q7"
+    },
+    {
+      "question": "Which ones below are the correct classes of accounts?",
+      "options": [
+        "Nominal, Real and Personal Accounts",
+        "Fictitious, Personal and Real Accounts",
+        "Personal, Fictitious and Nominal Accounts",
+        "Real, Fictitious and Nominal Accounts"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q8"
+    },
+    {
+      "question": "Which one of the following is not a Ledger?",
+      "options": [
+        "General Journal Ledger",
+        "General Ledger",
+        "Accounts Payable Ledger",
+        "Accounts Receivable Ledger"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q9"
+    },
+    {
+      "question": "The Creditors Ledger is the book in which ... are kept.",
+      "options": [
+        "Suppliers' Accounts",
+        "Real Accounts",
+        "Nominal Accounts",
+        "Customers' Accounts"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q10"
+    },
+    {
+      "question": "Which of the following are reasons for preparing the Trial Balance? To... (i) prove the arithmetic accuracy. (ii) show all Ledger balances. (iii) correct all errors. (iv) see if the double entry rule has been followed. (v) prepare the Suspense Account.",
+      "options": [
+        "(i), (ii) and (iv)",
+        "(i), (iii) and (v)",
+        "(ii), (iii) and (iv)",
+        "(iii), (iv) and (v)"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q11"
+    },
+    {
+      "question": "Calculate the gross profit for Isaac's business: Sales K28 000, Stock 1/1/2015 K10 000, Purchases K18 000, Stock 31/12/2015 K15 000, Expenses K6 000.",
+      "options": [
+        "K15 000",
+        "K20 000",
+        "K9 000",
+        "K28 000"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q13"
+    },
+    {
+      "question": "Net profit can be defined as...",
+      "options": [
+        "gross profit less operating expenses.",
+        "excess of sales over cost of goods sold.",
+        "sales less purchases.",
+        "Cost of goods sold plus opening stock."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q14"
+    },
+    {
+      "question": "The descending order in which current assets should be shown in the Balance Sheet is …",
+      "options": [
+        "Stock, debtors, cash, bank.",
+        "Stock, debtors, bank, cash.",
+        "Cash, bank, debtors, stock.",
+        "Debtors, stock, bank, cash."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q15"
+    },
+    {
+      "question": "Bwalya Trading bought a machine on 1 July 2016 by cheque for K4,000 and is estimated to last 10 years after which it will have a scrap value of K500. What is its Annual Depreciation?",
+      "options": [
+        "K350",
+        "K2 000",
+        "K200",
+        "K430"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q16"
+    },
+    {
+      "question": "Depreciation can be defined as the…",
+      "options": [
+        "loss of value of a fixed asset.",
+        "appreciation of a fixed asset.",
+        "appreciation of a current asset.",
+        "value of a current asset."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q17"
+    },
+    {
+      "question": "An Error of Principle is made if…",
+      "options": [
+        "an entry has been made in the wrong class of accounts.",
+        "a transaction has completely been omitted.",
+        "a transaction has been entered in both accounts with the wrong amount.",
+        "an entry has been made on the wrong side of the two accounts concerned."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q18"
+    },
+    {
+      "question": "Errors corrected using the Suspense Account…",
+      "options": [
+        "are omitted in the Ledger.",
+        "are not exposed by the Trial Balance.",
+        "prevent the Trial Balance from balancing.",
+        "affect the Balance Sheet."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q19"
+    },
+    {
+      "question": "Given that the total debit side of the Trial Balance is K18 900 and credit side is K22 000, what will be the opening balance on the Suspense Account?",
+      "options": [
+        "K3 100 on the debit side of Suspense Account",
+        "K3 100 on the credit side of Suspense Account",
+        "K3 000 on the debit side of Suspense Account",
+        "K3 000 on the credit side of Suspense Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q20"
+    },
+    {
+      "question": "Why is a Bank Reconciliation Statement prepared? To…",
+      "options": [
+        "verify the Cash Book balance and the Bank Statement balance.",
+        "check the arithmetic accuracy.",
+        "show unpresented cheques lodged with the bank.",
+        "show uncredited cheques lodged with the bank."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q21"
+    },
+    {
+      "question": "Which statement is sent by the bank to its customers to verify the balance at bank at the end of the month?",
+      "options": [
+        "Bank Statement",
+        "Bank Reconciliation Statement",
+        "Cash Statement",
+        "Statement of Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q22"
+    },
+    {
+      "question": "What is the purpose of the Sales Ledger Control Account? To…",
+      "options": [
+        "check the accuracy of the Sales Ledger",
+        "calculate the amount owed to suppliers.",
+        "calculate total sales.",
+        "make the Trial Balance totals agree."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q23"
+    },
+    {
+      "question": "The Debtors Ledger Control Account is also known as …",
+      "options": [
+        "Sales Ledger Control Account.",
+        "Purchases Ledger Control Account.",
+        "Creditors Ledger Control Account.",
+        "Total Creditors Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q24"
+    },
+    {
+      "question": "Which one of the following items is not entered in the Income and Expenditure Account?",
+      "options": [
+        "Accumulated fund",
+        "Printing and stationery",
+        "Profit on sale of tickets",
+        "Subscriptions."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q25"
+    },
+    {
+      "question": "A club has a total membership of 50 and the annual subscription per member is K100. At the end of the year, the club's Cash Book shows that a total of K4 000 was received. How much is transferred to the Income and Expenditure Account?",
+      "options": [
+        "K5 000",
+        "K4 000",
+        "K1 000",
+        "K6 000"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q26"
+    },
+    {
+      "question": "What is a Capital Receipt?",
+      "options": [
+        "Funds generated from the sale of fixed assets.",
+        "Money spent when acquiring fixed assets.",
+        "Funds generated from the sale of revenue expenditure",
+        "Funds generated from the sale of purchases."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q27"
+    },
+    {
+      "question": "Which one of the following is a Revenue Expenditure?",
+      "options": [
+        "A quarterly electricity bill",
+        "A purchase of filing cabinets for the office",
+        "Illegal costs for purchase of property",
+        "Cost of extension to buildings"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q28"
+    },
+    {
+      "question": "Single entry records are mostly kept by all those who...",
+      "options": [
+        "do not keep double entry records.",
+        "keep double entry records.",
+        "are sole traders in business.",
+        "are partners in business."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q29"
+    },
+    {
+      "question": "Which of the following items is used in sales calculation for single entry organizations?",
+      "options": [
+        "Discount Allowed",
+        "Cash payment to creditors",
+        "Discount Received",
+        "Returns Outwards"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q30"
+    },
+    {
+      "question": "Which one of the following is correct?",
+      "options": [
+        "Profit increases capital.",
+        "Profit does not alter capital.",
+        "Profit reduces capital.",
+        "Capital can only come from profit."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q31"
+    },
+    {
+      "question": "In the absence of a partnership agreement, how should capital be contributed?",
+      "options": [
+        "All partners should contribute equally.",
+        "According to financial resources of the partners.",
+        "All partners should contribute according to sharing ratios.",
+        "Some partners should not be allowed to contribute."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q32"
+    },
+    {
+      "question": "An Appropriation Account is an account dealing with allocation of... to partners.",
+      "options": [
+        "net profit",
+        "capital",
+        "drawings",
+        "gross profit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q33"
+    },
+    {
+      "question": "In a manufacturing business, royalties on every item manufactured are regarded as...",
+      "options": [
+        "direct expenses.",
+        "indirect expenses.",
+        "part of raw materials used.",
+        "factory overhead expenses."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q34"
+    },
+    {
+      "question": "What do you understand by the term 'work-in-progress'?",
+      "options": [
+        "Value of partly finished goods.",
+        "Value of goods purchased.",
+        "Value of finished goods on hand.",
+        "Sales less cost of goods sold."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q35"
+    },
+    {
+      "question": "A manufacturing business extracts the following information from its books: Direct Materials K2,800, Direct Labour K2,200, Indirect Expenses K800. What is the amount of Prime Cost?",
+      "options": [
+        "K5,000",
+        "K3,600",
+        "K4,200",
+        "K5,800"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q36"
+    },
+    {
+      "question": "Which of the following words best describes ethics in accountancy? (i) Fraud (ii) Integrity (iii) Corruption (iv) Discipline (v) Embezzlement (vi) Honest",
+      "options": [
+        "(ii), (iv) and (vi)",
+        "(i), (ii) and (v)",
+        "(ii), (iii) and (iv)",
+        "(i), (v) and (vi)"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q37"
+    },
+    {
+      "question": "Which one of the following is a danger of non-adherence to ethics in accounting?",
+      "options": [
+        "Money laundering",
+        "Accountability",
+        "Dependence",
+        "Trust"
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q38"
+    },
+    {
+      "question": "The amount a trader adds to their cost price is known as .",
+      "options": [
+        "mark-up.",
+        "margin.",
+        "net profit.",
+        "turnover."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q39"
+    },
+    {
+      "question": "Normally goods and services are sold above cost price, the difference being...",
+      "options": [
+        "profit.",
+        "capital.",
+        "loss.",
+        "turnover."
+      ],
+      "correctAnswer": 0,
+      "reference": "2017 P1 Q40"
+    },
+    {
+      "question": "The importance of accounting in business is to …",
+      "options": [
+        "measure the performance of the firm.",
+        "forecast purchase.",
+        "forecast sales.",
+        "measure the performance of the workers."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q1"
+    },
+    {
+      "question": "The prudence concept states that accounts should …",
+      "options": [
+        "provide for all possible losses and not anticipate profits.",
+        "include only items with a monetary value.",
+        "change methods from year to year.",
+        "provide for all accruals and prepayments from year to year."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q2"
+    },
+    {
+      "question": "The exchange of goods, money and services between persons is called transaction.",
+      "options": [
+        "business",
+        "barter",
+        "buying",
+        "selling"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q3"
+    },
+    {
+      "question": "Goods bought and paid for immediately is an example of a … transaction.",
+      "options": [
+        "cash",
+        "barter",
+        "business",
+        "credit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q4"
+    },
+    {
+      "question": "What is the source document for recording transactions in the Purchases Day Book?",
+      "options": [
+        "Original invoice",
+        "Credit note",
+        "Debit note",
+        "Duplicate invoice"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q5"
+    },
+    {
+      "question": "The book of prime entry where we record the sale of old equipment is called Journal.",
+      "options": [
+        "General",
+        "Bought",
+        "Sales",
+        "Sales returns"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q6"
+    },
+    {
+      "question": "In which class of ledger accounts is capital recorded?",
+      "options": [
+        "Nominal",
+        "Impersonal",
+        "Personal",
+        "Real"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q8"
+    },
+    {
+      "question": "The Accounts of our customers are kept in the...ledger.",
+      "options": [
+        "Debtor's",
+        "Creditor's",
+        "General",
+        "Sundry"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q9"
+    },
+    {
+      "question": "The main book of Accounts where the double entry system is completed is known as the...",
+      "options": [
+        "Ledger.",
+        "Cash Book.",
+        "Journal.",
+        "Petty Cash Book."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q10"
+    },
+    {
+      "question": "To find out whether our double entry has been carried out correctly, we prepare a …",
+      "options": [
+        "Trial balance.",
+        "Balance sheet.",
+        "Profit and Loss Account.",
+        "Trading Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q11"
+    },
+    {
+      "question": "Net Profit is calculated in the...",
+      "options": [
+        "Profit and Loss Account.",
+        "Balance Sheet.",
+        "Trading Account.",
+        "Trial Balance."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q13"
+    },
+    {
+      "question": "Which of the following should be charged to the Profit and Loss Account?",
+      "options": [
+        "Office rent",
+        "Carriage on raw materials",
+        "Direct materials",
+        "Work in progress"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q14"
+    },
+    {
+      "question": "Calculate the working capital.",
+      "options": [
+        "K2 700.00",
+        "K700.00",
+        "K1 200.00",
+        "K2 300.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q15"
+    },
+    {
+      "question": "Expenses which a firm has incurred but not yet paid for are called",
+      "options": [
+        "accrued.",
+        "administrative.",
+        "distribution.",
+        "prepaid."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q16"
+    },
+    {
+      "question": "What will be the accumulated depreciation figure on 31st December 2017?",
+      "options": [
+        "K30 000.00",
+        "K10 000.00",
+        "K20 000.00",
+        "K40 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q17"
+    },
+    {
+      "question": "What type of error is this?",
+      "options": [
+        "Commission",
+        "Compensation",
+        "Omission",
+        "Principle"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q18"
+    },
+    {
+      "question": "Which of the following errors would be revealed by the Trial Balance?",
+      "options": [
+        "Single entry",
+        "Error of original entry",
+        "Error of principle",
+        "Complete reversal of entries"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q19"
+    },
+    {
+      "question": "It is corrected by:",
+      "options": [
+        "Suspense Account Debtor's Account",
+        "Discount allowed Account Suspense Account",
+        "Debtor's Account Suspense Account",
+        "Suspense Account Discount allowed Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q20"
+    },
+    {
+      "question": "If the bank refuses to pay cash against a cheque then it is said to be a...Cheque.",
+      "options": [
+        "Dishonored",
+        "Cleared",
+        "Presented",
+        "Reconciled"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q21"
+    },
+    {
+      "question": "A Revised Cash Book shows the...",
+      "options": [
+        "balance at the bank.",
+        "profit in the bank.",
+        "statement of affairs.",
+        "account for the bank."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q22"
+    },
+    {
+      "question": "Which of the following will appear on a Bank Statement?",
+      "options": [
+        "Credit transfers received from debtors",
+        "Payment into the bank not yet credited",
+        "Cheques issued but not yet presented for payment",
+        "Bad debts written off"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q23"
+    },
+    {
+      "question": "Which of the following items would not appear in the Sales Ledger Control Account?",
+      "options": [
+        "Provision for bad debts",
+        "Discount allowed",
+        "Interest charged on overdue accounts",
+        "Sales returns"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q24"
+    },
+    {
+      "question": "In a club Balance Sheet, subscriptions paid in advance are recorded as a.",
+      "options": [
+        "Current Liability.",
+        "Current Asset.",
+        "Fixed Asset.",
+        "Long term Liability."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q25"
+    },
+    {
+      "question": "What is the amount transferred to the Income and Expenditure Account?",
+      "options": [
+        "K2 160.00",
+        "K2 744.00",
+        "K2 892.00",
+        "K2 308.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q26"
+    },
+    {
+      "question": "Kafue Textiles purchased an industrial sewing machine. What expenditure is this?",
+      "options": [
+        "Capital expenditure",
+        "Fixed asset",
+        "Fixed expenditure",
+        "Revenue expenditure"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q27"
+    },
+    {
+      "question": "Which of the following is Revenue Expenditure?",
+      "options": [
+        "Painting a building for the second time",
+        "Carriage paid to bring new machinery in the business",
+        "Legal costs for acquiring land",
+        "Purchase of a new vehicle"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q28"
+    },
+    {
+      "question": "In the absence of drawings and additional capital, capital at the end less capital at start is equal to...",
+      "options": [
+        "Net profit.",
+        "Drawings.",
+        "Gross profit.",
+        "Net worth."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q29"
+    },
+    {
+      "question": "Incomplete records are best described as records which..",
+      "options": [
+        "are kept based on single entry.",
+        "have been destroyed or damaged by fire.",
+        "show only the receipt book.",
+        "are maintained on the double entry system."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q30"
+    },
+    {
+      "question": "Which of the following items is used in purchases calculation for single entry organisations?",
+      "options": [
+        "Discount received",
+        "Cash receipt",
+        "Discount allowed",
+        "Returns inwards"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q31"
+    },
+    {
+      "question": "If a bonus is given to a partner then it is recorded in the...Account.",
+      "options": [
+        "Appropriation",
+        "Capital",
+        "Profit and Loss",
+        "Trading"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q32"
+    },
+    {
+      "question": "Which of the following does not appear in the Appropriation Account of a partnership?",
+      "options": [
+        "Drawings by partners",
+        "Goodwill written off",
+        "Interest on capital",
+        "Interest on drawings"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q33"
+    },
+    {
+      "question": "Total Cost of Finished Goods divided by the quantity produced gives us the.",
+      "options": [
+        "Cost Per Unit .",
+        "Overhead Cost.",
+        "Prime Cost.",
+        "Work in Progress."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q34"
+    },
+    {
+      "question": "What is the main reason for preparing a Manufacturing Account? To calculate the",
+      "options": [
+        "Cost of Production.",
+        "Cost of Overheads.",
+        "Cost of Raw Materials.",
+        "Prime Cost."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q35"
+    },
+    {
+      "question": "Calculate the Cost of Raw Materials used from the following: Purchase of raw materials K600 000.00, Factory wages K100 000.00, Opening stock of raw materials K55 000.00 and closing stock of raw materials K80 000.00.",
+      "options": [
+        "K575 000.00",
+        "K555 000.00",
+        "K655 000.00",
+        "K755 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q36"
+    },
+    {
+      "question": "Which one of the following is a benefit to the company for adhering to ethic in Accountancy?",
+      "options": [
+        "Creates investor and creditors' confidence,",
+        "Makes a Company produce more goods and services.",
+        "Makes a company Observe the rule of double entry.",
+        "Allows money laundering to take place."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q37"
+    },
+    {
+      "question": "Which of the following is not one of the ethics in Accountancy?",
+      "options": [
+        "Fraud",
+        "Consistency",
+        "Objectivity",
+        "Trust worthy"
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q38"
+    },
+    {
+      "question": "When goods and services are sold above Cost Price, the difference is...",
+      "options": [
+        "a profit.",
+        "a loss.",
+        "a decrease in stock.",
+        "an increase in stock."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q39"
+    },
+    {
+      "question": "The Gross Profit Margin shows the relationship between Gross Profit and...",
+      "options": [
+        "Turnover.",
+        "Cost of Sales.",
+        "Gross Sales.",
+        "Net Profit."
+      ],
+      "correctAnswer": 0,
+      "reference": "2018 P1 Q40"
+    },
+    {
+      "question": "What name is given to the Accounting Concept that requires the owner of the business to be treated separate from the business?",
+      "options": [
+        "Business Entity",
+        "Accrual",
+        "Going Concern",
+        "Prudence"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q1"
+    },
+    {
+      "question": "The person who maintains books of accounts in a firm is called...",
+      "options": [
+        "Accounts clerk.",
+        "Account Executive.",
+        "Office Clerk.",
+        "Receptionist."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q2"
+    },
+    {
+      "question": "The terms business transaction refers to the...",
+      "options": [
+        "exchange of goods and services for money's worth.",
+        "exchange of goods for goods.",
+        "meeting for business executives.",
+        "recording of information in the books of the business."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q3"
+    },
+    {
+      "question": "... is not an example of a bank transaction.",
+      "options": [
+        "Selling goods for cash",
+        "Depositing money",
+        "Paying by cheque",
+        "Receiving interest from the bank"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q4"
+    },
+    {
+      "question": "... note is the source document used to write up the Sales Returns Book.",
+      "options": [
+        "Duplicate credit",
+        "Duplicate debit",
+        "Original credit",
+        "Original debit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q5"
+    },
+    {
+      "question": "Which one of the following is not a Book of Original Entry?",
+      "options": [
+        "Sales Ledger Journal",
+        "Purchases Journal",
+        "Returns Inwards Journal",
+        "Sales Journal"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q6"
+    },
+    {
+      "question": "Which one of these would be the correct double entry for this transaction? Bought office furniture for cash from Furnishing world.",
+      "options": [
+        "Office furniture; Cash",
+        "Cash; Furnishing World",
+        "Cash; Office furniture",
+        "Office furniture; Furnishing World"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q7"
+    },
+    {
+      "question": "...is an example of a real account.",
+      "options": [
+        "Asset",
+        "Capital",
+        "Liability",
+        "Drawings"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q8"
+    },
+    {
+      "question": "The Sales Ledger of the business contains the ...",
+      "options": [
+        "Personal accounts of customers.",
+        "Creditors accounts.",
+        "Personal accounts of suppliers.",
+        "Sales account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q9"
+    },
+    {
+      "question": "..., Book is both a book of Prime Entry and the Ledger.",
+      "options": [
+        "Cash",
+        "Petty cash",
+        "Purchases",
+        "Sales"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q10"
+    },
+    {
+      "question": "Which one of the following is the reason for preparing a Trial Balance? To...",
+      "options": [
+        "show all ledger balances.",
+        "calculate the profit or Loss for the business.",
+        "check the cash and bank balances.",
+        "show financial position of the business."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q11"
+    },
+    {
+      "question": "From the list of balances below, you are required to prepare the Trial Balance and show the correct totals.",
+      "options": [
+        "K 205 000.00",
+        "K 235 000.00",
+        "K 185 000.00",
+        "K 170 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q12"
+    },
+    {
+      "question": "When preparing final accounts, trade expenses should be...",
+      "options": [
+        "debited to Profit and Loss Account.",
+        "credited to Profit and Loss Account.",
+        "credited to the Trading Account.",
+        "debited to the Trading Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q13"
+    },
+    {
+      "question": "In which final account do we reflect the warehouse wages?",
+      "options": [
+        "Trading Account",
+        "Balance Sheet",
+        "Profit and Loss Account",
+        "Trial Balance"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q14"
+    },
+    {
+      "question": "Calculate the Cost of Goods Sold from the following figures:",
+      "options": [
+        "K 135 000.00",
+        "K 45 000.00",
+        "K 170 000.00",
+        "K 180 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q15"
+    },
+    {
+      "question": "A Provision for Doubtful Debts is credited when",
+      "options": [
+        "providing for possible bad debts",
+        "debtors cease to be in business.",
+        "debtors become bankrupt.",
+        "writing off bad debts."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q16"
+    },
+    {
+      "question": "What will be the net book value of the cars after two years?",
+      "options": [
+        "K 51 200.00",
+        "K 64 000.00",
+        "K 40 960.00",
+        "K 32 768.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q17"
+    },
+    {
+      "question": "Error of Principle is an error...",
+      "options": [
+        "where an entry is made in a wrong class of account but correct side.",
+        "made in the cash book.",
+        "where an entry has been omitted from the books.",
+        "which cancels each other."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q18"
+    },
+    {
+      "question": "Which of the errors would be revealed by the Trial Balance?",
+      "options": [
+        "Repairs to van debited to Van account.",
+        "Cheque received from B. Hanyinda debited to B. Hamooba's account.",
+        "Credit Purchases from T. Lubinga completely omitted from the account.",
+        "Credit sales to J. Banda entered in J. Bunda's account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q19"
+    },
+    {
+      "question": "Find the shortage and indicate the side on which it would appear in the Suspense Account.",
+      "options": [
+        "K3 200.00 on the credit side",
+        "K2 300.00 on the debit side",
+        "K2 300.00 on the credit side",
+        "K3 200.00 on the debit side"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q20"
+    },
+    {
+      "question": "Bank Reconciliation Statement is...",
+      "options": [
+        "drawn by us to verify the Cash Book balance with the Bank Statement.",
+        "drawn by the bank to verify the Cash Book balance with the Bank Statement.",
+        "sent by the bank when the account is overdrawn.",
+        "sent by the bank when there is an error."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q21"
+    },
+    {
+      "question": "What should be the entry to reconcile the balances?",
+      "options": [
+        "Debit the Cash Book",
+        "Credit the Cash Book",
+        "Credit the Statement of Account",
+        "Debit the Statement of Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q22"
+    },
+    {
+      "question": "What is the purpose of this Control Account? To...",
+      "options": [
+        "check the accuracy of the Sales Ledger.",
+        "calculate the amount owed by suppliers.",
+        "calculate the amount owed to suppliers.",
+        "check the accuracy of the Sales Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q23"
+    },
+    {
+      "question": "In the Sales Ledger Control Account, the bad debts written off should be shown as a ...",
+      "options": [
+        "debit balance.",
+        "balance carried down.",
+        "balance brought forward.",
+        "credit balance."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q24"
+    },
+    {
+      "question": "Which one of the following item appears under Current assets of a Non-Profit Making Organization?",
+      "options": [
+        "Debtors for subscription",
+        "Bar expenses owing",
+        "Subscriptions received in advance",
+        "Transport cost owing"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q25"
+    },
+    {
+      "question": "What is the amount transferred to the Income and Expenditure Account?",
+      "options": [
+        "K 1 372 000.00",
+        "K1 446 000.00",
+        "K1 154 000.00",
+        "K 1 080 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q26"
+    },
+    {
+      "question": "Which of the following is classified as Revenue Expenditure?",
+      "options": [
+        "Repairs to van",
+        "Buying a van",
+        "Painting outside of a new building",
+        "Putting extra head light on a van"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q27"
+    },
+    {
+      "question": "Revenue Expenditure is...",
+      "options": [
+        "the cost of running the business on a day-to-day basis.",
+        "money spent on building fixed assets or adding value to them.",
+        "money spent on selling fixed assets of the business.",
+        "the extra capital paid in by the proprietor."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q28"
+    },
+    {
+      "question": "Profitability of a business which maintains single entry records can be found by...",
+      "options": [
+        "calculating capital increase at the end of the year.",
+        "calculating the proprietor's investment at the end of the year.",
+        "comparing creditors and debtors at the end of the year.",
+        "comparing the assets against liabilities at the end of the year."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q29"
+    },
+    {
+      "question": "Which one of the following item is used in sales calculation for single entry organisations?",
+      "options": [
+        "Discount allowed",
+        "Cash payment to creditors",
+        "Discount received",
+        "Returns outwards"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q30"
+    },
+    {
+      "question": "Net worth is the same as...",
+      "options": [
+        "Capital.",
+        "Gross Profit.",
+        "Net Profit.",
+        "Net Loss."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q31"
+    },
+    {
+      "question": "The minimum number of partners in a partnership business is",
+      "options": [
+        "2",
+        "7",
+        "20",
+        "50"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q32"
+    },
+    {
+      "question": "A partnership prepares an Appropriation Account to ...",
+      "options": [
+        "share Net Profit between partners",
+        "share Gross Profit between partners",
+        "show partners' capitals",
+        "show partners' drawings"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q33"
+    },
+    {
+      "question": "In Manufacturing Accounts, when market value of goods is lower than the cost of the product, it results in...",
+      "options": [
+        "a manufacturing loss.",
+        "a manufacturing profit.",
+        "an overvalued prime cost.",
+        "an undervalued total overhead expense."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q34"
+    },
+    {
+      "question": "Which one of the following is a direct cost?",
+      "options": [
+        "Raw materials",
+        "Depreciation",
+        "Insurance",
+        "Rent"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q35"
+    },
+    {
+      "question": "Calculate the figure for Cost of Production.",
+      "options": [
+        "K 510 000.00",
+        "K 470 000.00",
+        "K 520 000.00",
+        "K 550 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q36"
+    },
+    {
+      "question": "Which one of the following is not a danger to non-adherence to ethics in Accountancy?",
+      "options": [
+        "Integrity",
+        "Corruption",
+        "Embezzlement",
+        "Fraud"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q37"
+    },
+    {
+      "question": "Which one of the following is not an ethical conduct of an Accountant?",
+      "options": [
+        "Smartness",
+        "Accountability",
+        "Objectivity",
+        "Integrity"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q38"
+    },
+    {
+      "question": "The ratio which assesses the ability of a business to pay its financial obligations is known as...",
+      "options": [
+        "Current ratio",
+        "Acid test ratio.",
+        "Gross profit",
+        "Net profit."
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q39"
+    },
+    {
+      "question": "The following formula: ______ is used to calculate...",
+      "options": [
+        "Cost of sales.",
+        "Average Stock.",
+        "Stock taking.",
+        "Turnover"
+      ],
+      "correctAnswer": 0,
+      "reference": "2019 P1 Q40"
+    },
+    {
+      "question": "Which of the following is not the importance of Financial Accounting? It helps …",
+      "options": [
+        "with checks and balances.",
+        "to calculate the tax to be paid.",
+        "to provide proof of financial position.",
+        "with management of personnel in a business."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q1"
+    },
+    {
+      "question": "Which of the following is a job opportunity in the Accounting Profession?",
+      "options": [
+        "Office Clerk",
+        "Burbar",
+        "Executive Officer",
+        "Receptionist"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q2"
+    },
+    {
+      "question": "Mazuba Mazoka exchanged his laptop with a phone worth K 7 000.00. This type of transaction is a … Transaction.",
+      "options": [
+        "Barter",
+        "Business",
+        "Cash",
+        "Credit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q3"
+    },
+    {
+      "question": "Which one of the following can be referred to as a Credit Transaction? Buying goods today and paying for them…",
+      "options": [
+        "at a future date.",
+        "at a reduced price.",
+        "by cash immediately.",
+        "by cheque immediately."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q4"
+    },
+    {
+      "question": "In the General Journal, a description and explanation of the transaction is known as the ...",
+      "options": [
+        "narrative.",
+        "Folio.",
+        "Journal entry.",
+        "Opening Entry."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q5"
+    },
+    {
+      "question": "What is the source document for the Sales Returns Journal?",
+      "options": [
+        "Duplicate Credit Note",
+        "Duplicate Debit Note",
+        "Original Debit Note",
+        "Original Credit Note"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q6"
+    },
+    {
+      "question": "Funsani, a sole trader, took K6 000.00 from the business Bank Account for various office Use. How would this transaction be recorded in the books?",
+      "options": [
+        "Drawings Account; Bank Account",
+        "Bank Account; Drawings Account",
+        "Cash Account; Bank Account",
+        "Bank Account; Cash Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q7"
+    },
+    {
+      "question": "Rent Received, Sales and Returns Outwards are... Accounts.",
+      "options": [
+        "Nominal",
+        "Personal",
+        "Real",
+        "Suspense"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q8"
+    },
+    {
+      "question": "Incomes and expenses are recorded in the... Ledger.",
+      "options": [
+        "General",
+        "Main",
+        "Purchases",
+        "Sales"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P极 Q9"
+    },
+    {
+      "question": "What do we call the Principle Book of Accounts in which transactions are recorded on double entry basis?... book.",
+      "options": [
+        "Ledger",
+        "Purchases",
+        "Sales",
+        "Subsidiary"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q10"
+    },
+    {
+      "question": "A Trial Balance is made up of ... extracted from the Ledger.",
+      "options": [
+        "debit totals and credit totals",
+        "credit balances",
+        "debit and credit balances",
+        "de极 balances"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q11"
+    },
+    {
+      "question": "Redraft the Trial Balance and show the correct totals.",
+      "极options": [
+        "K422 525.50",
+        "K462 500.00",
+        "K450 000.00",
+        "K412 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q12"
+    },
+    {
+      "question": "A business makes a Net Loss at the end of the year. How would this be treated in the Balance Sheet of the business?",
+      "options": [
+        "Subtracted from capital",
+        "Added to capital",
+        "Added to liabilities",
+        "Subtracted from liabilities"
+      ],
+      "correctAnswer": 0,
+      "reference极": "2020 P1 Q13"
+    },
+    {
+      "question": "Which items below relate to the Balance Sheet?",
+      "options": [
+        "Assets, Capital, Liabilities",
+        "Capital, Incomes, Liabilities",
+        "Expenses, Assets, Capital",
+        "Liabilities, Capital, Expenses"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q14"
+    },
+    {
+      "question": "A firm's Opening Capital is K20 600.00 and the Net Profit is K6 800.00. How much is the Closing Capital?",
+      "options": [
+        "K27 400.00",
+        "K23 800.00",
+        "K20 600.00",
+        "K20 400.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q15"
+    },
+    {
+      "question": "Buumba bought a truck on 1 January 2019 at a cost of K90 极000.00. He decided to use the reducing balance method for depreciating the truck at the rate of 5% per annum. Calculate the depreciation charge for 2019.",
+      "options": [
+        "K4 500.00",
+        "K2 500.00",
+        "K4 000.00",
+        "K4 275.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q16"
+    },
+    {
+      "question": "Rent accrued means that rent was.",
+      "options": [
+        "in arrears.",
+        "a prepayment.",
+        "paid in advance.",
+        "prepaid."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q17"
+    },
+    {
+      "question": "A reduction in the provision for bad debts is.",
+      "options": [
+        "credited to the Profit and Loss Account.",
+        "credited to the Trading Account.",
+        "debited to the Profit and Loss Account.",
+        "debited to the Trading Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q18"
+    },
+    {
+      "question": "A Purchase Invoice for a delivery van K40 000.00 was debited to the Purchases Account. This is an error of ...",
+      "options": [
+        "Principle.",
+        "Compensation.",
+        "Original entry.",
+        "Overcast."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q19"
+    },
+    {
+      "question": "Which of the following errors would not be disclosed by the Trial Balance?",
+      "options": [
+        "极Cash sales were completely omitted from the books of accounts.",
+        "Sales Account was over cast by K30.00.",
+        "Purchases Account was under cast by K20.00.",
+        "Discount allowed, K300.00 was recorded in the Debtor's Account only."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q20"
+    },
+    {
+      "question": "If the Sales Account is under cast by K400.00, to correct this mistake, the entries will be ...",
+      "options": [
+        "Sales K400.00; Suspense K400.00.",
+        "Suspense K400.00; Sales K400.00",
+        "Sales K400.00; Cash K400.00.",
+        "Cash K400.00; Sales K400.00."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q21"
+    },
+    {
+      "question": "What do we call a cheque paid to us by a customer but not yet passed through the banking system?",
+      "options": [
+        "An unpresented Cheque.",
+        "A Bank Overdraft.",
+        "A dishonored Cheque.",
+        "An uncredited Cheque."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q22"
+    },
+    {
+      "question": "Which of the following items may be missing in the Cash Book but appear on the Bank Statement?",
+      "options": [
+        "Credit transfer, Standing Order, Bank Charges",
+        "Credit transfer, Bank Charges, Uncredited cheques",
+        "Uncredited cheques, Bank Charges, Standing Order.",
+        "Uncredited cheques, Credit transfer, Standing Order."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q23"
+    },
+    {
+      "question": "The total of credit sales for the month should be entered on the ...",
+      "options": [
+        "debit side of the Sales Ledger Control Account.",
+        "credit side of the Purchases Ledger Control Account.",
+        "credit side极 of the Sales Ledger Control Account.",
+        "debit side of the Purchases Ledger Control Account."
+      ],
+      "极correctAnswer": 0,
+      "reference": "2020 P1 Q24"
+    },
+    {
+      "question": "Mundia charged Mwangelwa interest on an overdue account. How will the interest be treated in Mundia's Control Account?",
+      "options": [
+        "Credit Sales",
+        "Debit Purchases",
+        "Debit Sales",
+        "Credit Purchases"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q25"
+    },
+    {
+      "question": "In Club Accounts, Capital is referred to as...",
+      "options": [
+        "accumulated fund.",
+        "donations.",
+        "subscription fees.",
+        "surplus."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q26"
+    },
+    {
+      "question": "What is the amount of subscription to be transferred to the Income and Expenditure Account?",
+      "options": [
+        "K54 390.00",
+        "K47 890.00",
+        "K58 970.00",
+        "K62 220.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q27"
+    },
+    {
+      "question": "Which ones are examples of Revenue Receipt极s from the transactions given below?",
+      "options": [
+        "(ii) and (iv)",
+        "(i) and (iii)",
+        "(极i) and (iv)",
+        "(ii) and (iii)"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q28"
+    },
+    {
+      "question": "Amount realised from sale of old furniture is...",
+      "options": [
+        "Capital Receipt.",
+        "Capital Expenditure.",
+        "Revenue Expenditure.",
+        "Revenue Receipt,"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q29"
+    },
+    {
+      "question": "Most small traders maintain their books on... entry.",
+      "options": [
+        "single",
+        "business",
+        "contra",
+        "double"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q30"
+    },
+    {
+      "question": "In single entry, profit is calculated by.",
+      "options": [
+        "Closing Capital - Opening Capital + Drawings.",
+        "Closing Capital + Opening Capital.",
+        "Closing Capital - Drawings +Opening Capital.",
+        "Closing Capital + Drawings +Opening Capital."
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q31"
+    },
+    {
+      "question": "What document governs the relationship between partners?",
+      "options极": [
+        "Articles of Partnership",
+        "Articles of Association",
+        "Business Act of Partnership",
+        "Memorandum of Association"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q32"
+    },
+    {
+      "question": "What item would be added to the Net Profit in the Profit and Loss Appropriation Account for a partnership?",
+      "options": [
+        "salary to a partner",
+        "drawing by partners",
+        "interest on capital",
+        "interest on drawings"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q33"
+    },
+    {
+      "question": "Royalties are classified as ... costs.",
+      "options": [
+        "direct",
+        "administrative",
+        "distribution",
+        "overhead"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q34"
+    },
+    {
+      "question": "A manufacturing business has the following information: Direct material K56 000.00; direct labour K44 000.00; indirect expenses K16 000.00. What is the cost of production?",
+      "options": [
+        "K116 000.00",
+        "K72 000.00",
+        "K84 000.00",
+        "K100 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q35"
+    },
+    {
+      "question": "Which of the following is not part of the inventory in manufacturing business?",
+      "options": [
+        "Overhead cost",
+        "Finished goods",
+        "Raw materials",
+        "Work in progress"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q36"
+    },
+    {
+      "question": "Embezzlement is one of the effects on non-adherence to Accounting Ethics. What does this mean?",
+      "options": [
+        "Misappropriation of funds",
+        "Asking for bribes",
+        "Discriminating other",
+        "Misapplication of funds"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q37"
+    },
+    {
+      "question": "Which of the following is a result of non-adherence to ethics in Accountancy?",
+      "options": [
+        "Imprisonment",
+        "Discipline",
+        "Honesty",
+        "Integrity"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1极 Q38"
+    },
+    {
+      "question": "What is included in the Working Capital, but not in the Quick Ratio?",
+      "options": [
+        "Inventory",
+        "Cash",
+        "Trade Receivables",
+        "Trade Payables"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q39"
+    },
+    {
+      "question": "What is the formula for calculating working capital?",
+      "options": [
+        "Total Current Assets – Total Current Liabilities",
+        "Assets – Liabilities",
+        "Fixed Assets – Current Liabilities",
+        "Total Current Assets + Total Current Liabilities"
+      ],
+      "correctAnswer": 0,
+      "reference": "2020 P1 Q40"
+    },
+    {
+      "question": "Which one of the following statements is not true about accounting? It provides information...",
+      "options": [
+        "about the types of goods and services sold by the business.",
+        "about assets and liabilities of the business.",
+        "to debtors and creditors of the business.",
+        "to managers for them to make decisions."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q1"
+    },
+    {
+      "question": "Which one of the following is not a career prospect in accounting?",
+      "options": [
+        "Receptionist",
+        "Auditor",
+        "Bursar",
+        "Cashier"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q2"
+    },
+    {
+      "question": "A business transaction ...",
+      "options": [
+        "involves the exchange of goods or services for money's worth.",
+        "极involves the recording of business transactions.",
+        "is the amount of money used极 in the business.",
+        "is the recording of money received or paid by the business."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q3"
+    },
+    {
+      "question": "Which one of the following is a credit transaction? Sold goods ...",
+      "options": [
+        "to Mukube investments for K25 000.00 to be paid after 7 days.",
+        "and received payment K300.50 through Airtel money.",
+        "and received payment K10 000.00 by credit transfer.",
+        "by cheque K4 000.00."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q4"
+    },
+    {
+      "question": "Which statement would constitute a contra entry in the Cash Book?",
+      "options": [
+        "Withdrawing cash from the bank for office use.",
+        "A transfer of cash by a debtor into the Bank Account.",
+        "Introducing Capital in the business by depositing cash into the Bank Account.",
+        "Withdrawing cash from the bank for personal use."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q5"
+    },
+    {
+      "question": "The purpose of sending a Credit Note is to ...",
+      "options": [
+        "inform the buyer of the amount he owes the seller.",
+        "increase the amount owed by the buyer.",
+        "inform the buyer about goods available.",
+        "reduce the amount the buyer owes the seller."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q6"
+    },
+    {
+      "question": "According to the double entry rule, credit entry is made when there is ...",
+      "options": [
+        "an increase in the amount of an expense.",
+        "an increase in the amount of a liability.",
+        "a decrease in the amount of a liability.",
+        "a decrease in the amount of an income."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q7"
+    },
+    {
+      "question": "The account of a proprietor for stock Withdrawn from the business for private use belongs to ... Accounts.",
+      "options": [
+        "Nominal",
+        "Personal",
+        "Real",
+        "Stock"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q8"
+    },
+    {
+      "question": "The General Ledger is also known as the ... Ledger.",
+      "options": [
+        "Nominal",
+        "Private",
+        "Purchases",
+        "Sales"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q9"
+    },
+    {
+      "question": "The double entry is completed in the ... Ledger.",
+      "options": [
+        "Main",
+        "General",
+        "Creditors",
+        "Debtors"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q10"
+    },
+    {
+      "question": "A ... is prepared from the list of ledger balances as at a particular date.",
+      "options": [
+        "Trial Balance",
+        "Balance Sheet",
+        "Statement of Accounts",
+        "Statement of Affairs"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q11"
+    },
+    {
+      "question": "The Balance Sheet is a report on the firm's ... at a specific date.",
+      "options": [
+        "financial position",
+        "profitability",
+        "debtors and creditors",
+        "cash flow"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q13"
+    },
+    {
+      "question": "Net profit is transferred to the... Account.",
+      "options": [
+        "Capital",
+        "Bank and Cash",
+        "Profit and Loss",
+        "Trading"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q14"
+    },
+    {
+      "question": "Calculate the Gross Profit.",
+      "options": [
+        "K9 300.00",
+        "K9 500.00",
+        "K10 300.00",
+        "K10 500.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q15"
+    },
+    {
+      "question": "Calculate depreciation for the year 2019.",
+      "options": [
+        "K 1 425.00",
+        "K 1500.00",
+        "K27 075.00",
+        "极K28 500.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q16"
+    },
+    {
+      "question": "How would this be recorded in Mwiza's books?",
+      "options": [
+        "Bad Debts Account Mwiza's Account",
+        "Bad Debts Account John Paul's Account",
+        "Mwiza's Account Bad Deb极ts Account",
+        "John Paul's Account Mwiza's Account"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q17"
+    },
+    {
+      "question": "Rent received in advance by the business is a ...",
+      "options": [
+        "Current Liability.",
+        "Current Asset.",
+        "Fixed Asset.",
+        "Long term Liability."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q18"
+    },
+    {
+      "question": "What type of an error is this?",
+      "options": [
+        "Complete reversal",
+        "Compensating error",
+        "Double entry",
+        "Original entry"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q19"
+    },
+    {
+      "question": "The error that would be corrected through the Suspense Account is an error of ...",
+      "options": [
+        "Single entry",
+        "Commission.",
+        "Compensation.",
+        "Double entry"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q20"
+    },
+    {
+      "question": "In the Bank Statement ... will be shown as a credit entry.",
+      "options": [
+        "credit transfer",
+        "bank charges",
+        "direct debit",
+        "standing order"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q22"
+    },
+    {
+      "question极": "What is a Bank Reconciliation Statement? A statement used to reconcile the ... balances.",
+      "options": [
+        "Bank Account and Bank Statement",
+        "Bank Account and Cash Book",
+        "Cash Account and Bank Statement",
+        "Cash Account and Bank Reconciliation Statement"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q23"
+    },
+    {
+      "question": "When preparing a control account, the total of credit sales for the month should be entered on the ...",
+      "options": [
+        "debit side of the Sales Ledger Control Account.",
+        "credit side of the Purchases Ledger Control Account.",
+        "credit side of the Sales Ledger Control Account.",
+        "debit side of the Purchases Ledger Control Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q24"
+    },
+    {
+      "question": "The other name for Total Creditors' Account is ... Ledger Account.",
+      "options": [
+        "Purchases Control",
+        "Personal",
+        "Purchases",
+        "Sales Control"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q25"
+    },
+    {
+      "question": "In the Club Accounts an Income Statement is referred to as.",
+      "options": [
+        "Income and Expenditure Account.",
+        "Accumulated Fund.",
+        "Profit and Loss Account.",
+        "Receipts and Payments Account."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q26"
+    },
+    {
+      "question": "An example of Capital Expenditure is ...",
+      "options": [
+        "cost of building extension to factory.",
+        "cost of repairs to machines",
+        "cost of purchase of fuel for an old van.",
+        "maintenance costs for vehicles,"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q28"
+    },
+    {
+      "question": "Discount received in a business is ... Receipt.",
+      "options": [
+        "Revenue",
+        "Income",
+        "Capital",
+        "Business"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q29"
+    },
+    {
+      "question": "A statement of affairs shows",
+      "options": [
+        "assets and liabilities at the end of period only.",
+        "amounts owing by the business.",
+        "amounts owed to the business.",
+        "assets and liabilities at the start and end of the period."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q30"
+    },
+    {
+      "question": "What items below would increase capital极 in single entry business?",
+      "options": [
+        "Profit and additional capital",
+        "Loan and working capital",
+        "Profit and loan",
+        "Working capital and profit"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q31"
+    },
+    {
+      "question": "When Partners' Capital is fixed, drawings are... Account",
+      "options": [
+        "debited to Current",
+        "debited to Capital",
+        "credited to Capital",
+        "credited to Current"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q32"
+    },
+    {
+      "question": "The agreement between partners is recorded in a document known as",
+      "options": [
+        "Partnership Deed.",
+        "Articles of Association.",
+        "Memorandum of Association.",
+        "Partnership Act"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q33"
+    },
+    {
+      "question": "A Manufacturing Account is prepared to calculate.",
+      "options": [
+        "cost of goods produced.",
+        "loss on goods produced.",
+        "profit on production.",
+        "value of goods produced."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q34"
+    },
+    {
+      "question": "The cost of production for a manufacturing firm is K115 000.00 and market value for similar goods is K135 000.00. Calculate the profit or loss on manufacturing.",
+      "options": [
+        "Profit K20 000.00",
+        "Loss K20 000.00",
+        "Loss K250 000.00",
+        "Profit K250 000.00"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q35"
+    },
+    {
+      "question": "Costs that cannot easily be traced to items being manufactured are ...",
+      "options": [
+        "indirect costs.",
+        "cost of purchases.",
+        "cost of sales.",
+        "direct costs."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q36"
+    },
+    {
+      "question": "An example of an accounting ethic is..",
+      "options": [
+        "perseverance.",
+        "courtesy.",
+        "honesty.",
+        "respect."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q37"
+    },
+    {
+      "question": "Which of the following does not constitute unethical behaviour?",
+      "options": [
+        "Changing jobs",
+        "Committing fraud",
+        "Money laundering",
+        "Receiving bribes"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q38"
+    },
+    {
+      "question": "The rate of stock turn is the number of times stock is ...",
+      "options": [
+        "sold in a year.",
+        "bought in a year.",
+        "counted in a year.",
+        "transferred between branches."
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q39"
+    },
+    {
+      "question": "What is the formula for calculating Return On Capital Employed (ROCE)?",
+      "options": [
+        "Net Profit / Capital Employed × 100",
+        "Capital Employed / Sales",
+        "Sales / Capital Employed",
+        "Capital Employed / Net Profit × 100"
+      ],
+      "correctAnswer": 0,
+      "reference": "2021 P1 Q40"
+    }
+  ]

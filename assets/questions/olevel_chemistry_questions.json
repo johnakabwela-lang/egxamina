@@ -1,0 +1,10 @@
+{
+  "questions": [
+    {
+      "question": "What is the chemical formula for sulfuric acid?",
+      "options": ["H2SO4", "HCl", "NaOH", "HNO3"],
+      "correctAnswer": "H2SO4",
+      "explanation": "Sulfuric acid has the chemical formula H2SO4, containing two hydrogen atoms, one sulfur atom, and four oxygen atoms."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "questions": [
+    {
+      "question": "What is the powerhouse of the cell?",
+      "options": [
+        "Mitochondria",
+        "Nucleus",
+        "Golgi apparatus",
+        "Endoplasmic reticulum"
+      ],
+      "correctAnswer": "Mitochondria",
+      "explanation": "Mitochondria are called the powerhouse of the cell because they produce most of the cell's supply of ATP (adenosine triphosphate), used as a source of chemical energy."
+    }
+  ]
+}

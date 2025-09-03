@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/group_model.dart';
 import 'group_service.dart';
 
 class GroupOwnershipService {

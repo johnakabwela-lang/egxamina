@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/group_model.dart';
 import '../services/group_service.dart';
 import '../services/auth_service.dart';
-import './create_group_screen.dart';
 
 class GroupsListScreen extends StatefulWidget {
   const GroupsListScreen({super.key});

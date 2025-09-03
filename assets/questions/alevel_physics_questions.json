@@ -1,0 +1,15 @@
+{
+  "questions": [
+    {
+      "question": "What is the de Broglie wavelength formula?",
+      "options": [
+        "λ = h/p",
+        "E = mc²",
+        "F = ma",
+        "v = u + at"
+      ],
+      "correctAnswer": "λ = h/p",
+      "explanation": "The de Broglie wavelength formula (λ = h/p) relates the wavelength of matter to its momentum, where h is Planck's constant and p is momentum."
+    }
+  ]
+}

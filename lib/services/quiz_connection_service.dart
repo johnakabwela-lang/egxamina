@@ -35,7 +35,6 @@ class QuizConnectionService {
   // Send heartbeat to Firebase
   Future<void> _sendHeartbeat(String sessionId, String userId) async {
     final sessionRef = _firestore.doc('quizSessions/$sessionId');
-    final now = DateTime.now().millisecondsSinceEpoch;
 
     try {
       await _firestore.runTransaction((transaction) async {

@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import '../models/group_model.dart';
 import 'group_service.dart';
 
 class GroupDeletionService {

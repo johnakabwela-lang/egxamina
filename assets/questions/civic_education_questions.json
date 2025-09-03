@@ -1,0 +1,15 @@
+{
+  "questions": [
+    {
+      "question": "What are the three arms of government?",
+      "options": [
+        "Executive, Legislative, Judiciary",
+        "President, Governor, Mayor",
+        "Federal, State, Local",
+        "Army, Navy, Air Force"
+      ],
+      "correctAnswer": "Executive, Legislative, Judiciary",
+      "explanation": "The three arms of government are the Executive, Legislative, and Judiciary, each with distinct roles in governance."
+    }
+  ]
+}
