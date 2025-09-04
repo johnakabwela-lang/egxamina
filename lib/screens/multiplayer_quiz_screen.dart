@@ -4,7 +4,7 @@ import '../models/quiz_session_model.dart';
 import '../services/quiz_service.dart';
 import '../services/quiz_connection_service.dart';
 import '../widgets/participant_status_list.dart';
-import './main_quiz_screen.dart';
+import 'multiplayer_quiz_game_screen.dart';
 
 class MultiplayerQuizScreen extends StatefulWidget {
   final QuizSessionModel session;
@@ -27,10 +27,17 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   bool _isDisposed = false;
   bool _isCancelling = false;
   bool _isLeaving = false;
+  Timer? _connectionTimer;
+  Timer? _countdownTimer;
+  static const int waitingRoomDuration = 120; // 2 minutes
+  int _remainingSeconds = waitingRoomDuration;
+  int _onlineUsersCount = 1; // Start with 1 (host)
 
   @override
   void dispose() {
     _isDisposed = true;
+    _connectionTimer?.cancel();
+    _countdownTimer?.cancel();
     if (!_isLeaving) {
       // Handle ungraceful disconnect (when user force-closes app or navigates without proper leaving)
       _connectionService.stopTracking(widget.session.id);
@@ -38,11 +45,78 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     super.dispose();
   }
 
+  // Initialize countdown timer
+  void _initializeCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          _handleCountdownExpiry();
+        }
+      });
+    });
+  }
+
+  // Handle countdown expiry
+  void _handleCountdownExpiry() {
+    _countdownTimer?.cancel();
+    if (_isDisposed || !mounted) return;
+
+    // Auto-cancel the quiz session
+    if (_isHost(widget.session)) {
+      _cancelQuizSession(widget.session);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Quiz waiting period has expired'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+
+    // Navigate back
+    Navigator.of(context).pop();
+  }
+
+  // Format remaining time as MM:SS
+  String _formatRemainingTime() {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  // Get color for countdown display
+  Color _getCountdownColor() {
+    if (_remainingSeconds <= 10) return Colors.red;
+    if (_remainingSeconds <= 30) return Colors.orange;
+    return Colors.black87;
+  }
+
+  // Update user count and start button state
+  void _updateOnlineUsersCount(QuizSessionModel session) {
+    final onlineCount = session.participants.values
+        .where((p) => p.connectionStatus == ConnectionStatus.online)
+        .length;
+
+    if (onlineCount != _onlineUsersCount) {
+      setState(() {
+        _onlineUsersCount = onlineCount;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _sessionStream = _quizService.getSessionUpdates(widget.session.id);
     _initializeConnection();
+    _initializeCountdown();
   }
 
   void _initializeConnection() {
@@ -50,7 +124,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     _connectionService.startTracking(widget.session.id);
 
     // Initialize regular connection status checks
-    Timer.periodic(const Duration(seconds: 15), (timer) {
+    _connectionTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (_isDisposed) {
         timer.cancel();
         return;
@@ -143,10 +217,9 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
     if (shouldLeave == true) {
       await _leaveSession();
-      return false; // Navigation is handled in _leaveSession
     }
 
-    return false; // Don't allow back navigation if user chose to stay
+    return false; // Always prevent default back navigation
   }
 
   Widget _buildWaitingRoom(QuizSessionModel session) {
@@ -154,7 +227,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Waiting for players to join...',
+          'Waiting for players to join... ($_onlineUsersCount online)',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -170,12 +243,14 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   }
 
   Widget _buildHostControls(QuizSessionModel session) {
-    final bool canStart = session.canStartQuiz();
+    final bool canStart = _onlineUsersCount >= 2;
 
     return Column(
       children: [
         ElevatedButton(
-          onPressed: canStart ? () => _quizService.startQuiz(session.id) : null,
+          onPressed: canStart
+              ? () => _quizService.startQuizSession(session.id)
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -272,18 +347,18 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     try {
       await _quizService.cancelSession(session.id);
 
-      if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Quiz session cancelled successfully'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+      if (!mounted) return;
 
-        // Navigate back immediately
-        Navigator.of(context).pop();
-      }
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Quiz session cancelled successfully'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      // Navigate back immediately
+      Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -362,7 +437,22 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       );
     }
 
-    return const QuizScreen();
+    return MultiplayerQuizGameScreen(
+      session: session,
+      currentUserId: widget.currentUserId,
+    );
+  }
+
+  void _handleSessionCancelled() {
+    if (!_isDisposed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Quiz session has been cancelled'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -432,20 +522,10 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
                       ),
                     );
                   case QuizStatus.cancelled:
-                    if (!_isDisposed && mounted) {
-                      // Show cancellation message briefly before navigating back
-                      Future.microtask(() {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Quiz session has been cancelled'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                          Navigator.of(context).pop();
-                        }
-                      });
-                    }
+                    // Use a post-frame callback to handle navigation
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _handleSessionCancelled();
+                    });
                     return const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -467,8 +547,27 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
                       ),
                     );
                   case QuizStatus.expired:
-                    // TODO: Handle this case.
-                    throw UnimplementedError();
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.timer_off, size: 64, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'Quiz session has expired',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'The waiting room timed out',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
                 }
               },
             ),

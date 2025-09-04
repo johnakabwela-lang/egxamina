@@ -98,6 +98,15 @@ class QuizSessionModel {
   final DateTime createdAt;
   final DateTime? expiresAt;
 
+  // Quiz game data fields
+  final String subject;
+  final String fileName;
+  final List<Map<String, dynamic>> questions;
+  final int currentQuestionIndex;
+  final DateTime? currentQuestionStartTime;
+  final int questionTimeLimit;
+  final Map<String, List<int>> participantAnswers;
+
   const QuizSessionModel({
     required this.id,
     required this.groupId,
@@ -108,6 +117,13 @@ class QuizSessionModel {
     required this.createdAt,
     this.startedAt,
     this.expiresAt,
+    this.subject = '',
+    this.fileName = '',
+    this.questions = const [],
+    this.currentQuestionIndex = 0,
+    this.currentQuestionStartTime,
+    this.questionTimeLimit = 30,
+    this.participantAnswers = const {},
   });
 
   factory QuizSessionModel.fromMap(Map<String, dynamic> map) {
@@ -118,6 +134,18 @@ class QuizSessionModel {
       participantsMap[entry.key] = QuizParticipant.fromMap(
         entry.value as Map<String, dynamic>,
       );
+    }
+
+    // Parse participant answers
+    final participantAnswersMap = <String, List<int>>{};
+    final participantAnswersData =
+        map['participantAnswers'] as Map<String, dynamic>? ?? {};
+
+    for (final entry in participantAnswersData.entries) {
+      final answersList = entry.value as List<dynamic>? ?? [];
+      participantAnswersMap[entry.key] = answersList
+          .map((e) => e as int)
+          .toList();
     }
 
     return QuizSessionModel(
@@ -136,6 +164,22 @@ class QuizSessionModel {
       createdAt: map['createdAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int)
           : DateTime.now(),
+      expiresAt: map['expiresAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['expiresAt'] as int)
+          : null,
+      subject: map['subject'] as String? ?? '',
+      fileName: map['fileName'] as String? ?? '',
+      questions: (map['questions'] as List<dynamic>? ?? [])
+          .map((e) => e as Map<String, dynamic>)
+          .toList(),
+      currentQuestionIndex: map['currentQuestionIndex'] as int? ?? 0,
+      currentQuestionStartTime: map['currentQuestionStartTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              map['currentQuestionStartTime'] as int,
+            )
+          : null,
+      questionTimeLimit: map['questionTimeLimit'] as int? ?? 30,
+      participantAnswers: participantAnswersMap,
     );
   }
 
@@ -145,6 +189,12 @@ class QuizSessionModel {
       participantsMap[entry.key] = entry.value.toMap();
     }
 
+    // Convert participant answers to serializable format
+    final participantAnswersMap = <String, dynamic>{};
+    for (final entry in participantAnswers.entries) {
+      participantAnswersMap[entry.key] = entry.value;
+    }
+
     return {
       'id': id,
       'groupId': groupId,
@@ -152,6 +202,17 @@ class QuizSessionModel {
       'participants': participantsMap,
       'startedAt': startedAt?.millisecondsSinceEpoch,
       'quizName': quizName,
+      'hostId': hostId,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'expiresAt': expiresAt?.millisecondsSinceEpoch,
+      'subject': subject,
+      'fileName': fileName,
+      'questions': questions,
+      'currentQuestionIndex': currentQuestionIndex,
+      'currentQuestionStartTime':
+          currentQuestionStartTime?.millisecondsSinceEpoch,
+      'questionTimeLimit': questionTimeLimit,
+      'participantAnswers': participantAnswersMap,
     };
   }
 
@@ -165,6 +226,13 @@ class QuizSessionModel {
     String? hostId,
     DateTime? createdAt,
     DateTime? expiresAt,
+    String? subject,
+    String? fileName,
+    List<Map<String, dynamic>>? questions,
+    int? currentQuestionIndex,
+    DateTime? currentQuestionStartTime,
+    int? questionTimeLimit,
+    Map<String, List<int>>? participantAnswers,
   }) {
     return QuizSessionModel(
       id: id ?? this.id,
@@ -178,6 +246,18 @@ class QuizSessionModel {
       hostId: hostId ?? this.hostId,
       createdAt: createdAt ?? this.createdAt,
       expiresAt: expiresAt ?? this.expiresAt,
+      subject: subject ?? this.subject,
+      fileName: fileName ?? this.fileName,
+      questions: questions != null
+          ? List.from(questions)
+          : List.from(this.questions),
+      currentQuestionIndex: currentQuestionIndex ?? this.currentQuestionIndex,
+      currentQuestionStartTime:
+          currentQuestionStartTime ?? this.currentQuestionStartTime,
+      questionTimeLimit: questionTimeLimit ?? this.questionTimeLimit,
+      participantAnswers: participantAnswers != null
+          ? Map.from(participantAnswers)
+          : Map.from(this.participantAnswers),
     );
   }
 
@@ -190,7 +270,14 @@ class QuizSessionModel {
         other.status == status &&
         _mapEquals(other.participants, participants) &&
         other.startedAt == startedAt &&
-        other.quizName == quizName;
+        other.quizName == quizName &&
+        other.subject == subject &&
+        other.fileName == fileName &&
+        _listEquals(other.questions, questions) &&
+        other.currentQuestionIndex == currentQuestionIndex &&
+        other.currentQuestionStartTime == currentQuestionStartTime &&
+        other.questionTimeLimit == questionTimeLimit &&
+        _participantAnswersEquals(other.participantAnswers, participantAnswers);
   }
 
   @override
@@ -204,12 +291,23 @@ class QuizSessionModel {
       ),
       startedAt,
       quizName,
+      subject,
+      fileName,
+      Object.hashAll(questions),
+      currentQuestionIndex,
+      currentQuestionStartTime,
+      questionTimeLimit,
+      Object.hashAll(
+        participantAnswers.entries.map(
+          (e) => Object.hash(e.key, Object.hashAll(e.value)),
+        ),
+      ),
     );
   }
 
   @override
   String toString() {
-    return 'QuizSessionModel(id: $id, groupId: $groupId, status: $status, participants: $participants, startedAt: $startedAt, quizName: $quizName)';
+    return 'QuizSessionModel(id: $id, groupId: $groupId, status: $status, participants: $participants, startedAt: $startedAt, quizName: $quizName, subject: $subject, fileName: $fileName, questions: ${questions.length}, currentQuestionIndex: $currentQuestionIndex)';
   }
 
   // Helper methods
@@ -256,7 +354,7 @@ class QuizSessionModel {
   int get totalCount => participants.length;
 
   bool canStartQuiz() {
-    return isWaiting && hasMinimumOnlinePlayers;
+    return isWaiting && hasMinimumOnlinePlayers && hasQuestionsLoaded();
   }
 
   bool isReconnectionTimeoutExpired(String userId) {
@@ -269,6 +367,70 @@ class QuizSessionModel {
 
   QuizParticipant? getParticipant(String userId) => participants[userId];
 
+  // New quiz game helper methods
+  Map<String, dynamic>? getCurrentQuestion() {
+    if (!hasQuestionsLoaded() || currentQuestionIndex >= questions.length) {
+      return null;
+    }
+    return questions[currentQuestionIndex];
+  }
+
+  bool hasQuestionsLoaded() {
+    return questions.isNotEmpty;
+  }
+
+  bool isQuestionActive() {
+    return currentQuestionStartTime != null &&
+        getCurrentQuestion() != null &&
+        !isQuestionTimeExpired();
+  }
+
+  bool isQuestionTimeExpired() {
+    if (currentQuestionStartTime == null) return false;
+
+    final elapsed = DateTime.now().difference(currentQuestionStartTime!);
+    return elapsed.inSeconds >= questionTimeLimit;
+  }
+
+  Duration? getQuestionTimeRemaining() {
+    if (currentQuestionStartTime == null) return null;
+
+    final elapsed = DateTime.now().difference(currentQuestionStartTime!);
+    final remaining = Duration(seconds: questionTimeLimit) - elapsed;
+
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  bool get isLastQuestion => currentQuestionIndex >= questions.length - 1;
+
+  int get totalQuestions => questions.length;
+
+  List<int> getParticipantAnswersForQuestion(String userId, int questionIndex) {
+    final userAnswers = participantAnswers[userId];
+    if (userAnswers == null || questionIndex >= userAnswers.length) {
+      return [];
+    }
+    return [userAnswers[questionIndex]];
+  }
+
+  bool hasParticipantAnswered(String userId) {
+    final userAnswers = participantAnswers[userId];
+    if (userAnswers == null) return false;
+
+    return userAnswers.length > currentQuestionIndex;
+  }
+
+  // Helper method for list comparison
+  bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    if (identical(a, b)) return true;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
   // Helper method for map comparison
   bool _mapEquals<K, V>(Map<K, V>? a, Map<K, V>? b) {
     if (a == null) return b == null;
@@ -276,6 +438,20 @@ class QuizSessionModel {
     if (identical(a, b)) return true;
     for (final key in a.keys) {
       if (!b.containsKey(key) || a[key] != b[key]) return false;
+    }
+    return true;
+  }
+
+  // Helper method for participant answers comparison
+  bool _participantAnswersEquals(
+    Map<String, List<int>>? a,
+    Map<String, List<int>>? b,
+  ) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    if (identical(a, b)) return true;
+    for (final key in a.keys) {
+      if (!b.containsKey(key) || !_listEquals(a[key], b[key])) return false;
     }
     return true;
   }

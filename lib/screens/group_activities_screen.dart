@@ -150,7 +150,7 @@ class _GroupActivitiesScreenState extends State<GroupActivitiesScreen> {
                           child: const Text('Join'),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ],
               ),

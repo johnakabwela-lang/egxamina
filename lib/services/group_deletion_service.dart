@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'group_service.dart';
+import 'package:ultsukulu/services/group_service.dart';
 
 class GroupDeletionService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;

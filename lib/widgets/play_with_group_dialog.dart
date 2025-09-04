@@ -27,8 +27,13 @@ class _PlayWithGroupDialogState extends State<PlayWithGroupDialog> {
   bool _isLoading = false;
   List<Map<String, dynamic>> _groups = [];
   String? _errorMessage;
-  bool _showExistingSessions = false;
   final Map<String, QuizSessionModel> _activeSessions = {};
+  bool _showExistingSessions = false;
+
+  bool get hasWaitingSession => _activeSessions.values.any(
+    (session) =>
+        session.isWaiting && session.quizName == '${widget.subject} Quiz',
+  );
 
   @override
   void initState() {
@@ -69,9 +74,14 @@ class _PlayWithGroupDialogState extends State<PlayWithGroupDialog> {
 
   Future<void> _loadActiveSessions() async {
     for (final group in _groups) {
+      // Clean up old sessions first
+      await _quizService.cleanUpOldSessions(group['id']);
+
+      // Listen for active sessions
       _quizService.getActiveGroupSessions(group['id']).listen((sessions) {
         if (mounted) {
           setState(() {
+            _activeSessions.clear();
             for (var session in sessions) {
               if (session.quizName == '${widget.subject} Quiz') {
                 _activeSessions[session.id] = session;
@@ -196,7 +206,7 @@ class _PlayWithGroupDialogState extends State<PlayWithGroupDialog> {
             children: [
               // Title
               Text(
-                _showExistingSessions ? 'Join Quiz Session' : 'Play with Group',
+                hasWaitingSession ? 'Join Quiz Session' : 'Play with Group',
                 style: Theme.of(context).textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
@@ -255,10 +265,12 @@ class _PlayWithGroupDialogState extends State<PlayWithGroupDialog> {
               ),
             ),
 
-          if (_groups.isNotEmpty)
-            _showExistingSessions
-                ? _buildActiveSessionsList()
-                : _buildCreateSession(),
+          if (_groups.isNotEmpty) ...[
+            if (_showExistingSessions)
+              _buildActiveSessionsList()
+            else
+              _buildCreateSession(),
+          ],
         ],
       ),
     );
@@ -269,14 +281,14 @@ class _PlayWithGroupDialogState extends State<PlayWithGroupDialog> {
       alignment: WrapAlignment.end,
       spacing: 8,
       children: [
-        if (!_isLoading && _groups.isNotEmpty)
+        if (!_isLoading && _groups.isNotEmpty && hasWaitingSession)
           TextButton(
             onPressed: () {
               setState(() {
                 _showExistingSessions = !_showExistingSessions;
               });
             },
-            child: Text(_showExistingSessions ? 'Create New' : 'Join Existing'),
+            child: Text(_showExistingSessions ? 'Create New' : 'Join Session'),
           ),
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),

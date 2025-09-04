@@ -1,13 +1,19 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/quiz_session_model.dart';
+import '../models/quiz_session_model.dart'
+    show QuizSessionModel, QuizParticipant, ConnectionStatus, QuizStatus;
 import '../services/auth_service.dart';
+import 'dart:developer' as developer;
 
 class QuizConnectionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Map<String, Timer> _heartbeatTimers = {};
   final Map<String, Timer> _reconnectionTimers = {};
   final Map<String, Timer> _cleanupTimers = {};
+
+  static void _log(String message) {
+    developer.log(message, name: 'QuizConnectionService', time: DateTime.now());
+  }
 
   static const Duration heartbeatInterval = Duration(seconds: 15);
   static const Duration reconnectionTimeout = Duration(minutes: 1);
@@ -64,6 +70,7 @@ class QuizConnectionService {
     try {
       // Update main session document
       final sessionRef = _firestore.doc('quizSessions/$sessionId');
+
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(sessionRef);
         if (!snapshot.exists) return;
@@ -101,7 +108,7 @@ class QuizConnectionService {
         'isOnline': true,
       });
     } catch (e) {
-      print('Error sending heartbeat: $e');
+      _log('Error sending heartbeat: $e');
     }
   }
 
@@ -235,8 +242,9 @@ class QuizConnectionService {
         if (!snapshot.exists) return;
 
         final session = QuizSessionModel.fromMap(snapshot.data()!);
-        if (!session.isActive)
-          return; // Only handle timeout for active sessions
+        if (!session.isActive && !session.isWaiting) {
+          return; // Only handle timeout for active or waiting sessions
+        }
 
         final participant = session.getParticipant(userId);
         if (participant == null) return;
@@ -251,19 +259,37 @@ class QuizConnectionService {
         );
         updatedParticipants[userId] = updatedParticipant;
 
-        transaction.update(sessionRef, {
-          'participants': updatedParticipants.map(
-            (key, value) => MapEntry(key, value.toMap()),
-          ),
-        });
+        // Check if all participants are offline
+        bool allOffline = updatedParticipants.values.every(
+          (p) => p.connectionStatus == ConnectionStatus.offline,
+        );
 
-        // Auto-pause quiz if minimum players not met
-        if (!_hasMinimumOnlinePlayers(updatedParticipants)) {
-          transaction.update(sessionRef, {'shouldPauseQuiz': true});
+        if (allOffline) {
+          // If all participants are offline, terminate the session
+          transaction.update(sessionRef, {
+            'status': QuizStatus.cancelled.name,
+            'cancelledAt': FieldValue.serverTimestamp(),
+            'cancelReason': 'All participants disconnected',
+            'participants': updatedParticipants.map(
+              (key, value) => MapEntry(key, value.toMap()),
+            ),
+          });
+        } else {
+          // Otherwise just update the participants
+          transaction.update(sessionRef, {
+            'participants': updatedParticipants.map(
+              (key, value) => MapEntry(key, value.toMap()),
+            ),
+          });
+
+          // Auto-pause quiz if minimum players not met
+          if (!_hasMinimumOnlinePlayers(updatedParticipants)) {
+            transaction.update(sessionRef, {'shouldPauseQuiz': true});
+          }
         }
       });
     } catch (e) {
-      print('Error handling reconnection timeout: $e');
+      _log('Error handling reconnection timeout: $e');
     }
   }
 
@@ -278,10 +304,15 @@ class QuizConnectionService {
         if (!snapshot.exists) return;
 
         final session = QuizSessionModel.fromMap(snapshot.data()!);
+        if (!session.isActive && !session.isWaiting) {
+          return; // Only check active or waiting sessions
+        }
+
         final updatedParticipants = Map<String, QuizParticipant>.from(
           session.participants,
         );
         var needsUpdate = false;
+        var allOfflineOrDisconnected = true;
 
         for (final entry in session.participants.entries) {
           final participant = entry.value;
@@ -302,18 +333,49 @@ class QuizConnectionService {
             // Start reconnection timer
             startReconnectionTimer(sessionId, participant.userId);
           }
+
+          // Check if any participant is still online or reconnecting
+          if (updatedParticipants[entry.key]!.connectionStatus !=
+              ConnectionStatus.offline) {
+            allOfflineOrDisconnected = false;
+          }
         }
 
-        if (needsUpdate) {
-          transaction.update(sessionRef, {
-            'participants': updatedParticipants.map(
-              (key, value) => MapEntry(key, value.toMap()),
-            ),
-          });
+        // Only proceed with updates if there are participants
+        if (session.participants.isNotEmpty &&
+            (needsUpdate || allOfflineOrDisconnected)) {
+          if (allOfflineOrDisconnected) {
+            // If all participants are offline, terminate the session
+            transaction.update(sessionRef, {
+              'status': QuizStatus.cancelled.name,
+              'cancelledAt': FieldValue.serverTimestamp(),
+              'cancelReason': 'All participants disconnected',
+              'participants': updatedParticipants.map(
+                (key, value) => MapEntry(key, value.toMap()),
+              ),
+            });
+          } else {
+            // Otherwise just update the participants
+            transaction.update(sessionRef, {
+              'participants': updatedParticipants.map(
+                (key, value) => MapEntry(key, value.toMap()),
+              ),
+            });
+
+            // Check if we need to pause active quiz due to insufficient players
+            if (session.isActive &&
+                !_hasMinimumOnlinePlayers(updatedParticipants)) {
+              transaction.update(sessionRef, {'shouldPauseQuiz': true});
+            }
+          }
         }
       });
+    } on TimeoutException catch (e) {
+      // Handle timeout specifically for web platform
+      print('Timeout while checking connection status: $e');
+      // Optionally implement retry logic here
     } catch (e) {
-      print('Error checking connection status: $e');
+      _log('Error checking connection status: $e');
     }
   }
 
@@ -386,7 +448,7 @@ class QuizConnectionService {
 
         await batch.commit();
       } catch (e) {
-        print('Error in cleanup timer: $e');
+        _log('Error in cleanup timer: $e');
       }
     });
   }

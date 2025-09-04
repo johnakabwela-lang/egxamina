@@ -29,8 +29,9 @@ class GroupModel {
     // Handle different timestamp formats from Firestore
     DateTime parseTimestamp(dynamic timestamp) {
       if (timestamp == null) return DateTime.now();
-      if (timestamp is int)
+      if (timestamp is int) {
         return DateTime.fromMillisecondsSinceEpoch(timestamp);
+      }
       if (timestamp is DateTime) return timestamp;
       if (timestamp is Timestamp) return timestamp.toDate();
       return DateTime.now();
@@ -44,7 +45,8 @@ class GroupModel {
       createdBy: map['createdBy'] as String,
       members: List<String>.from(map['members'] as List),
       memberCount: map['memberCount'] as int,
-      maxMembers: (map['maxMembers'] as int?) ?? 50, // Default to 50 if not in map
+      maxMembers:
+          (map['maxMembers'] as int?) ?? 50, // Default to 50 if not in map
       totalPoints: map['totalPoints'] as int,
       createdAt: parseTimestamp(map['createdAt']),
     );

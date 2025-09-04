@@ -15,11 +15,11 @@ class CreateMultiplayerQuizDialog extends StatefulWidget {
   });
 
   @override
-  _CreateMultiplayerQuizDialogState createState() =>
-      _CreateMultiplayerQuizDialogState();
+  CreateMultiplayerQuizDialogState createState() =>
+      CreateMultiplayerQuizDialogState();
 }
 
-class _CreateMultiplayerQuizDialogState
+class CreateMultiplayerQuizDialogState
     extends State<CreateMultiplayerQuizDialog> {
   final QuizService _quizService = QuizService();
   String? _selectedGroupId;
@@ -33,7 +33,7 @@ class _CreateMultiplayerQuizDialogState
     _loadGroups();
   }
 
-  Future<void> _loadGroups() async {
+  void _loadGroups() async {
     try {
       setState(() {
         _isLoading = true;
@@ -59,7 +59,7 @@ class _CreateMultiplayerQuizDialogState
     }
   }
 
-  Future<void> _createSession() async {
+  void _createSession() async {
     if (_selectedGroupId == null) return;
 
     try {

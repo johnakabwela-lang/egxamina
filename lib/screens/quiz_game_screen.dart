@@ -44,382 +44,6 @@ class QuizGameScreen extends StatefulWidget {
   }
 }
 
-// Independent Options Card Widget
-class PressEffectedWidget extends StatelessWidget {
-  final String option;
-  final String optionLabel;
-  final bool isSelected;
-  final bool isCorrect;
-  final bool isAnswered;
-  final bool timeUp;
-  final bool isPressed;
-  final VoidCallback onTap;
-  final Animation<double> shakeAnimation;
-  final Animation<double> buttonPressAnimation;
-  final bool isSmallScreen;
-
-  const PressEffectedWidget({
-    super.key,
-    required this.option,
-    required this.optionLabel,
-    required this.isSelected,
-    required this.isCorrect,
-    required this.isAnswered,
-    required this.timeUp,
-    required this.isPressed,
-    required this.onTap,
-    required this.shakeAnimation,
-    required this.buttonPressAnimation,
-    this.isSmallScreen = false,
-  });
-
-  Color _getBackgroundColor() {
-    if (!isAnswered && !timeUp) {
-      return isPressed ? const Color(0xFFE8F4FD) : Colors.white;
-    }
-
-    if (isCorrect) {
-      return const Color(0xFF58CC02).withAlpha(26); // 0.1 * 255
-    } else if (isSelected) {
-      return const Color(0xFFE74C3C).withAlpha(26); // 0.1 * 255
-    }
-
-    return Colors.white.withAlpha(153); // 0.6 * 255
-  }
-
-  Color _getBorderColor() {
-    if (!isAnswered && !timeUp) {
-      return isPressed ? const Color(0xFF1CB0F6) : const Color(0xFFE5E5E5);
-    }
-
-    if (isCorrect) {
-      return const Color(0xFF58CC02);
-    } else if (isSelected) {
-      return const Color(0xFFE74C3C);
-    }
-
-    return const Color(0xFFE5E5E5);
-  }
-
-  Color _getTextColor() {
-    if (!isAnswered && !timeUp) {
-      return const Color(0xFF4B4B4B);
-    }
-
-    if (isCorrect) {
-      return const Color(0xFF58CC02);
-    } else if (isSelected) {
-      return const Color(0xFFE74C3C);
-    }
-
-    return const Color(0xFF777777);
-  }
-
-  Widget _getStatusIcon() {
-    if (!isAnswered && !timeUp) return const SizedBox.shrink();
-
-    if (isCorrect) {
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: const BoxDecoration(
-          color: Color(0xFF58CC02),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.check,
-          color: Colors.white,
-          size: isSmallScreen ? 16 : 18,
-        ),
-      );
-    } else if (isSelected) {
-      return Container(
-        padding: const EdgeInsets.all(4),
-        decoration: const BoxDecoration(
-          color: Color(0xFFE74C3C),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          Icons.close,
-          color: Colors.white,
-          size: isSmallScreen ? 16 : 18,
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-
-    return AnimatedBuilder(
-      animation: Listenable.merge([shakeAnimation, buttonPressAnimation]),
-      builder: (context, child) {
-        double shakeOffset = 0;
-        double pressOffset = 0;
-
-        if (isSelected && !isCorrect && (isAnswered || timeUp)) {
-          shakeOffset = shakeAnimation.value;
-        }
-
-        if (isPressed) {
-          pressOffset = buttonPressAnimation.value;
-        }
-
-        return Transform.translate(
-          offset: Offset(shakeOffset, -pressOffset),
-          child: GestureDetector(
-            onTap: (isAnswered || timeUp) ? null : onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: EdgeInsets.only(
-                bottom: isSmallScreen ? 4 : 8,
-                left: pressOffset > 0 ? pressOffset : 0,
-                right: pressOffset > 0 ? pressOffset : 0,
-              ),
-              padding: EdgeInsets.all(
-                isTablet ? 20 : (isSmallScreen ? 14 : 16),
-              ),
-              decoration: BoxDecoration(
-                color: _getBackgroundColor(),
-                borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
-                border: Border.all(
-                  color: _getBorderColor(),
-                  width: (isAnswered || timeUp) ? 2 : 1.5,
-                ),
-                boxShadow: [
-                  if (!isAnswered && !timeUp)
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: isPressed ? 2 : 8,
-                      offset: Offset(0, isPressed ? 1 : 4),
-                    ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  // Option label (A, B, C, D)
-                  Container(
-                    width: isSmallScreen ? 28 : 32,
-                    height: isSmallScreen ? 28 : 32,
-                    decoration: BoxDecoration(
-                      color: _getBorderColor().withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(
-                        isSmallScreen ? 6 : 8,
-                      ),
-                      border: Border.all(
-                        color: _getBorderColor().withOpacity(0.3),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        optionLabel,
-                        style: TextStyle(
-                          fontSize: isSmallScreen ? 14 : 16,
-                          fontWeight: FontWeight.bold,
-                          color: _getTextColor(),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: isSmallScreen ? 12 : 16),
-
-                  // Option text
-                  Expanded(
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontSize: isTablet ? 18 : (isSmallScreen ? 14 : 16),
-                        fontWeight: FontWeight.w600,
-                        color: _getTextColor(),
-                        height: 1.3,
-                      ),
-                      maxLines: isSmallScreen ? 2 : 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-
-                  SizedBox(width: isSmallScreen ? 8 : 12),
-
-                  // Status icon
-                  _getStatusIcon(),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-// Enhanced Streak Widget
-class QuizStreakWidget extends StatefulWidget {
-  final int streakCount;
-
-  const QuizStreakWidget({super.key, required this.streakCount});
-
-  @override
-  State<QuizStreakWidget> createState() => _QuizStreakWidgetState();
-}
-
-class _QuizStreakWidgetState extends State<QuizStreakWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.elasticOut),
-    );
-  }
-
-  @override
-  void didUpdateWidget(QuizStreakWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.streakCount > oldWidget.streakCount && widget.streakCount >= 2) {
-      _pulseController.forward().then((_) => _pulseController.reverse());
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  String _getStreakEmoji() {
-    if (widget.streakCount >= 10) return "💯";
-    if (widget.streakCount >= 7) return "⚡";
-    if (widget.streakCount >= 5) return "🔥";
-    if (widget.streakCount >= 3) return "🌟";
-    return "✨";
-  }
-
-  String _getStreakText() {
-    if (widget.streakCount >= 10) return "LEGENDARY!";
-    if (widget.streakCount >= 7) return "AMAZING!";
-    if (widget.streakCount >= 5) return "ON FIRE!";
-    if (widget.streakCount >= 3) return "GREAT STREAK!";
-    if (widget.streakCount >= 2) return "NICE!";
-    return "";
-  }
-
-  Color _getStreakColor() {
-    if (widget.streakCount >= 10) return const Color(0xFF9B59B6);
-    if (widget.streakCount >= 7) return const Color(0xFFE67E22);
-    if (widget.streakCount >= 5) return const Color(0xFFE74C3C);
-    if (widget.streakCount >= 3) return const Color(0xFFFF9500);
-    return const Color(0xFF58CC02);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.streakCount < 2) return const SizedBox.shrink();
-
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnimation.value,
-          child: Container(
-            margin: const EdgeInsets.only(top: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_getStreakColor(), _getStreakColor().withOpacity(0.8)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.3),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: _getStreakColor().withOpacity(0.4),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                  spreadRadius: 1,
-                ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.2),
-                  blurRadius: 0,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Transform.scale(
-                  scale: _pulseAnimation.value,
-                  child: Text(
-                    _getStreakEmoji(),
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _getStreakText(),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${widget.streakCount}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Text(
-                          'in a row',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 class QuizGameScreenState extends State<QuizGameScreen>
     with TickerProviderStateMixin {
   List<Question> questions = [];
@@ -1767,5 +1391,381 @@ class QuestionService {
     }
 
     return missingImages;
+  }
+}
+
+// Independent Options Card Widget
+class PressEffectedWidget extends StatelessWidget {
+  final String option;
+  final String optionLabel;
+  final bool isSelected;
+  final bool isCorrect;
+  final bool isAnswered;
+  final bool timeUp;
+  final bool isPressed;
+  final VoidCallback onTap;
+  final Animation<double> shakeAnimation;
+  final Animation<double> buttonPressAnimation;
+  final bool isSmallScreen;
+
+  const PressEffectedWidget({
+    super.key,
+    required this.option,
+    required this.optionLabel,
+    required this.isSelected,
+    required this.isCorrect,
+    required this.isAnswered,
+    required this.timeUp,
+    required this.isPressed,
+    required this.onTap,
+    required this.shakeAnimation,
+    required this.buttonPressAnimation,
+    this.isSmallScreen = false,
+  });
+
+  Color _getBackgroundColor() {
+    if (!isAnswered && !timeUp) {
+      return isPressed ? const Color(0xFFE8F4FD) : Colors.white;
+    }
+
+    if (isCorrect) {
+      return const Color(0xFF58CC02).withAlpha(26); // 0.1 * 255
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C).withAlpha(26); // 0.1 * 255
+    }
+
+    return Colors.white.withAlpha(153); // 0.6 * 255
+  }
+
+  Color _getBorderColor() {
+    if (!isAnswered && !timeUp) {
+      return isPressed ? const Color(0xFF1CB0F6) : const Color(0xFFE5E5E5);
+    }
+
+    if (isCorrect) {
+      return const Color(0xFF58CC02);
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C);
+    }
+
+    return const Color(0xFFE5E5E5);
+  }
+
+  Color _getTextColor() {
+    if (!isAnswered && !timeUp) {
+      return const Color(0xFF4B4B4B);
+    }
+
+    if (isCorrect) {
+      return const Color(0xFF58CC02);
+    } else if (isSelected) {
+      return const Color(0xFFE74C3C);
+    }
+
+    return const Color(0xFF777777);
+  }
+
+  Widget _getStatusIcon() {
+    if (!isAnswered && !timeUp) return const SizedBox.shrink();
+
+    if (isCorrect) {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(
+          color: Color(0xFF58CC02),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.check,
+          color: Colors.white,
+          size: isSmallScreen ? 16 : 18,
+        ),
+      );
+    } else if (isSelected) {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: const BoxDecoration(
+          color: Color(0xFFE74C3C),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.close,
+          color: Colors.white,
+          size: isSmallScreen ? 16 : 18,
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+
+    return AnimatedBuilder(
+      animation: Listenable.merge([shakeAnimation, buttonPressAnimation]),
+      builder: (context, child) {
+        double shakeOffset = 0;
+        double pressOffset = 0;
+
+        if (isSelected && !isCorrect && (isAnswered || timeUp)) {
+          shakeOffset = shakeAnimation.value;
+        }
+
+        if (isPressed) {
+          pressOffset = buttonPressAnimation.value;
+        }
+
+        return Transform.translate(
+          offset: Offset(shakeOffset, -pressOffset),
+          child: GestureDetector(
+            onTap: (isAnswered || timeUp) ? null : onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: EdgeInsets.only(
+                bottom: isSmallScreen ? 4 : 8,
+                left: pressOffset > 0 ? pressOffset : 0,
+                right: pressOffset > 0 ? pressOffset : 0,
+              ),
+              padding: EdgeInsets.all(
+                isTablet ? 20 : (isSmallScreen ? 14 : 16),
+              ),
+              decoration: BoxDecoration(
+                color: _getBackgroundColor(),
+                borderRadius: BorderRadius.circular(isSmallScreen ? 14 : 16),
+                border: Border.all(
+                  color: _getBorderColor(),
+                  width: (isAnswered || timeUp) ? 2 : 1.5,
+                ),
+                boxShadow: [
+                  if (!isAnswered && !timeUp)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: isPressed ? 2 : 8,
+                      offset: Offset(0, isPressed ? 1 : 4),
+                    ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Option label (A, B, C, D)
+                  Container(
+                    width: isSmallScreen ? 28 : 32,
+                    height: isSmallScreen ? 28 : 32,
+                    decoration: BoxDecoration(
+                      color: _getBorderColor().withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(
+                        isSmallScreen ? 6 : 8,
+                      ),
+                      border: Border.all(
+                        color: _getBorderColor().withOpacity(0.3),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        optionLabel,
+                        style: TextStyle(
+                          fontSize: isSmallScreen ? 14 : 16,
+                          fontWeight: FontWeight.bold,
+                          color: _getTextColor(),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: isSmallScreen ? 12 : 16),
+
+                  // Option text
+                  Expanded(
+                    child: Text(
+                      option,
+                      style: TextStyle(
+                        fontSize: isTablet ? 18 : (isSmallScreen ? 14 : 16),
+                        fontWeight: FontWeight.w600,
+                        color: _getTextColor(),
+                        height: 1.3,
+                      ),
+                      maxLines: isSmallScreen ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  SizedBox(width: isSmallScreen ? 8 : 12),
+
+                  // Status icon
+                  _getStatusIcon(),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Enhanced Streak Widget
+class QuizStreakWidget extends StatefulWidget {
+  final int streakCount;
+
+  const QuizStreakWidget({super.key, required this.streakCount});
+
+  @override
+  State<QuizStreakWidget> createState() => _QuizStreakWidgetState();
+}
+
+class _QuizStreakWidgetState extends State<QuizStreakWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.elasticOut),
+    );
+  }
+
+  @override
+  void didUpdateWidget(QuizStreakWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.streakCount > oldWidget.streakCount && widget.streakCount >= 2) {
+      _pulseController.forward().then((_) => _pulseController.reverse());
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  String _getStreakEmoji() {
+    if (widget.streakCount >= 10) return "💯";
+    if (widget.streakCount >= 7) return "⚡";
+    if (widget.streakCount >= 5) return "🔥";
+    if (widget.streakCount >= 3) return "🌟";
+    return "✨";
+  }
+
+  String _getStreakText() {
+    if (widget.streakCount >= 10) return "LEGENDARY!";
+    if (widget.streakCount >= 7) return "AMAZING!";
+    if (widget.streakCount >= 5) return "ON FIRE!";
+    if (widget.streakCount >= 3) return "GREAT STREAK!";
+    if (widget.streakCount >= 2) return "NICE!";
+    return "";
+  }
+
+  Color _getStreakColor() {
+    if (widget.streakCount >= 10) return const Color(0xFF9B59B6);
+    if (widget.streakCount >= 7) return const Color(0xFFE67E22);
+    if (widget.streakCount >= 5) return const Color(0xFFE74C3C);
+    if (widget.streakCount >= 3) return const Color(0xFFFF9500);
+    return const Color(0xFF58CC02);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.streakCount < 2) return const SizedBox.shrink();
+
+    return AnimatedBuilder(
+      animation: _pulseAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            margin: const EdgeInsets.only(top: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_getStreakColor(), _getStreakColor().withOpacity(0.8)],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _getStreakColor().withOpacity(0.4),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.2),
+                  blurRadius: 0,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.scale(
+                  scale: _pulseAnimation.value,
+                  child: Text(
+                    _getStreakEmoji(),
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getStreakText(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${widget.streakCount}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'in a row',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

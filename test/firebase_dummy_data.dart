@@ -5,8 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:ultsukulu/models/user_model.dart';
-import '../lib/models/group_model.dart';
-import '../lib/firebase_options.dart';
+import 'package:ultsukulu/models/group_model.dart';
+import 'package:ultsukulu/firebase_options.dart';
 
 void main() async {
   // Initialize Firebase
