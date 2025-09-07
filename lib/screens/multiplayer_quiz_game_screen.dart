@@ -1,17 +1,10 @@
 import 'dart:async';
-// import 'dart:convert';
-// import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayers/audioplayers.dart';
-// import '../models/question_model.dart';
 import '../models/quiz_session_model.dart';
 import '../services/quiz_service.dart';
-import '../widgets/connection_overlay.dart';
-// import '../services/auth_service.dart';
-// import 'quiz_result_screen.dart';
 import 'quiz_game_screen.dart'; // For MultilineOptionButton
-import 'dart:developer' as developer;
 
 class MultiplayerQuizGameScreen extends StatefulWidget {
   final QuizSessionModel session;
@@ -120,7 +113,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
           _isConnected = true;
           _isReconnecting = false;
         });
-        _showConnectionStatus(true);
+        print('DEBUG: Connection restored');
       }
     } catch (e) {
       if (_isConnected && mounted) {
@@ -128,7 +121,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
           _isConnected = false;
           _isReconnecting = true;
         });
-        _showConnectionStatus(false);
+        print('DEBUG: Connection lost - Error: $e');
         _handleDisconnection();
       }
     }
@@ -159,7 +152,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
             _isConnected = true;
             _isReconnecting = false;
           });
-          _showConnectionStatus(true);
+          print('DEBUG: Reconnection successful');
 
           // Sync with current question state
           final session = await QuizService().getSessionSnapshot(
@@ -171,19 +164,10 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         }
         break;
       } catch (e) {
+        print('DEBUG: Reconnection attempt failed: $e');
         await Future.delayed(const Duration(seconds: 3));
       }
     }
-  }
-
-  void _showConnectionStatus(bool connected) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(connected ? 'Connection restored' : 'Connection lost'),
-        backgroundColor: connected ? Colors.green : Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
   }
 
   @override
@@ -300,6 +284,8 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         if (mounted) {
           await QuizService().moveToNextQuestion(widget.session.id);
         }
+      } catch (e) {
+        print('DEBUG: Failed to move to next question: $e');
       } finally {
         if (mounted) {
           setState(() {
@@ -316,12 +302,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     int questionIndex,
   ) async {
     if (!_isConnected) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot submit answer while offline'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('DEBUG: Cannot submit answer while offline');
       return;
     }
 
@@ -352,16 +333,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         answer: answerIndex,
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Failed to submit answer. Please check your connection.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      print('DEBUG: Failed to submit answer - Error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -569,6 +541,82 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     );
   }
 
+  // Method to handle session state changes safely
+  void _handleSessionStateChange(QuizSessionModel session) {
+    // Use WidgetsBinding.instance.addPostFrameCallback to schedule setState after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      bool questionChanged = _lastQuestionIndex != session.currentQuestionIndex;
+      bool startTimeChanged =
+          _lastQuestionStartTime !=
+          session.currentQuestionStartTime?.millisecondsSinceEpoch;
+
+      if (questionChanged || startTimeChanged) {
+        print(
+          'DEBUG: Question transition - questionChanged: $questionChanged, startTimeChanged: $startTimeChanged',
+        );
+
+        _fadeController.reset();
+        _fadeController.forward();
+        _pulseController.stop();
+        _questionTimer?.cancel();
+        _autoNextTimer?.cancel();
+        _waitingForNext = false;
+
+        if (session.status == QuizStatus.active &&
+            session.currentQuestionStartTime != null) {
+          print(
+            'DEBUG: Starting timer for question ${session.currentQuestionIndex}',
+          );
+          _startTimer(
+            session.questionTimeLimit,
+            startTimeMillis:
+                session.currentQuestionStartTime!.millisecondsSinceEpoch,
+          );
+        } else {
+          setState(() {
+            remainingTime = session.questionTimeLimit;
+            timeUp = false;
+          });
+        }
+        _lastQuestionIndex = session.currentQuestionIndex;
+        _lastQuestionStartTime =
+            session.currentQuestionStartTime?.millisecondsSinceEpoch;
+      }
+
+      // Handle auto-progression for host
+      final isHost = session.hostId == widget.currentUserId;
+      final answersMap = session.participantAnswers;
+      final totalPlayers = session.participants.length;
+      final currentQuestionIndex = session.currentQuestionIndex;
+
+      final answersForThisQ = <String, dynamic>{};
+      answersMap.forEach((uid, ansList) {
+        if (ansList.length > currentQuestionIndex) {
+          answersForThisQ[uid] = ansList[currentQuestionIndex];
+        }
+      });
+      final allAnswered = answersForThisQ.length >= totalPlayers;
+
+      if (isHost &&
+          session.status == QuizStatus.active &&
+          allAnswered &&
+          !_waitingForNext) {
+        print('DEBUG: All players answered, auto-progressing...');
+        _waitingForNext = true;
+        _autoNextTimer?.cancel();
+        _autoNextTimer = Timer(const Duration(milliseconds: 900), () async {
+          try {
+            await QuizService().moveToNextQuestion(session.id);
+          } catch (e) {
+            print('DEBUG: Auto-progression failed: $e');
+          }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -578,6 +626,12 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     return StreamBuilder<QuizSessionModel>(
       stream: QuizService().getSessionUpdates(widget.session.id),
       builder: (context, snapshot) {
+        // Debug logging
+        print('DEBUG: StreamBuilder - hasData: ${snapshot.hasData}');
+        if (snapshot.hasError) {
+          print('DEBUG: StreamBuilder error: ${snapshot.error}');
+        }
+
         if (!snapshot.hasData) {
           return Scaffold(
             backgroundColor: const Color(0xFFF7F7F7),
@@ -587,11 +641,156 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
               elevation: 0,
               foregroundColor: const Color(0xFF4B4B4B),
             ),
-            body: const Center(child: CircularProgressIndicator()),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading quiz session...'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF7F7F7),
+            appBar: AppBar(
+              title: const Text('Multiplayer Quiz'),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              foregroundColor: const Color(0xFF4B4B4B),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Error: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Go Back'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
         final session = snapshot.data!;
+
+        // Debug logging for session state
+        print('DEBUG: Session status: ${session.status}');
+        print('DEBUG: Questions loaded: ${session.hasQuestionsLoaded()}');
+        print('DEBUG: Questions count: ${session.questions.length}');
+        print('DEBUG: Current question index: ${session.currentQuestionIndex}');
+        print(
+          'DEBUG: Current question start time: ${session.currentQuestionStartTime}',
+        );
+
+        // Handle session state changes OUTSIDE of build method
+        _handleSessionStateChange(session);
+
+        // Check if session is not active
+        if (session.status != QuizStatus.active) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF7F7F7),
+            appBar: AppBar(
+              title: const Text('Multiplayer Quiz'),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              foregroundColor: const Color(0xFF4B4B4B),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    session.status == QuizStatus.completed
+                        ? Icons.check_circle
+                        : Icons.hourglass_empty,
+                    size: 64,
+                    color: session.status == QuizStatus.completed
+                        ? Colors.green
+                        : Colors.orange,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _getStatusMessage(session.status),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Check if questions are not loaded
+        if (!session.hasQuestionsLoaded()) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF7F7F7),
+            appBar: AppBar(
+              title: const Text('Multiplayer Quiz'),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              foregroundColor: const Color(0xFF4B4B4B),
+            ),
+            body: const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading quiz questions...'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Check if current question index is valid
+        if (session.currentQuestionIndex >= session.questions.length) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFF7F7F7),
+            appBar: AppBar(
+              title: const Text('Multiplayer Quiz'),
+              backgroundColor: Colors.white,
+              elevation: 0,
+              foregroundColor: const Color(0xFF4B4B4B),
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Quiz data error',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Invalid question index: ${session.currentQuestionIndex}/${session.questions.length}',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Go Back'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Get current question data
         final questions = session.questions;
         final currentQuestionIndex = session.currentQuestionIndex;
         final currentQuestion = questions[currentQuestionIndex];
@@ -603,66 +802,11 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         final isAnswered = selectedAnswer != null;
         final correctAnswer = currentQuestion['correctAnswer'];
         final participantCount = session.participants.length;
-        // Real-time score for current user
         final userScore =
             session.participants[widget.currentUserId]?.score ?? 0;
 
-        // --- Multiplayer question transition and timer sync logic ---
-        final questionStartTime = session
-            .currentQuestionStartTime
-            ?.millisecondsSinceEpoch; // epoch millis
-        final questionDuration = session.questionTimeLimit;
-        final questionState = session.status;
-        final isHost = session.hostId == widget.currentUserId;
-        final answersMap = session.participantAnswers;
-        final totalPlayers = session.participants.length;
-        final answersForThisQ = <String, dynamic>{};
-        answersMap.forEach((uid, ansList) {
-          if (ansList.length > currentQuestionIndex) {
-            answersForThisQ[uid] = ansList[currentQuestionIndex];
-          }
-        });
-        final allAnswered = answersForThisQ.length >= totalPlayers;
-
-        // Detect question change or start time change
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          bool questionChanged = _lastQuestionIndex != currentQuestionIndex;
-          bool startTimeChanged = _lastQuestionStartTime != questionStartTime;
-          if (questionChanged || startTimeChanged) {
-            _fadeController.reset();
-            _fadeController.forward();
-            _pulseController.stop();
-            _questionTimer?.cancel();
-            _autoNextTimer?.cancel();
-            _waitingForNext = false;
-            if (questionState == QuizStatus.active &&
-                questionStartTime != null) {
-              _startTimer(questionDuration, startTimeMillis: questionStartTime);
-            } else {
-              setState(() {
-                remainingTime = questionDuration;
-                timeUp = false;
-              });
-            }
-            _lastQuestionIndex = currentQuestionIndex;
-            _lastQuestionStartTime = questionStartTime;
-          }
-
-          // Automatic progression: if host and all answered, move to next after short delay
-          if (isHost &&
-              questionState == QuizStatus.active &&
-              allAnswered &&
-              !_waitingForNext) {
-            _waitingForNext = true;
-            _autoNextTimer?.cancel();
-            _autoNextTimer = Timer(const Duration(milliseconds: 900), () async {
-              await QuizService().moveToNextQuestion(session.id);
-            });
-          }
-        });
-
         // Show waiting state if not active or waiting for next
-        bool showWaiting = questionState != QuizStatus.active;
+        bool showWaiting = session.status != QuizStatus.active;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF7F7F7),
@@ -898,53 +1042,25 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
                     if (showWaiting)
                       Expanded(
                         child: Center(
-                          child: Text(
-                            questionState == QuizStatus.completed
-                                ? 'Quiz Finished!'
-                                : 'Waiting for other players...${isHost && questionState == QuizStatus.waiting ? '\nTap start to begin.' : ''}',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isTablet ? 22 : 18,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B4B4B),
-                            ),
+                          child: _buildQuizStatusDisplay(
+                            session.status,
+                            session,
+                            session.hostId == widget.currentUserId,
+                            isTablet,
                           ),
                         ),
                       )
                     else
                       Expanded(
-                        child: ListView.separated(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom + 16,
-                          ),
-                          itemCount:
-                              (currentQuestion['options'] as List).length,
-                          separatorBuilder: (context, index) =>
-                              SizedBox(height: isSmallScreen ? 12 : 16),
-                          itemBuilder: (context, index) {
-                            bool isCorrect = index == correctAnswer;
-                            bool isSelected = index == selectedAnswer;
-                            bool isPressed = index == pressedButtonIndex;
-                            return MultilineOptionButton(
-                              option:
-                                  (currentQuestion['options'] as List)[index],
-                              optionLabel: String.fromCharCode(65 + index),
-                              isSelected: isSelected,
-                              isCorrect: isCorrect,
-                              isAnswered: isAnswered,
-                              timeUp: timeUp,
-                              isPressed: isPressed,
-                              onTap: () => _selectAnswer(
-                                index,
-                                session.id,
-                                currentQuestionIndex,
-                              ),
-                              shakeAnimation: _shakeAnimation,
-                              buttonPressAnimation: _buttonPressAnimation,
-                              isSmallScreen: isSmallScreen,
-                              isTablet: isTablet,
-                            );
-                          },
+                        child: _buildOptionsDisplay(
+                          currentQuestion,
+                          isSmallScreen,
+                          isTablet,
+                          correctAnswer,
+                          selectedAnswer,
+                          isAnswered,
+                          timeUp,
+                          context,
                         ),
                       ),
                   ],
@@ -955,5 +1071,20 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         );
       },
     );
+  }
+
+  String _getStatusMessage(QuizStatus status) {
+    switch (status) {
+      case QuizStatus.waiting:
+        return 'Waiting for quiz to start...';
+      case QuizStatus.completed:
+        return 'Quiz Complete!';
+      case QuizStatus.cancelled:
+        return 'Quiz Cancelled';
+      case QuizStatus.expired:
+        return 'Quiz Expired';
+      default:
+        return 'Quiz Loading...';
+    }
   }
 }

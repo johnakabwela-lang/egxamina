@@ -8,8 +8,19 @@
         "Golgi apparatus",
         "Endoplasmic reticulum"
       ],
-      "correctAnswer": "Mitochondria",
+      "correctAnswer": 0,
       "explanation": "Mitochondria are called the powerhouse of the cell because they produce most of the cell's supply of ATP (adenosine triphosphate), used as a source of chemical energy."
+    },
+    {
+      "question": "Which organelle is responsible for protein synthesis?",
+      "options": [
+        "Mitochondria",
+        "Ribosomes",
+        "Vacuole",
+        "Chloroplast"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Ribosomes are the cellular structures responsible for protein synthesis, translating messenger RNA into proteins."
     }
   ]
 }

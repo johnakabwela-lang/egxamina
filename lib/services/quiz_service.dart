@@ -185,8 +185,11 @@ class QuizService {
     _connectionService.startHeartbeat(sessionId, userId);
   }
 
-  /// Starts the quiz session (moves from waiting to active)
-  Future<void> startQuizSession(String sessionId) async {
+  /// Starts the quiz session with questions loaded
+  Future<void> startQuizSession(
+    String sessionId, {
+    String? quizAssetPath,
+  }) async {
     final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
 
     await _firestore.runTransaction((transaction) async {
@@ -210,11 +213,57 @@ class QuizService {
         throw Exception('Need at least 2 online players to start the quiz');
       }
 
-      // Update session state
-      transaction.update(sessionRef, {
+      final now = DateTime.now();
+      final updateData = {
         'status': QuizStatus.active.name,
-        'startedAt': DateTime.now().millisecondsSinceEpoch,
-      });
+        'startedAt': now.millisecondsSinceEpoch,
+        'currentQuestionStartTime': now.millisecondsSinceEpoch,
+        'questionTimeLimit': 30, // Default 30 seconds
+        'participantAnswers': {}, // Initialize empty answers
+      };
+
+      // Load questions if asset path is provided
+      if (quizAssetPath != null) {
+        try {
+          final String data = await rootBundle.loadString(quizAssetPath);
+          final Map<String, dynamic> jsonMap = jsonDecode(data);
+          final List<dynamic> questions = List<dynamic>.from(
+            jsonMap['questions'],
+          );
+
+          // Convert string answers to indices
+          final List<dynamic> convertedQuestions = questions.map((question) {
+            final Map<String, dynamic> convertedQuestion =
+                Map<String, dynamic>.from(question);
+
+            // Convert correctAnswer from string to index
+            if (convertedQuestion['correctAnswer'] is String) {
+              final String correctAnswerString =
+                  convertedQuestion['correctAnswer'];
+              final List<dynamic> options = convertedQuestion['options'];
+              final int correctIndex = options.indexOf(correctAnswerString);
+
+              if (correctIndex != -1) {
+                convertedQuestion['correctAnswer'] = correctIndex;
+              } else {
+                print(
+                  'Warning: Could not find correct answer "${correctAnswerString}" in options',
+                );
+                convertedQuestion['correctAnswer'] =
+                    0; // Default to first option
+              }
+            }
+
+            return convertedQuestion;
+          }).toList();
+
+          updateData['questions'] = convertedQuestions;
+        } catch (e) {
+          throw Exception('Failed to load quiz questions: $e');
+        }
+      }
+
+      transaction.update(sessionRef, updateData);
     });
 
     // Cancel expiration timer
@@ -263,18 +312,45 @@ class QuizService {
     final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
 
     try {
+      // Load and parse the JSON file
       final String data = await rootBundle.loadString(quizAssetPath);
-      final List<dynamic> questions = List<dynamic>.from(jsonDecode(data));
+      final Map<String, dynamic> jsonMap = jsonDecode(data);
+
+      // Extract the questions array from the JSON
+      final List<dynamic> questions = List<dynamic>.from(jsonMap['questions']);
+
+      // Convert string answers to indices
+      final List<dynamic> convertedQuestions = questions.map((question) {
+        final Map<String, dynamic> convertedQuestion =
+            Map<String, dynamic>.from(question);
+
+        // Convert correctAnswer from string to index
+        if (convertedQuestion['correctAnswer'] is String) {
+          final String correctAnswerString = convertedQuestion['correctAnswer'];
+          final List<dynamic> options = convertedQuestion['options'];
+          final int correctIndex = options.indexOf(correctAnswerString);
+
+          if (correctIndex != -1) {
+            convertedQuestion['correctAnswer'] = correctIndex;
+          } else {
+            print(
+              'Warning: Could not find correct answer "${correctAnswerString}" in options',
+            );
+            convertedQuestion['correctAnswer'] = 0; // Default to first option
+          }
+        }
+
+        return convertedQuestion;
+      }).toList();
 
       await _firestore.runTransaction((transaction) async {
         final snapshot = await transaction.get(sessionRef);
         if (!snapshot.exists) throw Exception('Session not found');
 
         transaction.update(sessionRef, {
-          'questions': questions,
+          'questions': convertedQuestions,
           'currentQuestionIndex': 0,
-          'questionState': 'not_started',
-          'answers': {},
+          'participantAnswers': {},
         });
       });
     } catch (e) {
@@ -282,41 +358,11 @@ class QuizService {
     }
   }
 
-  /// Starts a specific question with timer (host only)
-  Future<void> startQuizQuestion({
-    required String sessionId,
-    required int questionIndex,
-    required int durationSeconds,
-  }) async {
-    final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
-
-    await _firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(sessionRef);
-      if (!snapshot.exists) throw Exception('Session not found');
-
-      final data = snapshot.data()!;
-      final questions = data['questions'] as List<dynamic>?;
-
-      if (questions == null || questionIndex >= questions.length) {
-        throw Exception('Invalid question index');
-      }
-
-      final now = DateTime.now();
-      transaction.update(sessionRef, {
-        'currentQuestionIndex': questionIndex,
-        'questionState': 'active',
-        'questionStartedAt': now.millisecondsSinceEpoch,
-        'questionDuration': durationSeconds,
-        'answers': {},
-      });
-    });
-  }
-
   /// Submits a participant's answer for the current question
   Future<void> submitParticipantAnswer({
     required String sessionId,
     required String userId,
-    required dynamic answer,
+    required int answer, // Changed to int to match expected type
   }) async {
     final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
 
@@ -325,16 +371,39 @@ class QuizService {
       if (!snapshot.exists) throw Exception('Session not found');
 
       final data = snapshot.data()!;
-      final questionState = data['questionState'] as String?;
+      final session = QuizSessionModel.fromMap(data);
 
-      if (questionState != 'active') {
-        throw Exception('No active question to answer');
+      if (session.status != QuizStatus.active) {
+        throw Exception('Quiz is not active');
       }
 
-      final answers = Map<String, dynamic>.from(data['answers'] ?? {});
-      answers[userId] = answer;
+      // Get current participant answers
+      final participantAnswers = Map<String, List<int>>.from(
+        (data['participantAnswers'] ?? {}).map(
+          (key, value) => MapEntry(key, List<int>.from(value ?? [])),
+        ),
+      );
 
-      transaction.update(sessionRef, {'answers': answers});
+      // Initialize user's answer list if it doesn't exist
+      if (!participantAnswers.containsKey(userId)) {
+        participantAnswers[userId] = [];
+      }
+
+      final userAnswers = participantAnswers[userId]!;
+      final currentQuestionIndex = session.currentQuestionIndex;
+
+      // Ensure the answers list is long enough
+      while (userAnswers.length <= currentQuestionIndex) {
+        userAnswers.add(-1); // -1 indicates no answer
+      }
+
+      // Set the answer for current question
+      userAnswers[currentQuestionIndex] = answer;
+      participantAnswers[userId] = userAnswers;
+
+      transaction.update(sessionRef, {
+        'participantAnswers': participantAnswers,
+      });
     });
   }
 
@@ -348,25 +417,33 @@ class QuizService {
 
       final data = snapshot.data()!;
       final session = QuizSessionModel.fromMap(data);
-      final questions = data['questions'] as List<dynamic>?;
-      final currentIndex = data['currentQuestionIndex'] ?? 0;
+      final questions = session.questions;
+      final currentIndex = session.currentQuestionIndex;
 
-      if (questions == null) {
+      if (questions.isEmpty) {
         throw Exception('No questions loaded');
       }
 
       // Calculate scores for current question
-      final answers = Map<String, dynamic>.from(data['answers'] ?? {});
-      final correctAnswer = questions[currentIndex]['correctAnswer'];
+      final participantAnswers = Map<String, List<int>>.from(
+        (data['participantAnswers'] ?? {}).map(
+          (key, value) => MapEntry(key, List<int>.from(value ?? [])),
+        ),
+      );
+
+      final correctAnswer = questions[currentIndex]['correctAnswer'] as int;
 
       // Update participant scores
       final updatedParticipants = Map<String, QuizParticipant>.from(
         session.participants,
       );
-      answers.forEach((userId, userAnswer) {
-        if (updatedParticipants[userId] != null) {
+
+      participantAnswers.forEach((userId, userAnswers) {
+        if (updatedParticipants[userId] != null &&
+            userAnswers.length > currentIndex) {
           final participant = updatedParticipants[userId]!;
           final currentScore = participant.score ?? 0;
+          final userAnswer = userAnswers[currentIndex];
           final isCorrect = userAnswer == correctAnswer;
           final newScore = currentScore + (isCorrect ? 1 : 0);
           updatedParticipants[userId] = participant.copyWith(score: newScore);
@@ -378,7 +455,6 @@ class QuizService {
         // Quiz is complete
         transaction.update(sessionRef, {
           'status': QuizStatus.completed.name,
-          'questionState': 'finished',
           'participants': updatedParticipants.map(
             (k, v) => MapEntry(k, v.toMap()),
           ),
@@ -387,10 +463,10 @@ class QuizService {
       }
 
       // Move to next question
+      final now = DateTime.now();
       transaction.update(sessionRef, {
         'currentQuestionIndex': currentIndex + 1,
-        'questionState': 'not_started',
-        'answers': {},
+        'currentQuestionStartTime': now.millisecondsSinceEpoch,
         'participants': updatedParticipants.map(
           (k, v) => MapEntry(k, v.toMap()),
         ),
@@ -398,67 +474,7 @@ class QuizService {
     });
   }
 
-  /// Finishes the quiz and calculates final scores
-  Future<void> finishQuiz(String sessionId) async {
-    final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
-
-    await _firestore.runTransaction((transaction) async {
-      final snapshot = await transaction.get(sessionRef);
-      if (!snapshot.exists) throw Exception('Session not found');
-
-      final data = snapshot.data()!;
-      final session = QuizSessionModel.fromMap(data);
-      final questions = data['questions'] as List<dynamic>?;
-      final allAnswers = data['allAnswers'] as Map<String, dynamic>?;
-
-      // Calculate final scores
-      Map<String, int> finalScores = {};
-      if (questions != null && allAnswers != null) {
-        for (final entry in allAnswers.entries) {
-          final userId = entry.key;
-          final userAnswers = entry.value as List?;
-          int score = 0;
-
-          if (userAnswers != null) {
-            for (
-              int i = 0;
-              i < userAnswers.length && i < questions.length;
-              i++
-            ) {
-              final question = questions[i];
-              if (userAnswers[i] == question['correctAnswer']) {
-                score++;
-              }
-            }
-          }
-          finalScores[userId] = score;
-        }
-      }
-
-      // Update participants with final scores
-      final updatedParticipants = Map<String, QuizParticipant>.from(
-        session.participants,
-      );
-      finalScores.forEach((userId, score) {
-        if (updatedParticipants[userId] != null) {
-          updatedParticipants[userId] = updatedParticipants[userId]!.copyWith(
-            score: score,
-          );
-        }
-      });
-
-      transaction.update(sessionRef, {
-        'status': QuizStatus.completed.name,
-        'questionState': 'finished',
-        'participants': updatedParticipants.map(
-          (k, v) => MapEntry(k, v.toMap()),
-        ),
-        'finalScores': finalScores,
-      });
-    });
-  }
-
-  // MARK: - Connection Management
+  // ... Rest of the methods remain the same ...
 
   /// Handles participant disconnection
   Future<void> handleParticipantDisconnect(

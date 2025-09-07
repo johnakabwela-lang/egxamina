@@ -52,18 +52,11 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      print('DEBUG: Error loading groups - ${e.toString()}');
+
       setState(() {
         _isLoading = false;
       });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading groups: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -124,14 +117,7 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
   Future<void> _joinGroup(GroupModel group) async {
     final userId = AuthService.currentUserId;
     if (userId == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please sign in to join a group'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      print('DEBUG: User not signed in - cannot join group');
       return;
     }
 
@@ -148,26 +134,15 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
           ElevatedButton(
             onPressed: () async {
               try {
-                Navigator.pop(context);
+                final groupName = group.name;
                 await GroupService.joinGroup(group.id, userId);
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Successfully joined ${group.name}!'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
+                Navigator.pop(context);
+
+                print('DEBUG: Successfully joined group: $groupName');
                 _loadGroups(); // Refresh the list
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to join group: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                print('DEBUG: Failed to join group - ${e.toString()}');
+                Navigator.pop(context);
               }
             },
             child: const Text('Join'),

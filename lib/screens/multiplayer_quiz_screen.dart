@@ -34,6 +34,14 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   int _onlineUsersCount = 1; // Start with 1 (host)
 
   @override
+  void initState() {
+    super.initState();
+    _sessionStream = _quizService.getSessionUpdates(widget.session.id);
+    _initializeConnection();
+    _initializeCountdown();
+  }
+
+  @override
   void dispose() {
     _isDisposed = true;
     _connectionTimer?.cancel();
@@ -43,6 +51,20 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       _connectionService.stopTracking(widget.session.id);
     }
     super.dispose();
+  }
+
+  void _initializeConnection() {
+    // Start comprehensive tracking (heartbeat + presence)
+    _connectionService.startTracking(widget.session.id);
+
+    // Initialize regular connection status checks
+    _connectionTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (_isDisposed) {
+        timer.cancel();
+        return;
+      }
+      _connectionService.checkConnectionStatus(widget.session.id);
+    });
   }
 
   // Initialize countdown timer
@@ -73,12 +95,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       _cancelQuizSession(widget.session);
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Quiz waiting period has expired'),
-        backgroundColor: Colors.orange,
-      ),
-    );
+    print('Quiz waiting period has expired');
 
     // Navigate back
     Navigator.of(context).pop();
@@ -114,28 +131,6 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _sessionStream = _quizService.getSessionUpdates(widget.session.id);
-    _initializeConnection();
-    _initializeCountdown();
-  }
-
-  void _initializeConnection() {
-    // Start comprehensive tracking (heartbeat + presence)
-    _connectionService.startTracking(widget.session.id);
-
-    // Initialize regular connection status checks
-    _connectionTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      if (_isDisposed) {
-        timer.cancel();
-        return;
-      }
-      _connectionService.checkConnectionStatus(widget.session.id);
-    });
-  }
-
   // Handle proper leave session
   Future<void> _leaveSession() async {
     if (_isLeaving) return;
@@ -151,12 +146,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Left quiz session'),
-            backgroundColor: Colors.blue,
-          ),
-        );
+        print('Left quiz session');
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -165,12 +155,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
           _isLeaving = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to leave session: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        print('Failed to leave session: ${e.toString()}');
       }
     }
   }
@@ -229,6 +214,33 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        // Add countdown display
+        Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _getCountdownColor()),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Time remaining: ${_formatRemainingTime()}',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _getCountdownColor(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Session will auto-cancel when timer expires',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
         Text(
           'Waiting for players to join... ($_onlineUsersCount online)',
           style: TextStyle(
@@ -250,28 +262,31 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
     return Column(
       children: [
+        // Start Quiz Button
         ElevatedButton(
-          onPressed: canStart
-              ? () => _quizService.startQuizSession(session.id)
-              : null,
+          onPressed: !canStart || session.status != QuizStatus.waiting
+              ? null
+              : () => _handleStartQuiz(session),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
+            backgroundColor: canStart ? Colors.green : Colors.grey,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           ),
           child: Text(
-            canStart ? 'Start Quiz' : 'Need at least 2 online players',
-            style: const TextStyle(fontSize: 18, color: Colors.white),
+            canStart
+                ? 'Start Biology Quiz ($_onlineUsersCount players)'
+                : 'Need at least 2 online players',
+            style: const TextStyle(fontSize: 18),
           ),
         ),
-        const SizedBox(height: 10),
-        // Cancel Quiz Session Button
-        ElevatedButton(
-          onPressed: _isCancelling
-              ? null
-              : () => _showCancelConfirmationDialog(session),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        const SizedBox(height: 16),
+        // Cancel Quiz Button
+        OutlinedButton(
+          onPressed: session.status == QuizStatus.waiting && !_isCancelling
+              ? () => _showCancelConfirmationDialog(session)
+              : null,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.red,
+            side: const BorderSide(color: Colors.red),
           ),
           child: _isCancelling
               ? const SizedBox(
@@ -279,16 +294,40 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
                   width: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: Colors.red,
                   ),
                 )
-              : const Text(
-                  'Cancel Quiz',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+              : const Text('Cancel Quiz'),
         ),
       ],
     );
+  }
+
+  // Handle starting the quiz by loading biology questions
+  Future<void> _handleStartQuiz(QuizSessionModel session) async {
+    if (!mounted) return;
+
+    setState(() {
+      _isCancelling = false; // Reset cancelling state
+    });
+
+    try {
+      // Step 1: Load biology questions from the asset file
+      await _quizService.loadQuizIntoSession(
+        sessionId: session.id,
+        quizAssetPath: 'assets/questions/biology_questions.json',
+      );
+
+      // Step 2: Start the quiz session (changes status from 'waiting' to 'active')
+      await _quizService.startQuizSession(session.id);
+
+      // Step 3: Cancel the countdown timer since quiz is starting
+      _countdownTimer?.cancel();
+    } catch (e) {
+      if (mounted) {
+        print('Failed to start quiz: ${e.toString()}');
+      }
+    }
   }
 
   void _showCancelConfirmationDialog(QuizSessionModel session) {
@@ -353,12 +392,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       if (!mounted) return;
 
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Quiz session cancelled successfully'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      print('Quiz session cancelled successfully');
 
       // Navigate back immediately
       Navigator.of(context).pop();
@@ -368,12 +402,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
           _isCancelling = false;
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to cancel quiz: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        print('Failed to cancel quiz: ${e.toString()}');
       }
     }
   }
@@ -448,12 +477,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
   void _handleSessionCancelled() {
     if (!_isDisposed && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Quiz session has been cancelled'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      print('Quiz session has been cancelled');
       Navigator.of(context).pop();
     }
   }
@@ -479,7 +503,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
           final session = snapshot.data!;
 
-          // Update online users count immediately
+          // Update online users count
           _updateOnlineUsersCount(session);
 
           return Scaffold(

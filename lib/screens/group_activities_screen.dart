@@ -1,5 +1,4 @@
 // Group Activities Screen
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:ultsukulu/models/group_model.dart';
