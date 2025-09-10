@@ -37,6 +37,8 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
   Timer? _autoNextTimer;
   Timer? _connectionCheckTimer;
   StreamSubscription? _connectivitySubscription;
+  StreamSubscription<QuizSessionModel>? _sessionSubscription;
+
   bool _isConnected = true;
   bool _isReconnecting = false;
   int remainingTime = 0;
@@ -49,14 +51,68 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
   int? _lastQuestionStartTime;
   bool _waitingForNext = false;
   bool _isLoading = false;
+  bool _isUpdatingState = false;
+
+  // Add session state tracking
+  QuizSessionModel? _currentSession;
+  bool _hasInitialData = false;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    _currentSession = widget.session; // Initialize with passed session
     remainingTime = widget.session.questionTimeLimit;
     _initializeConnectivityMonitoring();
+    _initializeAnimations();
+    _initializeSessionStream();
+  }
+
+  void _initializeSessionStream() {
+    // Start listening to session updates immediately
+    _sessionSubscription = QuizService()
+        .getSessionUpdates(widget.session.id)
+        .listen(
+          (session) {
+            if (mounted) {
+              _handleSessionUpdate(session);
+            }
+          },
+          onError: (error) {
+            print('DEBUG: Session stream error: $error');
+            if (mounted) {
+              setState(() {
+                _isConnected = false;
+                _isReconnecting = true;
+              });
+            }
+          },
+        );
+  }
+
+  void _handleSessionUpdate(QuizSessionModel session) {
+    print(
+      'DEBUG: Received session update - status: ${session.status}, questionIndex: ${session.currentQuestionIndex}',
+    );
+
+    if (!mounted || _isUpdatingState) return;
+
+    // Update current session
+    setState(() {
+      _currentSession = session;
+      _hasInitialData = true;
+    });
+
+    // Handle session state changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _handleSessionStateChange(session);
+      }
+    });
+  }
+
+  void _initializeAnimations() {
     _progressController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
@@ -108,22 +164,36 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
   Future<void> _checkConnection() async {
     try {
       await QuizService().pingSession(widget.session.id);
-      if (!_isConnected && mounted) {
-        setState(() {
+      if (!_isConnected && mounted && !_isUpdatingState) {
+        _safeSetState(() {
           _isConnected = true;
           _isReconnecting = false;
         });
         print('DEBUG: Connection restored');
       }
     } catch (e) {
-      if (_isConnected && mounted) {
-        setState(() {
+      if (_isConnected && mounted && !_isUpdatingState) {
+        _safeSetState(() {
           _isConnected = false;
           _isReconnecting = true;
         });
         print('DEBUG: Connection lost - Error: $e');
         _handleDisconnection();
       }
+    }
+  }
+
+  // Safe setState wrapper to prevent conflicts
+  void _safeSetState(VoidCallback fn) {
+    if (mounted && !_isUpdatingState) {
+      _isUpdatingState = true;
+      setState(fn);
+      // Reset flag after a short delay
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          _isUpdatingState = false;
+        }
+      });
     }
   }
 
@@ -144,22 +214,19 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
   void _attemptReconnection() async {
     if (!mounted) return;
 
-    while (!_isConnected) {
+    while (!_isConnected && mounted) {
       try {
         await QuizService().pingSession(widget.session.id);
-        if (mounted) {
-          setState(() {
+        if (mounted && !_isUpdatingState) {
+          _safeSetState(() {
             _isConnected = true;
             _isReconnecting = false;
           });
           print('DEBUG: Reconnection successful');
 
           // Sync with current question state
-          final session = await QuizService().getSessionSnapshot(
-            widget.session.id,
-          );
-          if (session.currentQuestionIndex != _lastQuestionIndex) {
-            _syncWithCurrentQuestion(session);
+          if (_currentSession != null) {
+            _syncWithCurrentQuestion(_currentSession!);
           }
         }
         break;
@@ -182,6 +249,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     _autoNextTimer?.cancel();
     _connectionCheckTimer?.cancel();
     _connectivitySubscription?.cancel();
+    _sessionSubscription?.cancel();
     _audioPlayer.dispose();
 
     // Update connection status on dispose
@@ -202,72 +270,39 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     }
   }
 
-  void _startTimer(int duration, {int? startTimeMillis}) {
-    // If startTimeMillis is provided, sync timer to that start time
-    int elapsed = 0;
-    if (startTimeMillis != null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      elapsed = ((now - startTimeMillis) / 1000).floor();
-      if (elapsed < 0) elapsed = 0;
-    }
-    int timeLeft = duration - elapsed;
-    if (timeLeft < 0) timeLeft = 0;
-    _timerController.duration = Duration(seconds: duration);
-    _timerController.value = elapsed / duration;
-    if (timeLeft > 0) {
-      _timerController.forward(from: elapsed / duration);
-    } else {
-      _timerController.value = 1.0;
-    }
-    setState(() {
-      remainingTime = timeLeft;
-      timeUp = false;
-    });
-    _questionTimer?.cancel();
-    if (timeLeft > 0) {
-      _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          remainingTime--;
-        });
-        if (remainingTime <= 10 && remainingTime > 0) {
-          _pulseController.repeat(reverse: true);
-        }
-        if (remainingTime <= 0) {
-          timer.cancel();
-          _pulseController.stop();
-          _handleTimeUp();
-        }
-      });
-    }
-  }
-
   void _syncWithCurrentQuestion(QuizSessionModel session) {
-    if (!mounted) return;
-    setState(() {
+    if (!mounted || _isUpdatingState) return;
+
+    _safeSetState(() {
       _isLoading = true;
     });
 
-    try {
-      if (session.currentQuestionIndex != _lastQuestionIndex) {
-        _lastQuestionIndex = session.currentQuestionIndex;
-        _lastQuestionStartTime = DateTime.now().millisecondsSinceEpoch;
-        _startTimer(
-          session.questionTimeLimit,
-          startTimeMillis: _lastQuestionStartTime,
-        );
+    // Use post frame callback to ensure safe execution
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      try {
+        if (session.currentQuestionIndex != _lastQuestionIndex) {
+          _lastQuestionIndex = session.currentQuestionIndex;
+          _lastQuestionStartTime = DateTime.now().millisecondsSinceEpoch;
+          _startTimer(
+            session.questionTimeLimit,
+            startTimeMillis: _lastQuestionStartTime,
+          );
+        }
+      } finally {
+        if (mounted && !_isUpdatingState) {
+          _safeSetState(() {
+            _isLoading = false;
+          });
+        }
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    });
   }
 
   void _handleTimeUp() async {
-    if (mounted) {
-      setState(() {
+    if (mounted && !_isUpdatingState) {
+      _safeSetState(() {
         timeUp = true;
       });
     }
@@ -276,7 +311,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
 
     // If host, wait a short delay then move to next question
     if (widget.session.hostId == widget.currentUserId) {
-      setState(() {
+      _safeSetState(() {
         _isLoading = true;
       });
       try {
@@ -287,8 +322,8 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
       } catch (e) {
         print('DEBUG: Failed to move to next question: $e');
       } finally {
-        if (mounted) {
-          setState(() {
+        if (mounted && !_isUpdatingState) {
+          _safeSetState(() {
             _isLoading = false;
           });
         }
@@ -314,7 +349,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
       return;
     }
 
-    setState(() {
+    _safeSetState(() {
       pressedButtonIndex = answerIndex;
       _isLoading = true;
     });
@@ -335,27 +370,32 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     } catch (e) {
       print('DEBUG: Failed to submit answer - Error: $e');
     } finally {
-      if (mounted) {
-        setState(() {
+      if (mounted && !_isUpdatingState) {
+        _safeSetState(() {
           _isLoading = false;
         });
       }
     }
+
     // Immediate feedback: play sound and haptic
-    final session = widget.session;
-    final questions = session.questions;
-    final correctAnswer = questions[questionIndex]['correctAnswer'];
-    if (answerIndex == correctAnswer) {
-      // Correct
-      await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
-      HapticFeedback.mediumImpact();
-    } else {
-      // Incorrect
-      await _playWrongSound();
-      HapticFeedback.heavyImpact();
-      _shakeController.forward(from: 0.0);
+    if (_currentSession != null) {
+      final questions = _currentSession!.questions;
+      if (questionIndex < questions.length) {
+        final correctAnswer = questions[questionIndex]['correctAnswer'];
+        if (answerIndex == correctAnswer) {
+          // Correct
+          await _audioPlayer.play(AssetSource('sounds/correct.mp3'));
+          HapticFeedback.mediumImpact();
+        } else {
+          // Incorrect
+          await _playWrongSound();
+          HapticFeedback.heavyImpact();
+          _shakeController.forward(from: 0.0);
+        }
+      }
     }
-    setState(() {
+
+    _safeSetState(() {
       pressedButtonIndex = -1;
     });
   }
@@ -530,7 +570,7 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
           onTap: () => _selectAnswer(
             index,
             widget.session.id,
-            widget.session.currentQuestionIndex,
+            _currentSession?.currentQuestionIndex ?? 0,
           ),
           shakeAnimation: _shakeAnimation,
           buttonPressAnimation: _buttonPressAnimation,
@@ -541,21 +581,25 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     );
   }
 
-  // Method to handle session state changes safely
   void _handleSessionStateChange(QuizSessionModel session) {
-    // Use WidgetsBinding.instance.addPostFrameCallback to schedule setState after build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+    if (_isUpdatingState) return;
 
-      bool questionChanged = _lastQuestionIndex != session.currentQuestionIndex;
-      bool startTimeChanged =
-          _lastQuestionStartTime !=
-          session.currentQuestionStartTime?.millisecondsSinceEpoch;
+    bool questionChanged = _lastQuestionIndex != session.currentQuestionIndex;
+    bool startTimeChanged = false;
 
-      if (questionChanged || startTimeChanged) {
-        print(
-          'DEBUG: Question transition - questionChanged: $questionChanged, startTimeChanged: $startTimeChanged',
-        );
+    int? newStartTime =
+        session.currentQuestionStartTime?.millisecondsSinceEpoch;
+    if (_lastQuestionStartTime != newStartTime) {
+      startTimeChanged = true;
+    }
+
+    if (questionChanged || startTimeChanged) {
+      print(
+        'DEBUG: Question transition - questionChanged: $questionChanged, startTimeChanged: $startTimeChanged',
+      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _isUpdatingState) return;
 
         _fadeController.reset();
         _fadeController.forward();
@@ -565,56 +609,156 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
         _waitingForNext = false;
 
         if (session.status == QuizStatus.active &&
-            session.currentQuestionStartTime != null) {
+            session.hasQuestionsLoaded() &&
+            session.currentQuestionIndex < session.questions.length) {
           print(
             'DEBUG: Starting timer for question ${session.currentQuestionIndex}',
           );
-          _startTimer(
-            session.questionTimeLimit,
-            startTimeMillis:
-                session.currentQuestionStartTime!.millisecondsSinceEpoch,
-          );
+
+          if (session.currentQuestionStartTime != null) {
+            _startTimer(
+              session.questionTimeLimit,
+              startTimeMillis:
+                  session.currentQuestionStartTime!.millisecondsSinceEpoch,
+            );
+          } else {
+            print('DEBUG: No start time yet, setting initial state');
+            _safeSetState(() {
+              remainingTime = session.questionTimeLimit;
+              timeUp = false;
+            });
+          }
         } else {
-          setState(() {
+          print('DEBUG: Session not active or invalid state, resetting timer');
+          _safeSetState(() {
             remainingTime = session.questionTimeLimit;
             timeUp = false;
           });
+          _timerController.reset();
         }
+
         _lastQuestionIndex = session.currentQuestionIndex;
-        _lastQuestionStartTime =
-            session.currentQuestionStartTime?.millisecondsSinceEpoch;
-      }
-
-      // Handle auto-progression for host
-      final isHost = session.hostId == widget.currentUserId;
-      final answersMap = session.participantAnswers;
-      final totalPlayers = session.participants.length;
-      final currentQuestionIndex = session.currentQuestionIndex;
-
-      final answersForThisQ = <String, dynamic>{};
-      answersMap.forEach((uid, ansList) {
-        if (ansList.length > currentQuestionIndex) {
-          answersForThisQ[uid] = ansList[currentQuestionIndex];
-        }
+        _lastQuestionStartTime = newStartTime;
       });
-      final allAnswered = answersForThisQ.length >= totalPlayers;
+    }
 
-      if (isHost &&
-          session.status == QuizStatus.active &&
-          allAnswered &&
-          !_waitingForNext) {
-        print('DEBUG: All players answered, auto-progressing...');
+    _handleAutoProgression(session);
+  }
+
+  void _handleAutoProgression(QuizSessionModel session) {
+    final isHost = session.hostId == widget.currentUserId;
+
+    if (!isHost || session.status != QuizStatus.active || _waitingForNext) {
+      return;
+    }
+
+    final answersMap = session.participantAnswers;
+    final onlineParticipants = session.participants.values
+        .where((p) => p.connectionStatus == ConnectionStatus.online)
+        .toList();
+    final totalOnlinePlayers = onlineParticipants.length;
+    final currentQuestionIndex = session.currentQuestionIndex;
+
+    int answeredCount = 0;
+    for (final participant in onlineParticipants) {
+      final userAnswers = answersMap[participant.userId];
+      if (userAnswers != null && userAnswers.length > currentQuestionIndex) {
+        final answer = userAnswers[currentQuestionIndex];
+        if (answer != -1) {
+          answeredCount++;
+        }
+      }
+    }
+
+    final allOnlineAnswered = answeredCount >= totalOnlinePlayers;
+
+    if (allOnlineAnswered && session.currentQuestionStartTime != null) {
+      final questionRunTime = DateTime.now().difference(
+        session.currentQuestionStartTime!,
+      );
+      final minQuestionTime = const Duration(seconds: 3);
+
+      if (questionRunTime >= minQuestionTime) {
+        print(
+          'DEBUG: All online players ($answeredCount/$totalOnlinePlayers) answered, auto-progressing...',
+        );
         _waitingForNext = true;
         _autoNextTimer?.cancel();
-        _autoNextTimer = Timer(const Duration(milliseconds: 900), () async {
+
+        _autoNextTimer = Timer(const Duration(milliseconds: 1500), () async {
+          if (!mounted) return;
           try {
             await QuizService().moveToNextQuestion(session.id);
           } catch (e) {
             print('DEBUG: Auto-progression failed: $e');
+            if (mounted) {
+              _safeSetState(() {
+                _waitingForNext = false;
+              });
+            }
           }
         });
       }
+    }
+  }
+
+  void _startTimer(int duration, {int? startTimeMillis}) {
+    print(
+      'DEBUG: Starting timer - duration: ${duration}s, startTime: $startTimeMillis',
+    );
+
+    _questionTimer?.cancel();
+    _timerController.reset();
+
+    int elapsed = 0;
+    int timeLeft = duration;
+
+    if (startTimeMillis != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      elapsed = ((now - startTimeMillis) / 1000).floor();
+      if (elapsed < 0) elapsed = 0;
+      timeLeft = duration - elapsed;
+      if (timeLeft < 0) timeLeft = 0;
+    }
+
+    _timerController.duration = Duration(seconds: duration);
+
+    if (timeLeft > 0 && elapsed >= 0) {
+      final progress = elapsed.toDouble() / duration.toDouble();
+      _timerController.forward(from: progress.clamp(0.0, 1.0));
+    } else if (timeLeft <= 0) {
+      _timerController.value = 1.0;
+    }
+
+    _safeSetState(() {
+      remainingTime = timeLeft;
+      timeUp = timeLeft <= 0;
     });
+
+    if (timeLeft > 0) {
+      _questionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        _safeSetState(() {
+          remainingTime--;
+        });
+
+        if (remainingTime <= 10 && remainingTime > 0) {
+          _pulseController.repeat(reverse: true);
+        }
+
+        if (remainingTime <= 0) {
+          timer.cancel();
+          _pulseController.stop();
+          _handleTimeUp();
+        }
+      });
+    } else if (timeLeft <= 0) {
+      _handleTimeUp();
+    }
   }
 
   @override
@@ -623,453 +767,505 @@ class _MultiplayerQuizGameScreenState extends State<MultiplayerQuizGameScreen>
     final isSmallScreen = screenSize.height < 700;
     final isTablet = screenSize.width > 600;
 
-    return StreamBuilder<QuizSessionModel>(
-      stream: QuizService().getSessionUpdates(widget.session.id),
-      builder: (context, snapshot) {
-        // Debug logging
-        print('DEBUG: StreamBuilder - hasData: ${snapshot.hasData}');
-        if (snapshot.hasError) {
-          print('DEBUG: StreamBuilder error: ${snapshot.error}');
+    // Use the current session from our state management
+    if (!_hasInitialData || _currentSession == null) {
+      return _buildLoadingScreen(context, 'Loading quiz session...');
+    }
+
+    final session = _currentSession!;
+    print(
+      'DEBUG: Building with session - status: ${session.status}, questionIndex: ${session.currentQuestionIndex}',
+    );
+
+    // Check for basic session validity
+    if (!session.participants.containsKey(widget.currentUserId)) {
+      return _buildInvalidSessionScreen(context, session);
+    }
+
+    // Handle different session states
+    switch (session.status) {
+      case QuizStatus.completed:
+        return _buildCompletedScreen(context, session, isTablet);
+
+      case QuizStatus.cancelled:
+      case QuizStatus.expired:
+        return _buildCancelledScreen(context, session);
+
+      case QuizStatus.waiting:
+        return _buildWaitingScreen(context, session, isTablet);
+
+      case QuizStatus.active:
+        if (session.questions.isEmpty) {
+          return _buildLoadingScreen(context, 'Loading quiz questions...');
         }
 
-        if (!snapshot.hasData) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF7F7F7),
-            appBar: AppBar(
-              title: const Text('Multiplayer Quiz'),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              foregroundColor: const Color(0xFF4B4B4B),
+        if (session.currentQuestionIndex >= session.questions.length) {
+          print('DEBUG: Invalid question index during transition, waiting...');
+          return _buildLoadingScreen(context, 'Preparing next question...');
+        }
+
+        return _buildGameScreen(context, session, isSmallScreen, isTablet);
+
+      default:
+        return _buildLoadingScreen(context, 'Preparing quiz...');
+    }
+  }
+
+  // ... (Keep all the existing _build methods unchanged)
+  Widget _buildLoadingScreen(BuildContext context, String message) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Multiplayer Quiz'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(message),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorScreen(BuildContext context, String error) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Multiplayer Quiz'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: $error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
             ),
-            body: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading quiz session...'),
-                ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInvalidSessionScreen(
+    BuildContext context,
+    QuizSessionModel session,
+  ) {
+    String message = 'Quiz session error';
+
+    if (session.status == QuizStatus.active && !session.hasQuestionsLoaded()) {
+      message = 'Quiz questions not loaded';
+    } else if (session.currentQuestionIndex >= session.questions.length) {
+      message = 'Invalid question data';
+    } else if (!session.participants.containsKey(widget.currentUserId)) {
+      message = 'You are no longer part of this quiz';
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Multiplayer Quiz'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            if (session.status == QuizStatus.active &&
+                session.currentQuestionIndex >= session.questions.length)
+              Text(
+                'Question ${session.currentQuestionIndex + 1}/${session.questions.length}',
+                style: const TextStyle(color: Colors.red),
+              ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaitingScreen(
+    BuildContext context,
+    QuizSessionModel session,
+    bool isTablet,
+  ) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Multiplayer Quiz'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 64, color: Colors.orange),
+            const SizedBox(height: 16),
+            _buildQuizStatusDisplay(
+              session.status,
+              session,
+              session.hostId == widget.currentUserId,
+              isTablet,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedScreen(
+    BuildContext context,
+    QuizSessionModel session,
+    bool isTablet,
+  ) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Quiz Complete!'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.check_circle, size: 64, color: Colors.green),
+            const SizedBox(height: 16),
+            Text(
+              'Quiz Finished!',
+              style: TextStyle(
+                fontSize: isTablet ? 24 : 20,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF4B4B4B),
               ),
             ),
-          );
-        }
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(child: _buildLeaderboard(session)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-        if (snapshot.hasError) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF7F7F7),
-            appBar: AppBar(
-              title: const Text('Multiplayer Quiz'),
+  Widget _buildCancelledScreen(BuildContext context, QuizSessionModel session) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: AppBar(
+        title: const Text('Multiplayer Quiz'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: const Color(0xFF4B4B4B),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cancel, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(
+              _getStatusMessage(session.status),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Go Back'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameScreen(
+    BuildContext context,
+    QuizSessionModel session,
+    bool isSmallScreen,
+    bool isTablet,
+  ) {
+    final questions = session.questions;
+    final currentQuestionIndex = session.currentQuestionIndex;
+    final currentQuestion = questions[currentQuestionIndex];
+    final userAnswers = session.participantAnswers[widget.currentUserId] ?? [];
+    final selectedAnswer = (userAnswers.length > currentQuestionIndex)
+        ? userAnswers[currentQuestionIndex]
+        : null;
+    final isAnswered = selectedAnswer != null && selectedAnswer != -1;
+    final correctAnswer = currentQuestion['correctAnswer'];
+    final participantCount = session.participants.length;
+    final userScore = session.participants[widget.currentUserId]?.score ?? 0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F7F7),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(isSmallScreen ? 80 : 90),
+        child: Stack(
+          children: [
+            AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
               foregroundColor: const Color(0xFF4B4B4B),
-            ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              centerTitle: false,
+              automaticallyImplyLeading: false,
+              toolbarHeight: isSmallScreen ? 80 : 90,
+              title: Row(
                 children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Error: ${snapshot.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        final session = snapshot.data!;
-
-        // Debug logging for session state
-        print('DEBUG: Session status: ${session.status}');
-        print('DEBUG: Questions loaded: ${session.hasQuestionsLoaded()}');
-        print('DEBUG: Questions count: ${session.questions.length}');
-        print('DEBUG: Current question index: ${session.currentQuestionIndex}');
-        print(
-          'DEBUG: Current question start time: ${session.currentQuestionStartTime}',
-        );
-
-        // Handle session state changes OUTSIDE of build method
-        _handleSessionStateChange(session);
-
-        // Check if session is not active
-        if (session.status != QuizStatus.active) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF7F7F7),
-            appBar: AppBar(
-              title: const Text('Multiplayer Quiz'),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              foregroundColor: const Color(0xFF4B4B4B),
-            ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    session.status == QuizStatus.completed
-                        ? Icons.check_circle
-                        : Icons.hourglass_empty,
-                    size: 64,
-                    color: session.status == QuizStatus.completed
-                        ? Colors.green
-                        : Colors.orange,
-                  ),
-                  const SizedBox(height: 16),
                   Text(
-                    _getStatusMessage(session.status),
+                    '${session.subject.isNotEmpty ? session.subject : session.quizName} Quiz',
                     style: const TextStyle(
-                      fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF4B4B4B),
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1CB0F6).withValues(alpha: 26),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.group,
+                          color: Color(0xFF1CB0F6),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text('$participantCount'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF58CC02).withValues(alpha: 31),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          color: Color(0xFF58CC02),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$userScore',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        }
-
-        // Check if questions are not loaded
-        if (!session.hasQuestionsLoaded()) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF7F7F7),
-            appBar: AppBar(
-              title: const Text('Multiplayer Quiz'),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              foregroundColor: const Color(0xFF4B4B4B),
-            ),
-            body: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading quiz questions...'),
-                ],
+            // Timer progress bar
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AnimatedBuilder(
+                animation: _timerController,
+                builder: (context, child) {
+                  return Container(
+                    height: 3,
+                    color: const Color(0xFFE5E5E5),
+                    child: FractionallySizedBox(
+                      widthFactor: timeUp
+                          ? 0.0
+                          : (1.0 - _timerController.value),
+                      alignment: Alignment.centerLeft,
+                      child: Container(color: _getTimerColor()),
+                    ),
+                  );
+                },
               ),
             ),
-          );
-        }
-
-        // Check if current question index is valid
-        if (session.currentQuestionIndex >= session.questions.length) {
-          return Scaffold(
-            backgroundColor: const Color(0xFFF7F7F7),
-            appBar: AppBar(
-              title: const Text('Multiplayer Quiz'),
-              backgroundColor: Colors.white,
-              elevation: 0,
-              foregroundColor: const Color(0xFF4B4B4B),
+          ],
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF7F7F7), Colors.white],
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              isTablet ? 24 : 16,
+              isTablet ? 24 : 16,
+              isTablet ? 24 : 16,
+              0,
             ),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Quiz data error',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Invalid question index: ${session.currentQuestionIndex}/${session.questions.length}',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        // Get current question data
-        final questions = session.questions;
-        final currentQuestionIndex = session.currentQuestionIndex;
-        final currentQuestion = questions[currentQuestionIndex];
-        final userAnswers =
-            session.participantAnswers[widget.currentUserId] ?? [];
-        final selectedAnswer = (userAnswers.length > currentQuestionIndex)
-            ? userAnswers[currentQuestionIndex]
-            : null;
-        final isAnswered = selectedAnswer != null;
-        final correctAnswer = currentQuestion['correctAnswer'];
-        final participantCount = session.participants.length;
-        final userScore =
-            session.participants[widget.currentUserId]?.score ?? 0;
-
-        // Show waiting state if not active or waiting for next
-        bool showWaiting = session.status != QuizStatus.active;
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFF7F7F7),
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(isSmallScreen ? 80 : 90),
-            child: Stack(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AppBar(
-                  backgroundColor: Colors.white,
-                  elevation: 0,
-                  foregroundColor: const Color(0xFF4B4B4B),
-                  centerTitle: false,
-                  automaticallyImplyLeading: false,
-                  toolbarHeight: isSmallScreen ? 80 : 90,
-                  title: Row(
-                    children: [
-                      Text(
-                        '${session.subject} Quiz',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4B4B4B),
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1CB0F6).withValues(alpha: 26),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.group,
-                              color: Color(0xFF1CB0F6),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text('$participantCount'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Real-time score display
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF58CC02).withValues(alpha: 31),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.star,
-                              color: Color(0xFF58CC02),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$userScore',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                // Question card
+                Container(
+                  padding: EdgeInsets.all(isTablet ? 24 : 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 15,
+                        offset: Offset(0, 5),
                       ),
                     ],
                   ),
-                ),
-                // Timer progress bar as bottom border
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: AnimatedBuilder(
-                    animation: _timerController,
-                    builder: (context, child) {
-                      return Container(
-                        height: 3,
-                        color: const Color(0xFFE5E5E5),
-                        child: FractionallySizedBox(
-                          widthFactor: timeUp
-                              ? 0.0
-                              : (1.0 - _timerController.value),
-                          alignment: Alignment.centerLeft,
-                          child: Container(color: _getTimerColor()),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (currentQuestion['reference'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8E44AD).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFF8E44AD,
+                                  ).withValues(alpha: 77),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.bookmark_outline,
+                                    size: 12,
+                                    color: Color(0xFF8E44AD),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    currentQuestion['reference']!,
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 10 : 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF8E44AD),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    },
+                      if ((currentQuestion['question'] ?? '').isNotEmpty)
+                        Text(
+                          currentQuestion['question'],
+                          style: TextStyle(
+                            fontSize: isTablet ? 20 : (isSmallScreen ? 16 : 18),
+                            fontWeight: FontWeight.bold,
+                            height: 1.4,
+                            color: const Color(0xFF4B4B4B),
+                          ),
+                        ),
+                      if (currentQuestion['imagePath'] != null) ...[
+                        SizedBox(
+                          height: (currentQuestion['question'] ?? '').isNotEmpty
+                              ? 16
+                              : 0,
+                        ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            currentQuestion['imagePath'],
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                height: isSmallScreen ? 120 : 160,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0F0F0),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Color(0xFF777777),
+                                    size: 48,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                SizedBox(height: isSmallScreen ? 16 : 20),
+                // Options display
+                Expanded(
+                  child: _buildOptionsDisplay(
+                    currentQuestion,
+                    isSmallScreen,
+                    isTablet,
+                    correctAnswer,
+                    selectedAnswer,
+                    isAnswered,
+                    timeUp,
+                    context,
                   ),
                 ),
               ],
             ),
           ),
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFF7F7F7), Colors.white],
-              ),
-            ),
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isTablet ? 24 : 16,
-                  isTablet ? 24 : 16,
-                  isTablet ? 24 : 16,
-                  0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Question card
-                    Container(
-                      padding: EdgeInsets.all(isTablet ? 24 : 20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 15,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (currentQuestion['reference'] != null)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(
-                                      0xFF8E44AD,
-                                    ).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFF8E44AD,
-                                      ).withValues(alpha: 77),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.bookmark_outline,
-                                        size: 12,
-                                        color: Color(0xFF8E44AD),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        currentQuestion['reference']!,
-                                        style: TextStyle(
-                                          fontSize: isSmallScreen ? 10 : 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF8E44AD),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          if ((currentQuestion['question'] ?? '').isNotEmpty)
-                            Text(
-                              currentQuestion['question'],
-                              style: TextStyle(
-                                fontSize: isTablet
-                                    ? 20
-                                    : (isSmallScreen ? 16 : 18),
-                                fontWeight: FontWeight.bold,
-                                height: 1.4,
-                                color: const Color(0xFF4B4B4B),
-                              ),
-                            ),
-                          if (currentQuestion['imagePath'] != null) ...[
-                            SizedBox(
-                              height:
-                                  (currentQuestion['question'] ?? '').isNotEmpty
-                                  ? 16
-                                  : 0,
-                            ),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                currentQuestion['imagePath'],
-                                fit: BoxFit.contain,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    height: isSmallScreen ? 120 : 160,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF0F0F0),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.image_not_supported,
-                                        color: Color(0xFF777777),
-                                        size: 48,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: isSmallScreen ? 16 : 20),
-                    // Options or waiting state
-                    if (showWaiting)
-                      Expanded(
-                        child: Center(
-                          child: _buildQuizStatusDisplay(
-                            session.status,
-                            session,
-                            session.hostId == widget.currentUserId,
-                            isTablet,
-                          ),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: _buildOptionsDisplay(
-                          currentQuestion,
-                          isSmallScreen,
-                          isTablet,
-                          correctAnswer,
-                          selectedAnswer,
-                          isAnswered,
-                          timeUp,
-                          context,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
+        ),
+      ),
     );
   }
 

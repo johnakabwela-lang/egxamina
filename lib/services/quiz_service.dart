@@ -185,7 +185,7 @@ class QuizService {
     _connectionService.startHeartbeat(sessionId, userId);
   }
 
-  /// Starts the quiz session with questions loaded
+  /// Fixed startQuizSession method with proper Firestore timestamp handling
   Future<void> startQuizSession(
     String sessionId, {
     String? quizAssetPath,
@@ -198,7 +198,8 @@ class QuizService {
         throw Exception('Session not found');
       }
 
-      final session = QuizSessionModel.fromMap(snapshot.data()!);
+      final sessionData = snapshot.data()!;
+      final session = QuizSessionModel.fromMap(sessionData);
 
       // Validate session state
       if (!session.isWaiting) {
@@ -213,30 +214,24 @@ class QuizService {
         throw Exception('Need at least 2 online players to start the quiz');
       }
 
-      final now = DateTime.now();
-      final updateData = {
-        'status': QuizStatus.active.name,
-        'startedAt': now.millisecondsSinceEpoch,
-        'currentQuestionStartTime': now.millisecondsSinceEpoch,
-        'questionTimeLimit': 30, // Default 30 seconds
-        'participantAnswers': {}, // Initialize empty answers
-      };
-
-      // Load questions if asset path is provided
-      if (quizAssetPath != null) {
+      // Check if questions are already loaded
+      List<dynamic> questions = [];
+      if (sessionData.containsKey('questions') &&
+          sessionData['questions'] != null) {
+        questions = List<dynamic>.from(sessionData['questions']);
+        print('DEBUG: Using pre-loaded questions, count: ${questions.length}');
+      } else if (quizAssetPath != null) {
+        // Load questions if needed
         try {
           final String data = await rootBundle.loadString(quizAssetPath);
           final Map<String, dynamic> jsonMap = jsonDecode(data);
-          final List<dynamic> questions = List<dynamic>.from(
-            jsonMap['questions'],
-          );
+          questions = List<dynamic>.from(jsonMap['questions']);
 
           // Convert string answers to indices
-          final List<dynamic> convertedQuestions = questions.map((question) {
+          questions = questions.map((question) {
             final Map<String, dynamic> convertedQuestion =
                 Map<String, dynamic>.from(question);
 
-            // Convert correctAnswer from string to index
             if (convertedQuestion['correctAnswer'] is String) {
               final String correctAnswerString =
                   convertedQuestion['correctAnswer'];
@@ -247,21 +242,43 @@ class QuizService {
                 convertedQuestion['correctAnswer'] = correctIndex;
               } else {
                 print(
-                  'Warning: Could not find correct answer "${correctAnswerString}" in options',
+                  'Warning: Could not find correct answer "$correctAnswerString" in options',
                 );
                 convertedQuestion['correctAnswer'] =
                     0; // Default to first option
               }
             }
-
             return convertedQuestion;
           }).toList();
 
-          updateData['questions'] = convertedQuestions;
+          print(
+            'DEBUG: Loaded questions from asset, count: ${questions.length}',
+          );
         } catch (e) {
           throw Exception('Failed to load quiz questions: $e');
         }
+      } else {
+        throw Exception('No questions loaded and no asset path provided');
       }
+
+      if (questions.isEmpty) {
+        throw Exception('No questions available to start quiz');
+      }
+
+      final now = DateTime.now();
+      // FIXED: Add a small delay to ensure all clients are ready
+      final questionStartTime = now.add(const Duration(seconds: 2));
+
+      // FIXED: Use Firestore Timestamp objects for proper serialization
+      final updateData = {
+        'status': QuizStatus.active.name,
+        'startedAt': Timestamp.fromDate(now),
+        'currentQuestionStartTime': Timestamp.fromDate(questionStartTime),
+        'questionTimeLimit': 30,
+        'currentQuestionIndex': 0, // Explicitly set to 0
+        'participantAnswers': {}, // Initialize empty answers
+        'questions': questions,
+      };
 
       transaction.update(sessionRef, updateData);
     });
@@ -334,7 +351,7 @@ class QuizService {
             convertedQuestion['correctAnswer'] = correctIndex;
           } else {
             print(
-              'Warning: Could not find correct answer "${correctAnswerString}" in options',
+              'Warning: Could not find correct answer "$correctAnswerString" in options',
             );
             convertedQuestion['correctAnswer'] = 0; // Default to first option
           }
@@ -362,7 +379,7 @@ class QuizService {
   Future<void> submitParticipantAnswer({
     required String sessionId,
     required String userId,
-    required int answer, // Changed to int to match expected type
+    required int answer,
   }) async {
     final sessionRef = _firestore.doc('$_sessionsCollection/$sessionId');
 
@@ -462,19 +479,17 @@ class QuizService {
         return;
       }
 
-      // Move to next question
+      // Move to next question with proper Timestamp handling
       final now = DateTime.now();
       transaction.update(sessionRef, {
         'currentQuestionIndex': currentIndex + 1,
-        'currentQuestionStartTime': now.millisecondsSinceEpoch,
+        'currentQuestionStartTime': Timestamp.fromDate(now),
         'participants': updatedParticipants.map(
           (k, v) => MapEntry(k, v.toMap()),
         ),
       });
     });
   }
-
-  // ... Rest of the methods remain the same ...
 
   /// Handles participant disconnection
   Future<void> handleParticipantDisconnect(
@@ -625,7 +640,7 @@ class QuizService {
         if (session.isWaiting) {
           transaction.update(sessionRef, {
             'status': QuizStatus.expired.name,
-            'expiredAt': DateTime.now().millisecondsSinceEpoch,
+            'expiredAt': Timestamp.now(),
           });
         }
       });

@@ -27,6 +27,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   bool _isDisposed = false;
   bool _isCancelling = false;
   bool _isLeaving = false;
+  bool _isStartingQuiz = false; // Add this flag
   Timer? _connectionTimer;
   Timer? _countdownTimer;
   static const int waitingRoomDuration = 120; // 2 minutes
@@ -75,13 +76,15 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
         return;
       }
 
-      setState(() {
-        if (_remainingSeconds > 0) {
-          _remainingSeconds--;
-        } else {
-          _handleCountdownExpiry();
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            _handleCountdownExpiry();
+          }
+        });
+      }
     });
   }
 
@@ -98,7 +101,9 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
     print('Quiz waiting period has expired');
 
     // Navigate back
-    Navigator.of(context).pop();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   // Format remaining time as MM:SS
@@ -133,7 +138,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
   // Handle proper leave session
   Future<void> _leaveSession() async {
-    if (_isLeaving) return;
+    if (_isLeaving || _isDisposed) return;
 
     setState(() {
       _isLeaving = true;
@@ -150,19 +155,26 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !_isDisposed) {
         setState(() {
           _isLeaving = false;
         });
 
         print('Failed to leave session: ${e.toString()}');
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to leave session: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
 
   // Override back button behavior
   Future<bool> _onWillPop() async {
-    if (_isLeaving || _isCancelling) return false;
+    if (_isLeaving || _isCancelling || _isStartingQuiz) return false;
 
     // Show confirmation dialog for leaving
     final shouldLeave = await showDialog<bool>(
@@ -258,7 +270,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   }
 
   Widget _buildHostControls(QuizSessionModel session) {
-    final bool canStart = _onlineUsersCount >= 2;
+    final bool canStart = _onlineUsersCount >= 2 && !_isStartingQuiz;
 
     return Column(
       children: [
@@ -271,17 +283,29 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
             backgroundColor: canStart ? Colors.green : Colors.grey,
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           ),
-          child: Text(
-            canStart
-                ? 'Start Biology Quiz ($_onlineUsersCount players)'
-                : 'Need at least 2 online players',
-            style: const TextStyle(fontSize: 18),
-          ),
+          child: _isStartingQuiz
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  canStart
+                      ? 'Start Biology Quiz ($_onlineUsersCount players)'
+                      : 'Need at least 2 online players',
+                  style: const TextStyle(fontSize: 18),
+                ),
         ),
         const SizedBox(height: 16),
         // Cancel Quiz Button
         OutlinedButton(
-          onPressed: session.status == QuizStatus.waiting && !_isCancelling
+          onPressed:
+              session.status == QuizStatus.waiting &&
+                  !_isCancelling &&
+                  !_isStartingQuiz
               ? () => _showCancelConfirmationDialog(session)
               : null,
           style: OutlinedButton.styleFrom(
@@ -305,9 +329,10 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
   // Handle starting the quiz by loading biology questions
   Future<void> _handleStartQuiz(QuizSessionModel session) async {
-    if (!mounted) return;
+    if (!mounted || _isStartingQuiz || _isDisposed) return;
 
     setState(() {
+      _isStartingQuiz = true;
       _isCancelling = false; // Reset cancelling state
     });
 
@@ -323,9 +348,26 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
 
       // Step 3: Cancel the countdown timer since quiz is starting
       _countdownTimer?.cancel();
+
+      print('Quiz started successfully');
     } catch (e) {
-      if (mounted) {
-        print('Failed to start quiz: ${e.toString()}');
+      print('Failed to start quiz: ${e.toString()}');
+
+      if (mounted && !_isDisposed) {
+        // Show error message to user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start quiz: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted && !_isDisposed) {
+        setState(() {
+          _isStartingQuiz = false;
+        });
       }
     }
   }
@@ -380,7 +422,7 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
   }
 
   Future<void> _cancelQuizSession(QuizSessionModel session) async {
-    if (!mounted) return;
+    if (!mounted || _isDisposed) return;
 
     setState(() {
       _isCancelling = true;
@@ -397,12 +439,20 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
       // Navigate back immediately
       Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) {
+      if (mounted && !_isDisposed) {
         setState(() {
           _isCancelling = false;
         });
 
         print('Failed to cancel quiz: ${e.toString()}');
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to cancel quiz: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -496,21 +546,40 @@ class MultiplayerQuizScreenState extends State<MultiplayerQuizScreen> {
           }
 
           if (snapshot.hasError) {
+            print('StreamBuilder error: ${snapshot.error}');
             return Scaffold(
-              body: Center(child: Text('Error: ${snapshot.error}')),
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${snapshot.error}'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
             );
           }
 
           final session = snapshot.data!;
 
           // Update online users count
-          _updateOnlineUsersCount(session);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && !_isDisposed) {
+              _updateOnlineUsersCount(session);
+            }
+          });
 
           return Scaffold(
             appBar: AppBar(
               title: Text(widget.session.quizName),
               backgroundColor: Colors.teal.shade600,
-              leading: _isLeaving || _isCancelling
+              leading: _isLeaving || _isCancelling || _isStartingQuiz
                   ? Container(
                       padding: const EdgeInsets.all(14),
                       child: const CircularProgressIndicator(

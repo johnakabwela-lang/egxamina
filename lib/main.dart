@@ -315,7 +315,7 @@ class MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                   onTap: _onTabTapped,
                   items: [
                     _buildNavItem(0, Icons.home_rounded, 'Learn'),
-                    _buildNavItem(1, Icons.quiz_rounded, 'Practice'),
+                    _buildNavItem(1, Icons.question_mark_rounded, 'Practice'),
                     _buildNavItem(2, Icons.videocam_rounded, 'Videos'),
                     _buildNavItem(3, Icons.apps_rounded, 'Tools'),
                   ],

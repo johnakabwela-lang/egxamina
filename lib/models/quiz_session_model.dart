@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum QuizStatus { waiting, active, completed, cancelled, expired }
 
 enum ConnectionStatus { online, offline, reconnecting }
@@ -31,19 +33,13 @@ class QuizParticipant {
       userName: map['userName'] as String,
       score: map['score'] as int? ?? 0,
       hasJoined: map['hasJoined'] as bool? ?? false,
-      joinedAt: map['joinedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['joinedAt'] as int)
-          : null,
+      joinedAt: _parseTimestamp(map['joinedAt']),
       connectionStatus: ConnectionStatus.values.firstWhere(
         (e) => e.name == (map['connectionStatus'] as String?),
         orElse: () => ConnectionStatus.offline,
       ),
-      lastHeartbeat: map['lastHeartbeat'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['lastHeartbeat'] as int)
-          : null,
-      disconnectedAt: map['disconnectedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['disconnectedAt'] as int)
-          : null,
+      lastHeartbeat: _parseTimestamp(map['lastHeartbeat']),
+      disconnectedAt: _parseTimestamp(map['disconnectedAt']),
       hasLockedAnswer: map['hasLockedAnswer'] as bool? ?? false,
     );
   }
@@ -84,6 +80,21 @@ class QuizParticipant {
       disconnectedAt: disconnectedAt ?? this.disconnectedAt,
       hasLockedAnswer: hasLockedAnswer ?? this.hasLockedAnswer,
     );
+  }
+
+  // Static helper method to parse timestamps
+  static DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+
+    if (value is Timestamp) {
+      return value.toDate();
+    } else if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    } else if (value is String) {
+      return DateTime.tryParse(value);
+    }
+
+    return null;
   }
 }
 
@@ -156,28 +167,20 @@ class QuizSessionModel {
         orElse: () => QuizStatus.waiting,
       ),
       participants: participantsMap,
-      startedAt: map['startedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['startedAt'] as int)
-          : null,
+      startedAt: _parseTimestamp(map['startedAt']),
       quizName: map['quizName'] as String,
       hostId: '${map['hostId']}',
-      createdAt: map['createdAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int)
-          : DateTime.now(),
-      expiresAt: map['expiresAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['expiresAt'] as int)
-          : null,
+      createdAt: _parseTimestamp(map['createdAt']) ?? DateTime.now(),
+      expiresAt: _parseTimestamp(map['expiresAt']),
       subject: map['subject'] as String? ?? '',
       fileName: map['fileName'] as String? ?? '',
       questions: (map['questions'] as List<dynamic>? ?? [])
           .map((e) => e as Map<String, dynamic>)
           .toList(),
       currentQuestionIndex: map['currentQuestionIndex'] as int? ?? 0,
-      currentQuestionStartTime: map['currentQuestionStartTime'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(
-              map['currentQuestionStartTime'] as int,
-            )
-          : null,
+      currentQuestionStartTime: _parseTimestamp(
+        map['currentQuestionStartTime'],
+      ),
       questionTimeLimit: map['questionTimeLimit'] as int? ?? 30,
       participantAnswers: participantAnswersMap,
     );
@@ -214,6 +217,22 @@ class QuizSessionModel {
       'questionTimeLimit': questionTimeLimit,
       'participantAnswers': participantAnswersMap,
     };
+  }
+
+  // Static helper method to parse timestamps - handles both Firestore Timestamp and int
+  static DateTime? _parseTimestamp(dynamic value) {
+    if (value == null) return null;
+
+    if (value is Timestamp) {
+      return value.toDate();
+    } else if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    } else if (value is String) {
+      return DateTime.tryParse(value);
+    }
+
+    print('Warning: Unexpected timestamp type: ${value.runtimeType}');
+    return null;
   }
 
   QuizSessionModel copyWith({
