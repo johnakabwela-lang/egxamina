@@ -500,16 +500,16 @@ class _QuizScreenState extends State<QuizScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.orange, Color(0xFF58CC02)],
+              colors: [Colors.orange, Colors.yellow],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Color(0xFF58CC02),
+                color: Colors.yellow,
                 blurRadius: 8,
-                offset: const Offset(0, 4),
+                offset: const Offset(0, 1),
               ),
             ],
           ),
@@ -567,49 +567,166 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildMotivationalBanner() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOut,
         width: double.infinity,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24), // Increased padding for height
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.green.shade300, Colors.green.shade500],
+            colors: [
+              Color(0xFF58CC02).withOpacity(0.8), // Light green from background
+              Color(0xFF58CC02), // Main green color
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20), // Slightly more rounded
           boxShadow: [
             BoxShadow(
-              color: Colors.green.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: Color(0xFF58CC02).withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+              spreadRadius: 2,
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.psychology,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                _currentMotivationalMessage,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Animated icon container
+                TweenAnimationBuilder(
+                  duration: const Duration(milliseconds: 1200),
+                  tween: Tween<double>(begin: 0, end: 1),
+                  builder: (context, double value, child) {
+                    return Transform.scale(
+                      scale: 0.8 + (0.2 * value),
+                      child: Transform.rotate(
+                        angle:
+                            (value * 0.1) - 0.05, // Subtle rotation animation
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.psychology,
+                            color: Colors.white,
+                            size: 28, // Larger icon
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              ),
+                const SizedBox(width: 16),
+
+                // Animated text content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Animated motivational message
+                      TweenAnimationBuilder(
+                        key: ValueKey(
+                          _currentMotivationalMessage,
+                        ), // Rebuild when message changes
+                        duration: const Duration(milliseconds: 600),
+                        tween: Tween<double>(begin: 0, end: 1),
+                        builder: (context, double value, child) {
+                          return Transform.translate(
+                            offset: Offset(
+                              0,
+                              20 * (1 - value),
+                            ), // Slide up animation
+                            child: Opacity(
+                              opacity: value,
+                              child: Text(
+                                _currentMotivationalMessage,
+                                style: const TextStyle(
+                                  fontSize: 16, // Slightly larger text
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.3,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Subtitle with animation
+                      TweenAnimationBuilder(
+                        duration: const Duration(milliseconds: 800),
+                        tween: Tween<double>(begin: 0, end: 1),
+                        builder: (context, double value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 15 * (1 - value)),
+                            child: Opacity(
+                              opacity: value * 0.9, // Slightly transparent
+                              child: Text(
+                                'Tap a subject below to start your journey! ✨',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Animated progress indicator or decorative element
+            TweenAnimationBuilder(
+              duration: const Duration(milliseconds: 1000),
+              tween: Tween<double>(begin: 0, end: 1),
+              builder: (context, double value, child) {
+                return Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.white.withOpacity(0.2),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: value * 0.7, // Animated progress bar
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(2),
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withOpacity(0.6),
+                            Colors.white.withOpacity(0.9),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
